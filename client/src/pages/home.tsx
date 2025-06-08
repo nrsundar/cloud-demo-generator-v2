@@ -1,4 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, 
+  const handleDownloadZip = async (repoId: number) => {
+    try {
+      const response = await fetch(`/api/repositories/${repoId}/zip`);
+      if (!response.ok) throw new Error("Failed to download ZIP");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `repository-${repoId}.zip`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("ZIP download error:", error);
+      alert("Could not download the ZIP file.");
+    }
+  };
+
+
+useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ConfigurationPanel from "@/components/configuration-panel";
 import ProgressTracker from "@/components/progress-tracker";
