@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""
+{{module.name}} - Python Examples
+Generated for: {{config.repositoryName}}
+
+This module demonstrates {{module.description}}
+"""
+
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import json
+from typing import List, Dict, Any, Optional
+
+# Database configuration
+DATABASE_CONFIG = {
+    'host': 'localhost',
+    'database': 'pgrouting_db',
+    'user': 'postgres',
+    'password': 'postgres',
+    'port': 5432
+}
+
+class {{module.name}}Examples:
+    """Examples for {{module.name}}"""
+    
+    def __init__(self):
+        self.conn = psycopg2.connect(**DATABASE_CONFIG)
+    
+    def __del__(self):
+        if hasattr(self, 'conn'):
+            self.conn.close()
+
+{{#equals module.id "01-fundamentals"}}
+    def basic_spatial_query(self) -> List[Dict[str, Any]]:
+        """Execute a basic spatial query"""
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = """
+            SELECT 
+                id,
+                name,
+                ST_AsText(geom) as geometry_text,
+                ST_X(geom) as longitude,
+                ST_Y(geom) as latitude
+            FROM {{module.id}}_schema.sample_points
+            ORDER BY id;
+            """
+            
+            cursor.execute(query)
+            return cursor.fetchall()
+    
+    def calculate_distances(self) -> List[Dict[str, Any]]:
+        """Calculate distances between points"""
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = """
+            SELECT 
+                a.name as point_a,
+                b.name as point_b,
+                ST_Distance(a.geom, b.geom) as distance_degrees,
+                ST_Distance_Sphere(a.geom, b.geom) as distance_meters
+            FROM {{module.id}}_schema.sample_points a
+            CROSS JOIN {{module.id}}_schema.sample_points b
+            WHERE a.id < b.id
+            ORDER BY distance_meters;
+            """
+            
+            cursor.execute(query)
+            return cursor.fetchall()
+{{/equals}}
+
+{{#equals module.id "02-spatial-data-types"}}
+    def demonstrate_geometry_types(self) -> List[Dict[str, Any]]:
+        """Demonstrate different geometry types"""
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = """
+            SELECT 
+                id,
+                ST_AsText(point_geom) as point_wkt,
+                ST_AsText(line_geom) as line_wkt,
+                ST_AsText(polygon_geom) as polygon_wkt,
+                ST_AsText(geography_point::geometry) as geography_as_geometry
+            FROM {{module.id}}_schema.spatial_examples;
+            """
+            
+            cursor.execute(query)
+            return cursor.fetchall()
+    
+    def spatial_operations(self) -> Dict[str, Any]:
+        """Demonstrate spatial operations"""
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            operations = {}
+            
+            # Area calculation
+            cursor.execute("""
+                SELECT ST_Area(polygon_geom) as area_degrees,
+                       ST_Area(polygon_geom::geography) as area_meters
+                FROM {{module.id}}_schema.spatial_examples LIMIT 1;
+            """)
+            operations['area'] = cursor.fetchone()
+            
+            # Length calculation
+            cursor.execute("""
+                SELECT ST_Length(line_geom) as length_degrees,
+                       ST_Length(line_geom::geography) as length_meters
+                FROM {{module.id}}_schema.spatial_examples LIMIT 1;
+            """)
+            operations['length'] = cursor.fetchone()
+            
+            return operations
+{{/equals}}
+
+{{#equals module.id "03-routing-basics"}}
+    def find_shortest_path(self, start_node: int, end_node: int) -> List[Dict[str, Any]]:
+        """Find shortest path using Dijkstra algorithm"""
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = """
+            SELECT 
+                seq,
+                path_seq,
+                node,
+                edge,
+                cost,
+                agg_cost
+            FROM pgr_dijkstra(
+                'SELECT id, source, target, cost, reverse_cost FROM {{module.id}}_schema.routing_edges',
+                %s, %s
+            );
+            """
+            
+            cursor.execute(query, (start_node, end_node))
+            return cursor.fetchall()
+    
+    def get_route_geometry(self, start_node: int, end_node: int) -> Dict[str, Any]:
+        """Get route with geometry"""
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = """
+            SELECT 
+                ST_AsGeoJSON(ST_MakeLine(geom ORDER BY seq)) as route_geojson,
+                SUM(cost) as total_cost
+            FROM (
+                SELECT 
+                    r.seq,
+                    e.geom,
+                    r.cost
+                FROM pgr_dijkstra(
+                    'SELECT id, source, target, cost, reverse_cost FROM {{module.id}}_schema.routing_edges',
+                    %s, %s
+                ) r
+                JOIN {{module.id}}_schema.routing_edges e ON r.edge = e.id
+                WHERE r.edge != -1
+            ) route_segments;
+            """
+            
+            cursor.execute(query, (start_node, end_node))
+            result = cursor.fetchone()
+            
+            return {
+                'geometry': json.loads(result['route_geojson']) if result['route_geojson'] else None,
+                'total_cost': float(result['total_cost']) if result['total_cost'] else 0
+            }
+{{/equals}}
+
+def main():
+    """Main function to run examples"""
+    print(f"Running {{module.name}} Examples")
+    print("=" * 50)
+    
+    examples = {{module.name}}Examples()
+    
+    try:
+{{#equals module.id "01-fundamentals"}}
+        # Basic spatial query
+        print("\\n1. Basic Spatial Query:")
+        points = examples.basic_spatial_query()
+        for point in points:
+            print(f"  {point['name']}: ({point['longitude']:.4f}, {point['latitude']:.4f})")
+        
+        # Distance calculations
+        print("\\n2. Distance Calculations:")
+        distances = examples.calculate_distances()
+        for dist in distances:
+            print(f"  {dist['point_a']} to {dist['point_b']}: {dist['distance_meters']:.2f} meters")
+{{/equals}}
+
+{{#equals module.id "02-spatial-data-types"}}
+        # Geometry types
+        print("\\n1. Geometry Types:")
+        geoms = examples.demonstrate_geometry_types()
+        for geom in geoms:
+            print(f"  Point: {geom['point_wkt']}")
+            print(f"  Line: {geom['line_wkt']}")
+            print(f"  Polygon: {geom['polygon_wkt']}")
+        
+        # Spatial operations
+        print("\\n2. Spatial Operations:")
+        ops = examples.spatial_operations()
+        print(f"  Area: {ops['area']['area_meters']:.2f} square meters")
+        print(f"  Length: {ops['length']['length_meters']:.2f} meters")
+{{/equals}}
+
+{{#equals module.id "03-routing-basics"}}
+        # Shortest path
+        print("\\n1. Shortest Path (Node 1 to Node 4):")
+        path = examples.find_shortest_path(1, 4)
+        for step in path:
+            print(f"  Step {step['seq']}: Node {step['node']}, Cost: {step['cost']}")
+        
+        # Route with geometry
+        print("\\n2. Route Geometry:")
+        route = examples.get_route_geometry(1, 4)
+        print(f"  Total Cost: {route['total_cost']}")
+        print(f"  Geometry Type: {route['geometry']['type'] if route['geometry'] else 'None'}")
+{{/equals}}
+        
+    except Exception as e:
+        print(f"Error running examples: {e}")
+    
+    print("\\nExamples completed!")
+
+if __name__ == "__main__":
+    main()

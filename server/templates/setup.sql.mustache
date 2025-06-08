@@ -1,0 +1,92 @@
+-- {{module.name}} Setup Script
+-- Generated for: {{config.repositoryName}}
+
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pgrouting;
+
+-- Create schema for this module
+CREATE SCHEMA IF NOT EXISTS {{module.id}}_schema;
+
+-- Set search path
+SET search_path TO {{module.id}}_schema, public;
+
+{{#equals module.id "01-fundamentals"}}
+-- Basic PostGIS setup
+CREATE TABLE sample_points (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    geom GEOMETRY(POINT, 4326)
+);
+
+-- Insert sample data
+INSERT INTO sample_points (name, geom) VALUES
+    ('Point A', ST_GeomFromText('POINT(-73.9857 40.7484)', 4326)),
+    ('Point B', ST_GeomFromText('POINT(-73.9735 40.7589)', 4326)),
+    ('Point C', ST_GeomFromText('POINT(-73.9969 40.7061)', 4326));
+
+-- Create spatial index
+CREATE INDEX idx_sample_points_geom ON sample_points USING GIST (geom);
+{{/equals}}
+
+{{#equals module.id "02-spatial-data-types"}}
+-- Spatial data types examples
+CREATE TABLE spatial_examples (
+    id SERIAL PRIMARY KEY,
+    point_geom GEOMETRY(POINT, 4326),
+    line_geom GEOMETRY(LINESTRING, 4326),
+    polygon_geom GEOMETRY(POLYGON, 4326),
+    geography_point GEOGRAPHY(POINT)
+);
+
+-- Insert various geometry types
+INSERT INTO spatial_examples (point_geom, line_geom, polygon_geom, geography_point) VALUES
+    (
+        ST_GeomFromText('POINT(-73.9857 40.7484)', 4326),
+        ST_GeomFromText('LINESTRING(-73.9857 40.7484, -73.9735 40.7589)', 4326),
+        ST_GeomFromText('POLYGON((-74.0 40.7, -73.9 40.7, -73.9 40.8, -74.0 40.8, -74.0 40.7))', 4326),
+        ST_GeogFromText('POINT(-73.9857 40.7484)')
+    );
+{{/equals}}
+
+{{#equals module.id "03-routing-basics"}}
+-- Basic routing setup
+CREATE TABLE routing_nodes (
+    id SERIAL PRIMARY KEY,
+    geom GEOMETRY(POINT, 4326)
+);
+
+CREATE TABLE routing_edges (
+    id SERIAL PRIMARY KEY,
+    source INTEGER REFERENCES routing_nodes(id),
+    target INTEGER REFERENCES routing_nodes(id),
+    cost DOUBLE PRECISION,
+    reverse_cost DOUBLE PRECISION,
+    geom GEOMETRY(LINESTRING, 4326)
+);
+
+-- Insert sample network
+INSERT INTO routing_nodes (geom) VALUES
+    (ST_GeomFromText('POINT(-73.9857 40.7484)', 4326)),
+    (ST_GeomFromText('POINT(-73.9735 40.7589)', 4326)),
+    (ST_GeomFromText('POINT(-73.9969 40.7061)', 4326)),
+    (ST_GeomFromText('POINT(-73.9445 40.6892)', 4326));
+
+INSERT INTO routing_edges (source, target, cost, reverse_cost, geom) VALUES
+    (1, 2, 0.5, 0.5, ST_GeomFromText('LINESTRING(-73.9857 40.7484, -73.9735 40.7589)', 4326)),
+    (2, 3, 0.8, 0.8, ST_GeomFromText('LINESTRING(-73.9735 40.7589, -73.9969 40.7061)', 4326)),
+    (3, 4, 1.2, 1.2, ST_GeomFromText('LINESTRING(-73.9969 40.7061, -73.9445 40.6892)', 4326)),
+    (1, 4, 2.0, 2.0, ST_GeomFromText('LINESTRING(-73.9857 40.7484, -73.9445 40.6892)', 4326));
+
+-- Create indexes
+CREATE INDEX idx_routing_nodes_geom ON routing_nodes USING GIST (geom);
+CREATE INDEX idx_routing_edges_geom ON routing_edges USING GIST (geom);
+CREATE INDEX idx_routing_edges_source ON routing_edges (source);
+CREATE INDEX idx_routing_edges_target ON routing_edges (target);
+{{/equals}}
+
+-- Verification queries
+SELECT 'Setup completed successfully for {{module.name}}' as status;
+SELECT version() as postgresql_version;
+SELECT postgis_version() as postgis_version;
+SELECT pgr_version() as pgrouting_version;
