@@ -285,4 +285,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
   return httpServer;
+
+  // Generate ZIP for a repository
+  app.get('/api/repositories/:id/zip', isAuthenticated, async (req, res) => {
+    try {
+      const repoId = parseInt(req.params.id);
+      const zipBuffer = await storage.generateRepositoryZip(repoId);
+      res.setHeader("Content-Disposition", `attachment; filename=repository-${repoId}.zip`);
+      res.setHeader("Content-Type", "application/zip");
+      res.send(zipBuffer);
+    } catch (error) {
+      console.error("Error generating ZIP:", error);
+      res.status(500).json({ message: "Failed to generate ZIP" });
+    }
+  });
 }

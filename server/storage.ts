@@ -38,7 +38,33 @@ export interface IStorage {
   updateRepository(id: number, updates: Partial<Repository>): Promise<Repository | undefined>;
   getAllRepositories(): Promise<Repository[]>;
   generateRepositoryContent(id: number): Promise<void>;
-  generateRepositoryZip(id: number): Promise<Buffer>;
+  async generateRepositoryZip(id: number): Promise<Buffer> {
+    const repository = await this.getRepository(id);
+    if (!repository) {
+      throw new Error("Repository not found");
+    }
+
+    const archiver = require("archiver");
+    const { PassThrough } = require("stream");
+
+    const archive = archiver("zip", { zlib: { level: 9 } });
+    const bufferChunks: Uint8Array[] = [];
+    const stream = new PassThrough();
+
+    stream.on("data", (chunk) => bufferChunks.push(chunk));
+    archive.on("warning", (err) => { if (err.code !== "ENOENT") throw err; });
+    archive.on("error", (err) => { throw err; });
+
+    archive.pipe(stream);
+
+    // Example files - replace with actual content logic
+    archive.append("# Sample README\nGenerated for repository " + repository.name, { name: "README.md" });
+    archive.append("console.log('Demo');", { name: "src/index.js" });
+
+    await archive.finalize();
+
+    return Buffer.concat(bufferChunks);
+  }
   getRepositoryStats(id: number): Promise<RepositoryStats>;
   getLearningModules(repositoryId: number): Promise<LearningModule[]>;
   getDatasets(repositoryId: number): Promise<DatasetInfo[]>;
