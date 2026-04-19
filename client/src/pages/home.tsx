@@ -31,6 +31,7 @@ const DB_TYPES = [
 ];
 
 const DB_VERSIONS = [
+  { label: "PostgreSQL 17", value: "17" },
   { label: "PostgreSQL 16", value: "16" },
   { label: "PostgreSQL 15", value: "15" },
   { label: "PostgreSQL 14", value: "14" },
