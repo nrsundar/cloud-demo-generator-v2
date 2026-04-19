@@ -4,7 +4,7 @@
 
 **🔗 Try it live:** [https://main.d1s77hhl4y34ji.amplifyapp.com](https://main.d1s77hhl4y34ji.amplifyapp.com)
 
-> **Note:** The live demo runs on a shared AWS environment and may not be available at all times. If the app is down, you can deploy your own instance in minutes — see [Deploy to AWS](#deploy-to-aws) below.
+> **Note:** This is a demo environment and may not be available at all times. To run your own instance, follow the [Deploy to AWS](#deploy-to-aws) instructions below — it takes about 15 minutes to set up in any AWS account.
 
 ---
 
