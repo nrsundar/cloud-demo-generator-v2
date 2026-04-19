@@ -228,6 +228,8 @@ Resources:
             - { Name: NODE_ENV, Value: production }
             - { Name: PORT, Value: '5000' }
             - { Name: NODE_TLS_REJECT_UNAUTHORIZED, Value: '0' }
+            - { Name: ALLOWED_ORIGINS, Value: 'https://main.d1s77hhl4y34ji.amplifyapp.com,https://d1s77hhl4y34ji.amplifyapp.com,https://d2g4zib7n3kevf.cloudfront.net,http://localhost:3000' }
+            - { Name: AMPLIFY_URL, Value: 'https://main.d1s77hhl4y34ji.amplifyapp.com' }
             - { Name: VITE_COGNITO_USER_POOL_ID, Value: !Ref CognitoUserPoolId }
             - { Name: VITE_COGNITO_CLIENT_ID, Value: !Ref CognitoClientId }
           LogConfiguration:

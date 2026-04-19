@@ -16,11 +16,20 @@ export function registerRoutes(app: Express) {
     try {
       const data = insertRepositorySchema.parse(req.body);
       const repo = await storage.createRepository(data);
-      setTimeout(async () => {
-        await storage.updateRepositoryStatus(repo.id, "generating", 50);
-        setTimeout(() => storage.updateRepositoryStatus(repo.id, "complete", 100), 3000);
-      }, 2000);
       res.json(repo);
+      // Simulate generation in background
+      (async () => {
+        try {
+          await storage.updateRepositoryStatus(repo.id, "generating", 30);
+          await new Promise(r => setTimeout(r, 2000));
+          await storage.updateRepositoryStatus(repo.id, "generating", 70);
+          await new Promise(r => setTimeout(r, 2000));
+          await storage.updateRepositoryStatus(repo.id, "complete", 100);
+        } catch (e) {
+          console.error("Generation failed:", e);
+          await storage.updateRepositoryStatus(repo.id, "error", 0).catch(() => {});
+        }
+      })();
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }

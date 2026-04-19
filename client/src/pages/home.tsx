@@ -78,7 +78,14 @@ export default function HomePage() {
   const [useCases, setUseCases] = useState<any[]>([]);
   const [complexity, setComplexity] = useState<any>(null);
 
-  const { data: repos, isLoading } = useQuery<any[]>({ queryKey: ["/api/repositories"] });
+  const { data: repos, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/repositories"],
+    refetchInterval: (query) => {
+      const data = query.state.data as any[] | undefined;
+      const hasInProgress = data?.some((r: any) => r.status !== "complete" && r.status !== "error");
+      return hasInProgress ? 3000 : false;
+    },
+  });
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
