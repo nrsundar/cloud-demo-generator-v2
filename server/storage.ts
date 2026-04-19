@@ -25,20 +25,9 @@ const USE_CASE_TEMPLATES: Record<string, { tarball: string; name: string }> = {
 };
 
 function getTemplatesDir(): string {
-  const { dirname } = require("path");
-  const { fileURLToPath } = require("url");
-  // In production bundle, __dirname equivalent
-  let baseDir: string;
-  try {
-    baseDir = dirname(fileURLToPath(import.meta.url));
-  } catch {
-    baseDir = process.cwd();
-  }
   const candidates = [
-    resolve(baseDir, "..", "server", "templates"),
-    resolve(baseDir, "server", "templates"),
-    resolve(process.cwd(), "server", "templates"),
     resolve("/app", "server", "templates"),
+    resolve(process.cwd(), "server", "templates"),
   ];
   for (const dir of candidates) {
     if (existsSync(dir)) return dir;
