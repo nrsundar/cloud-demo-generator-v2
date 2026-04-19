@@ -10,8 +10,42 @@ import Table from "@cloudscape-design/components/table";
 import Tabs from "@cloudscape-design/components/tabs";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Badge from "@cloudscape-design/components/badge";
+import Alert from "@cloudscape-design/components/alert";
+import Button from "@cloudscape-design/components/button";
+import { useAuth } from "../hooks/useAuth";
+import { useLocation } from "wouter";
 
 export default function AdminPage() {
+  const { user, loading } = useAuth();
+  const [, navigate] = useLocation();
+
+  if (loading) {
+    return (
+      <ContentLayout header={<Header variant="h1">Admin Dashboard</Header>}>
+        <Box textAlign="center" padding="xxl"><StatusIndicator type="loading">Loading...</StatusIndicator></Box>
+      </ContentLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <ContentLayout header={<Header variant="h1">Admin Dashboard</Header>}>
+        <Alert type="warning" action={<Button onClick={() => navigate("/auth")}>Sign In</Button>}>
+          You must be signed in to access the admin dashboard.
+        </Alert>
+      </ContentLayout>
+    );
+  }
+
+  if (!user.isAdmin) {
+    return (
+      <ContentLayout header={<Header variant="h1">Admin Dashboard</Header>}>
+        <Alert type="error">
+          Access denied. Your account ({user.email}) is not in the admin group. Contact an administrator to request access.
+        </Alert>
+      </ContentLayout>
+    );
+  }
   const { data: analytics, isLoading } = useQuery<any>({
     queryKey: ["/api/analytics/stats"],
     retry: false,

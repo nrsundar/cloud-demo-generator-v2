@@ -18,6 +18,30 @@ export interface AuthUser {
   sub: string;
   name?: string;
   token: string;
+  groups: string[];
+  isAdmin: boolean;
+}
+
+function parseGroups(session: CognitoUserSession): string[] {
+  try {
+    const payload = session.getIdToken().decodePayload();
+    return payload["cognito:groups"] ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function buildUser(session: CognitoUserSession, attrs: CognitoUserAttribute[]): AuthUser {
+  const get = (name: string) => attrs.find((a) => a.Name === name)?.Value ?? "";
+  const groups = parseGroups(session);
+  return {
+    email: get("email"),
+    sub: get("sub"),
+    name: get("name") || get("email"),
+    token: session.getIdToken().getJwtToken(),
+    groups,
+    isAdmin: groups.includes("admin"),
+  };
 }
 
 export function getCurrentUser(): Promise<AuthUser | null> {
@@ -29,14 +53,8 @@ export function getCurrentUser(): Promise<AuthUser | null> {
       if (err || !session?.isValid()) return resolve(null);
 
       cognitoUser.getUserAttributes((err, attrs) => {
-        if (err) return resolve(null);
-        const get = (name: string) => attrs?.find((a) => a.Name === name)?.Value ?? "";
-        resolve({
-          email: get("email"),
-          sub: get("sub"),
-          name: get("name") || get("email"),
-          token: session.getIdToken().getJwtToken(),
-        });
+        if (err || !attrs) return resolve(null);
+        resolve(buildUser(session, attrs));
       });
     });
   });
@@ -50,14 +68,8 @@ export function signIn(email: string, password: string): Promise<AuthUser> {
     cognitoUser.authenticateUser(authDetails, {
       onSuccess: (session) => {
         cognitoUser.getUserAttributes((err, attrs) => {
-          if (err) return reject(err);
-          const get = (name: string) => attrs?.find((a) => a.Name === name)?.Value ?? "";
-          resolve({
-            email: get("email"),
-            sub: get("sub"),
-            name: get("name") || get("email"),
-            token: session.getIdToken().getJwtToken(),
-          });
+          if (err || !attrs) return reject(err);
+          resolve(buildUser(session, attrs));
         });
       },
       onFailure: (err) => reject(err),
