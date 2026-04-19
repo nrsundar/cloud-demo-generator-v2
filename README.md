@@ -1,6 +1,6 @@
 # Cloud Demo Generator v3
 
-> **Built with [Kiro](https://kiro.dev) (powered by [Anthropic Claude](https://www.anthropic.com/claude))** — AI-driven development from code conversion through production deployment.
+> **Built with [Kiro](https://kiro.dev) (powered by [Anthropic Claude](https://www.anthropic.com/claude))** — AI-driven development from code conversion through cloud deployment.
 
 ---
 
@@ -32,7 +32,7 @@ Each demo is generated end-to-end:
 - Infrastructure (AWS CloudFormation)
 - Documentation and setup instructions
 
-> Reduce demo setup time from hours to minutes, while ensuring production-quality outputs.
+> Reduce demo setup time from hours to minutes, while ensuring high-quality outputs.
 
 ---
 
