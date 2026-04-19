@@ -52,7 +52,7 @@ const REGIONS = [
 
 const USE_CASES = [
   { label: "Geospatial Analytics (PostGIS)", value: "geospatial" },
-  { label: "Time-Series Analytics", value: "timeseries" },
+  { label: "Network Routing (pgRouting)", value: "timeseries" },
   { label: "Vector Database (pgVector)", value: "vector" },
   { label: "Multi-Tenant SaaS", value: "multitenant" },
   { label: "Analytics Dashboard", value: "analytics" },

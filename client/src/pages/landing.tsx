@@ -15,24 +15,24 @@ import { useAuth } from "../hooks/useAuth";
 const FEATURES = [
   { title: "⚡ AI-Powered Generator", description: "Each repository is intelligently assembled based on your selected use case, complexity level, and deployment preferences — configured in seconds, not hours." },
   { title: "☁️ AWS Infrastructure", description: "Complete CloudFormation templates for Amazon RDS, Aurora, Lambda, ECS, and more — deploy to any AWS account with a single command." },
-  { title: "🌐 Multi-Language", description: "Generated code in Python, JavaScript, TypeScript, and Go with idiomatic patterns, error handling, and comprehensive documentation." },
+  { title: "🌐 Multi-Language", description: "Generated code in Python with idiomatic patterns, error handling, and comprehensive documentation. Additional languages coming soon." },
   { title: "📚 Learning Modules", description: "Structured learning paths with exercises, documentation, and hands-on examples tailored to different skill levels." },
   { title: "📦 Complete Packages", description: "Download ready-to-deploy ZIP repositories with infrastructure, application code, seed data, and deployment scripts." },
-  { title: "🔧 Extensible", description: "Fork and add your own database demos — PostgreSQL, MySQL, DynamoDB, or any AWS database service." },
+  { title: "🔧 Extensible", description: "Fork and add your own PostgreSQL demos — pgvector, PostGIS, pgRouting, or any PostgreSQL extension. More database engines coming soon." },
 ];
 
 const USE_CASES = [
   { title: "Hybrid Search", description: "Semantic + lexical retrieval with pgvector on Aurora PostgreSQL", tags: ["pgvector", "OpenAI", "LangChain"], level: "Advanced" },
   { title: "Geospatial Analytics", description: "Location-based queries, distance calculations, and spatial indexing", tags: ["PostGIS", "QGIS", "Leaflet"], level: "Intermediate" },
-  { title: "Time-Series Analytics", description: "Financial data analysis with continuous aggregates and compression", tags: ["TimescaleDB", "Grafana", "Python"], level: "Advanced" },
+  { title: "Time-Series Analytics", description: "Time-series data analysis with partitioning, window functions, and materialized views on Aurora PostgreSQL", tags: ["Partitioning", "Window Functions", "Grafana"], level: "Advanced" },
   { title: "Multi-Tenant SaaS", description: "Scalable multi-tenant architecture with row-level security", tags: ["RLS", "JWT", "REST API"], level: "Advanced" },
   { title: "Analytics Dashboard", description: "Business intelligence with complex queries, materialized views, and reporting", tags: ["Metabase", "PostgreSQL", "Docker"], level: "Intermediate" },
   { title: "High Availability", description: "Master-replica configurations with automatic failover and read scaling", tags: ["Aurora", "Read Replicas", "CloudWatch"], level: "Advanced" },
 ];
 
 const STATS = [
-  { value: "6+", label: "Use Cases" },
-  { value: "4", label: "Programming Languages" },
+  { value: "3", label: "Use Cases" },
+  { value: "Python", label: "Language" },
   { value: "< 2 min", label: "Generation Time" },
   { value: "1-Click", label: "AWS Deploy" },
 ];
@@ -118,16 +118,16 @@ export default function LandingPage() {
         <Container header={<Header variant="h2">Coming Soon</Header>}>
           <ColumnLayout columns={3}>
             <Box>
-              <Box variant="h3">Amazon Aurora MySQL</Box>
-              <Box color="text-body-secondary">E-commerce catalog, session store, multi-region replication</Box>
+              <Box variant="h3">More PostgreSQL Extensions</Box>
+              <Box color="text-body-secondary">TimescaleDB (EC2), Citus, pg_partman, and more</Box>
             </Box>
             <Box>
-              <Box variant="h3">Amazon DynamoDB</Box>
-              <Box color="text-body-secondary">Single-table design, event sourcing, gaming leaderboard</Box>
+              <Box variant="h3">Additional Languages</Box>
+              <Box color="text-body-secondary">JavaScript, TypeScript, and Go demo templates</Box>
             </Box>
             <Box>
-              <Box variant="h3">Amazon ElastiCache</Box>
-              <Box color="text-body-secondary">Caching patterns, pub/sub, session management</Box>
+              <Box variant="h3">More AWS Databases</Box>
+              <Box color="text-body-secondary">Aurora MySQL, DynamoDB, ElastiCache</Box>
             </Box>
           </ColumnLayout>
         </Container>
