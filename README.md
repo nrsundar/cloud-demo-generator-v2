@@ -285,3 +285,5 @@ The core ZIP generation logic is in `server/storage.ts`:
 - MIT License for generated code
 - Clear cost disclaimers in generated repositories
 - User responsibility acknowledgments for AWS charges
+---
+*Built with Kiro CLI (powered by Claude Opus)*
