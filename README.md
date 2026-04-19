@@ -90,6 +90,8 @@ Designed for:
 
 ### Supported Use Cases
 
+#### Available Now (PostgreSQL)
+
 | Use Case | Technologies |
 |----------|-------------|
 | Hybrid Search | pgvector · OpenAI · LangChain |
@@ -98,6 +100,34 @@ Designed for:
 | Multi-Tenant SaaS | Row-Level Security · JWT · REST API |
 | Analytics Dashboard | Metabase · PostgreSQL · Docker |
 | High Availability | Aurora · Read Replicas · CloudWatch |
+
+#### Roadmap
+
+| Database | Planned Use Cases | Status |
+|----------|------------------|--------|
+| **Amazon Aurora MySQL** | E-commerce catalog, session store, multi-region replication | 🔜 Next |
+| **Amazon DynamoDB** | Single-table design, event sourcing, gaming leaderboard, IoT telemetry | 🔜 Planned |
+| **Amazon ElastiCache (Redis)** | Caching patterns, pub/sub, session management | 📋 Backlog |
+| **Amazon Neptune** | Knowledge graphs, fraud detection, social networks | 📋 Backlog |
+| **Amazon MemoryDB** | Durable in-memory workloads, real-time ML feature store | 📋 Backlog |
+
+### Extensibility — Add Your Own Demos
+
+The generator is designed to be extended. To add a new database or use case:
+
+1. **Fork/clone** this repository
+2. **Add a use case** to the configuration options in `client/src/pages/home.tsx`
+3. **Add generation logic** in `server/storage.ts` — define the files, templates, and CloudFormation for your demo
+4. **Add schema templates** — SQL schemas, seed data, and application code for the new database type
+5. **Deploy** your customized version to your own AWS account
+
+Example: to add a DynamoDB single-table design demo, you would:
+- Add `"DynamoDB"` as a database type option
+- Create a template that generates a `template.yaml` (SAM/CloudFormation with DynamoDB table)
+- Generate Python/JS application code with boto3/AWS SDK
+- Include sample data and query patterns
+
+> The goal is for any SA or developer to fork this and add demos for their specialty — PostgreSQL, MySQL, DynamoDB, or any AWS database.
 
 ### Authentication
 
