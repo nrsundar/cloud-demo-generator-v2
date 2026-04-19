@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { serveStatic, setupVite, log } from "./vite";
 
@@ -26,11 +27,9 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "…";
       }
-
       log(logLine);
     }
   });
@@ -48,13 +47,15 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  const server = createServer(app);
+
   if (process.env.NODE_ENV === "development") {
-    await setupVite(app);
+    await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`🚀 Server listening on http://localhost:${PORT}`);
   });
 })();

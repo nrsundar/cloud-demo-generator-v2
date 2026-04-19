@@ -1,42 +1,44 @@
-import express from "express";
+import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
+const PORT = process.env.PORT || 5000;
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Production-specific middleware
 app.use((req, res, next) => {
   const start = Date.now();
+  const reqPath = req.path;
   res.on("finish", () => {
     const duration = Date.now() - start;
-    console.log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
+    if (reqPath.startsWith("/api")) {
+      console.log(`${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`);
+    }
   });
   next();
 });
 
-(async () => {
-  // Register API routes first
-  const server = await registerRoutes(app);
+registerRoutes(app);
 
-  // Serve static files from dist/public
-  const publicPath = path.resolve(__dirname, "public");
-  app.use(express.static(publicPath));
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  res.status(status).json({ message });
+});
 
-  // Catch-all handler for SPA routing
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(publicPath, "index.html"));
-  });
+// Serve static files
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const publicPath = path.resolve(__dirname, "public");
+app.use(express.static(publicPath));
+app.get("*", (_req, res) => {
+  res.sendFile(path.resolve(publicPath, "index.html"));
+});
 
-  // Use PORT environment variable or default to 5000
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-  
-  server.listen(port, "0.0.0.0", () => {
-    console.log(`Production server running on port ${port}`);
-  });
-})();
+const server = createServer(app);
+server.listen(PORT, () => {
+  console.log(`🚀 Server listening on http://localhost:${PORT}`);
+});

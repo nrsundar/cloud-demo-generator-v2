@@ -1,0 +1,275 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Cloud Demo Generator v3 - Epoxy/Orthanc compliant.
+  VPC + RDS PostgreSQL (private) + ECS Fargate + ALB.
+  Cognito User Pool created separately.
+
+Parameters:
+  DBUsername:
+    Type: String
+    Default: demoadmin
+  DBPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+  CognitoUserPoolId:
+    Type: String
+    Default: us-east-2_sndKJLxLR
+  CognitoClientId:
+    Type: String
+    Default: 4bm8gt0i2of69v9g0vm5nnh2k0
+
+Resources:
+  # ── VPC ──
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: demo-gen-vpc }]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: demo-gen-public-a }]
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: demo-gen-public-b }]
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetAAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PublicSubnetA, RouteTableId: !Ref PublicRouteTable }
+  PublicSubnetBAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PublicSubnetB, RouteTableId: !Ref PublicRouteTable }
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.10.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags: [{ Key: Name, Value: demo-gen-private-a }]
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags: [{ Key: Name, Value: demo-gen-private-b }]
+
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties: { Domain: vpc }
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId: !Ref PublicSubnetA
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+  PrivateSubnetAAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PrivateSubnetA, RouteTableId: !Ref PrivateRouteTable }
+  PrivateSubnetBAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: { SubnetId: !Ref PrivateSubnetB, RouteTableId: !Ref PrivateRouteTable }
+
+  # ── Security Groups ──
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB - HTTP from internet
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS - from ALB only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 5000, ToPort: 5000, SourceSecurityGroupId: !Ref ALBSecurityGroup }
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS - from ECS only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 5432, ToPort: 5432, SourceSecurityGroupId: !Ref ECSSecurityGroup }
+
+  # ── RDS (Epoxy compliant - NOT publicly accessible) ──
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private subnets for RDS
+      SubnetIds: [!Ref PrivateSubnetA, !Ref PrivateSubnetB]
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: demo-gen-db
+      Engine: postgres
+      EngineVersion: '16.13'
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBName: demogen
+      VPCSecurityGroups: [!Ref DBSecurityGroup]
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      PubliclyAccessible: false
+      StorageEncrypted: true
+      BackupRetentionPeriod: 7
+      MultiAZ: false
+
+  # ── ECS ──
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: demo-gen-cluster
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: demo-gen-exec-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - { Effect: Allow, Principal: { Service: ecs-tasks.amazonaws.com }, Action: 'sts:AssumeRole' }
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/demo-gen
+      RetentionInDays: 14
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: demo-gen-task
+      Cpu: '256'
+      Memory: '512'
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: demo-gen
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cloud-demo-generator-v3:latest
+          Essential: true
+          PortMappings: [{ ContainerPort: 5000, Protocol: tcp }]
+          Environment:
+            - { Name: DATABASE_URL, Value: !Sub 'postgresql://${DBUsername}:${DBPassword}@${Database.Endpoint.Address}:5432/demogen' }
+            - { Name: NODE_ENV, Value: production }
+            - { Name: PORT, Value: '5000' }
+            - { Name: VITE_COGNITO_USER_POOL_ID, Value: !Ref CognitoUserPoolId }
+            - { Name: VITE_COGNITO_CLIENT_ID, Value: !Ref CognitoClientId }
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  # ── ALB ──
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: demo-gen-alb
+      Scheme: internet-facing
+      Type: application
+      Subnets: [!Ref PublicSubnetA, !Ref PublicSubnetB]
+      SecurityGroups: [!Ref ALBSecurityGroup]
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: demo-gen-tg
+      Port: 5000
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - { Type: forward, TargetGroupArn: !Ref TargetGroup }
+
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListener
+    Properties:
+      ServiceName: demo-gen-service
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets: [!Ref PrivateSubnetA, !Ref PrivateSubnetB]
+          SecurityGroups: [!Ref ECSSecurityGroup]
+      LoadBalancers:
+        - { ContainerName: demo-gen, ContainerPort: 5000, TargetGroupArn: !Ref TargetGroup }
+
+Outputs:
+  AppURL:
+    Description: Application URL
+    Value: !Sub http://${ALB.DNSName}
+  DatabaseEndpoint:
+    Description: RDS endpoint (private)
+    Value: !GetAtt Database.Endpoint.Address
+  CognitoUserPoolId:
+    Value: !Ref CognitoUserPoolId
+  CognitoClientId:
+    Value: !Ref CognitoClientId
