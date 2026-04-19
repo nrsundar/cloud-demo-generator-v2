@@ -1,5 +1,14 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { API_BASE } from "./config";
+import { getCurrentUser } from "./auth";
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const user = await getCurrentUser();
+  if (user?.token) {
+    return { Authorization: `Bearer ${user.token}` };
+  }
+  return {};
+}
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -13,9 +22,13 @@ export async function apiRequest(
   url: string,
   data?: unknown,
 ): Promise<Response> {
+  const authHeaders = await getAuthHeaders();
   const res = await fetch(`${API_BASE}${url}`, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      ...authHeaders,
+      ...(data ? { "Content-Type": "application/json" } : {}),
+    },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -29,7 +42,9 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const authHeaders = await getAuthHeaders();
     const res = await fetch(`${API_BASE}${queryKey[0] as string}`, {
+      headers: authHeaders,
       credentials: "include",
     });
     if (unauthorizedBehavior === "returnNull" && res.status === 401) return null;
@@ -40,7 +55,7 @@ export const getQueryFn: <T>(options: {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,

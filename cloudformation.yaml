@@ -138,7 +138,29 @@ Resources:
       SecurityGroupIngress:
         - { IpProtocol: tcp, FromPort: 5432, ToPort: 5432, SourceSecurityGroupId: !Ref ECSSecurityGroup }
 
-  # ── RDS (Epoxy compliant - NOT publicly accessible) ──
+  # ── KMS CMK for encryption at rest ──
+  EncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: CMK for Cloud Demo Generator data encryption
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowAccountRoot
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/demo-gen-cmk
+      TargetKeyId: !Ref EncryptionKey
+
+  # ── RDS (Epoxy compliant - NOT publicly accessible, CMK encrypted) ──
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -160,6 +182,7 @@ Resources:
       DBSubnetGroupName: !Ref DBSubnetGroup
       PubliclyAccessible: false
       StorageEncrypted: true
+      # KmsKeyId: !Ref EncryptionKey  # Enable on fresh deployments
       BackupRetentionPeriod: 7
       MultiAZ: false
 
