@@ -122,15 +122,18 @@ export default function HomePage() {
   };
 
   const handleDownload = async (id: number) => {
-    const res = await fetch(`/api/repositories/${id}/zip`);
-    if (!res.ok) return;
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `repository-${id}.zip`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    try {
+      const res = await apiRequest("GET", `/api/repositories/${id}/zip`);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `repository-${id}.zip`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e: any) {
+      setFlash([{ type: "error", content: `Download failed: ${e.message}`, dismissible: true, onDismiss: () => setFlash([]) }]);
+    }
   };
 
   return (
