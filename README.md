@@ -18,13 +18,13 @@
 
 ## What This Produces
 
-A platform that generates customer-ready PostgreSQL demo repositories including:
+A platform that generates customer-ready PostgreSQL demo repositories that Solutions Architects, TAMs, and field teams can use directly in customer engagements:
 
 - **[pgvector-hybrid-search-demo](https://github.com/nrsundar/pgvector-hybrid-search-demo-py-v1.0)** — semantic + lexical hybrid retrieval using pgvector
 - **[postgis-property-search-demo](https://github.com/nrsundar/postgis-property-search-demo-py-v2)** — geospatial property search with PostGIS
 - **[pgroute-transportation-demo](https://github.com/nrsundar/pgroute-transportation-demo-py-v1.0-2)** — transportation network routing with pgRouting
 
-Each demo is generated end-to-end:
+Each demo is generated end-to-end and ready to present:
 
 - Database schema and extensions
 - Seed data and ingestion pipelines
@@ -32,19 +32,20 @@ Each demo is generated end-to-end:
 - Infrastructure (AWS CloudFormation)
 - Documentation and setup instructions
 
-> Reduce demo setup time from hours to minutes, while ensuring high-quality outputs.
+> Generate a complete, deployable demo in minutes — then walk your customer through it live.
 
 ---
 
 ## Overview
 
-The **Cloud Demo Generator** is an AI-powered platform that generates complete, deployable PostgreSQL demo repositories for real-world use cases.
+The **Cloud Demo Generator** is an AI-powered platform that generates complete, deployable PostgreSQL demo repositories for customer engagements.
 
 Designed for:
 
-- Solutions Architects preparing customer demonstrations
-- Sales Engineers building proof-of-concept environments
-- Developers exploring PostgreSQL extensions on AWS
+- **Solutions Architects** preparing customer demonstrations
+- **Technical Account Managers** building hands-on proof-of-concept environments
+- **Sales Engineers** showcasing PostgreSQL capabilities on AWS
+- **Anyone** who needs a working demo to present to customers in minutes, not hours
 
 ---
 
