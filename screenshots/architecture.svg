@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="Amazon Ember, Arial, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="520" rx="12" fill="#f8f9fa"/>
+
+  <!-- AWS Cloud boundary -->
+  <rect x="180" y="30" width="690" height="460" rx="10" fill="none" stroke="#232f3e" stroke-width="2" stroke-dasharray="8,4"/>
+  <rect x="190" y="18" width="120" height="24" fill="#f8f9fa"/>
+  <text x="200" y="35" font-size="13" font-weight="bold" fill="#232f3e">AWS Cloud</text>
+
+  <!-- VPC boundary -->
+  <rect x="210" y="70" width="640" height="400" rx="8" fill="none" stroke="#1b660f" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <rect x="220" y="58" width="160" height="24" fill="#f8f9fa"/>
+  <text x="230" y="75" font-size="12" font-weight="bold" fill="#1b660f">VPC (10.0.0.0/16)</text>
+
+  <!-- Public Subnet -->
+  <rect x="230" y="100" width="280" height="140" rx="6" fill="#e8f5e9" stroke="#4caf50" stroke-width="1"/>
+  <text x="240" y="120" font-size="11" font-weight="bold" fill="#2e7d32">Public Subnets</text>
+
+  <!-- Private Subnet -->
+  <rect x="540" y="100" width="290" height="350" rx="6" fill="#e3f2fd" stroke="#1976d2" stroke-width="1"/>
+  <text x="550" y="120" font-size="11" font-weight="bold" fill="#1565c0">Private Subnets</text>
+
+  <!-- Internet -->
+  <rect x="20" y="150" width="120" height="50" rx="25" fill="#232f3e" filter="url(#shadow)"/>
+  <text x="80" y="180" text-anchor="middle" font-size="13" font-weight="bold" fill="white">Internet</text>
+
+  <!-- ALB -->
+  <rect x="260" y="140" width="220" height="70" rx="6" fill="#fff" stroke="#8c6bb1" stroke-width="2" filter="url(#shadow)"/>
+  <text x="370" y="168" text-anchor="middle" font-size="12" font-weight="bold" fill="#232f3e">Application Load Balancer</text>
+  <text x="370" y="185" text-anchor="middle" font-size="10" fill="#666">HTTP :80 (internet-facing)</text>
+
+  <!-- Arrow: Internet → ALB -->
+  <line x1="140" y1="175" x2="258" y2="175" stroke="#232f3e" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- NAT Gateway -->
+  <rect x="260" y="230" width="130" height="45" rx="4" fill="#fff" stroke="#ff9800" stroke-width="1.5"/>
+  <text x="325" y="250" text-anchor="middle" font-size="10" font-weight="bold" fill="#e65100">NAT Gateway</text>
+  <text x="325" y="264" text-anchor="middle" font-size="9" fill="#666">Outbound only</text>
+
+  <!-- ECS Fargate -->
+  <rect x="570" y="140" width="240" height="90" rx="6" fill="#fff" stroke="#ff9900" stroke-width="2" filter="url(#shadow)"/>
+  <text x="690" y="168" text-anchor="middle" font-size="12" font-weight="bold" fill="#232f3e">ECS Fargate</text>
+  <text x="690" y="185" text-anchor="middle" font-size="10" fill="#666">Node.js 18 + React</text>
+  <text x="690" y="200" text-anchor="middle" font-size="10" fill="#666">Cloudscape UI · Express API</text>
+  <text x="690" y="215" text-anchor="middle" font-size="9" fill="#999">256 CPU / 512 MB</text>
+
+  <!-- Arrow: ALB → ECS -->
+  <line x1="480" y1="175" x2="568" y2="175" stroke="#8c6bb1" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="524" y="168" text-anchor="middle" font-size="9" fill="#666">:5000</text>
+
+  <!-- RDS -->
+  <rect x="570" y="270" width="240" height="80" rx="6" fill="#fff" stroke="#3b48cc" stroke-width="2" filter="url(#shadow)"/>
+  <text x="690" y="298" text-anchor="middle" font-size="12" font-weight="bold" fill="#232f3e">RDS PostgreSQL 16</text>
+  <text x="690" y="315" text-anchor="middle" font-size="10" fill="#666">Private · Encrypted</text>
+  <text x="690" y="330" text-anchor="middle" font-size="10" fill="#666">Not publicly accessible</text>
+
+  <!-- Arrow: ECS → RDS -->
+  <line x1="690" y1="230" x2="690" y2="268" stroke="#3b48cc" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="710" y="252" font-size="9" fill="#666">:5432</text>
+
+  <!-- Cognito -->
+  <rect x="570" y="380" width="240" height="55" rx="6" fill="#fff" stroke="#dd344c" stroke-width="2" filter="url(#shadow)"/>
+  <text x="690" y="405" text-anchor="middle" font-size="12" font-weight="bold" fill="#232f3e">Amazon Cognito</text>
+  <text x="690" y="422" text-anchor="middle" font-size="10" fill="#666">User Pool · Email/Password · SRP</text>
+
+  <!-- Arrow: ECS ↔ Cognito (dashed, client-side) -->
+  <line x1="690" y1="350" x2="690" y2="378" stroke="#dd344c" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+
+  <!-- ECR -->
+  <rect x="230" y="310" width="130" height="45" rx="4" fill="#fff" stroke="#ff9900" stroke-width="1.5"/>
+  <text x="295" y="330" text-anchor="middle" font-size="10" font-weight="bold" fill="#232f3e">Amazon ECR</text>
+  <text x="295" y="344" text-anchor="middle" font-size="9" fill="#666">Container Registry</text>
+
+  <!-- CloudWatch -->
+  <rect x="230" y="375" width="130" height="45" rx="4" fill="#fff" stroke="#ff4f8b" stroke-width="1.5"/>
+  <text x="295" y="395" text-anchor="middle" font-size="10" font-weight="bold" fill="#232f3e">CloudWatch</text>
+  <text x="295" y="409" text-anchor="middle" font-size="9" fill="#666">Logs · Monitoring</text>
+
+  <!-- CloudFormation badge -->
+  <rect x="230" y="440" width="130" height="25" rx="4" fill="#232f3e"/>
+  <text x="295" y="457" text-anchor="middle" font-size="10" font-weight="bold" fill="white">CloudFormation</text>
+
+  <!-- Arrowhead marker -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#232f3e"/>
+    </marker>
+  </defs>
+</svg>

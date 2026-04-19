@@ -1,6 +1,6 @@
 # Cloud Demo Generator v3
 
-> **Built with Kiro (powered by [Anthropic Claude](https://www.anthropic.com/claude))** — primary authoring via Kiro CLI in AgentSpaces. Full AWS migration from Firebase/Render/Neon to Cognito/ECS Fargate/RDS completed entirely through AI-driven conversation.
+> **Built with [Kiro](https://kiro.dev) (powered by [Anthropic Claude](https://www.anthropic.com/claude))** — AI-driven development from code conversion through production deployment.
 
 ---
 
@@ -14,21 +14,17 @@
 | Custom demo request | ![Demo Request](screenshots/04-demo-request.png) |
 | Admin analytics dashboard | ![Admin](screenshots/05-admin.png) |
 
-**Live App:** [http://demo-gen-alb-29620839.us-east-2.elb.amazonaws.com](http://demo-gen-alb-29620839.us-east-2.elb.amazonaws.com)
-
-**Test credentials:** `demo@example.com` / `DemoUser2026!`
-
 ---
 
 ## What This Produces
 
-This generator produces customer-ready PostgreSQL demos including:
+A platform that generates customer-ready PostgreSQL demo repositories including:
 
-- **[pgvector-hybrid-search-demo](https://github.com/nrsundar/pgvector-hybrid-search-demo-py-v1.0)** — semantic + lexical hybrid retrieval over AWS Aurora PostgreSQL using pgvector
-- **[postgis-property-search-demo](https://github.com/nrsundar/postgis-property-search-demo-py-v2)** — geospatial property search with PostGIS (distance, filtering, ranking)
+- **[pgvector-hybrid-search-demo](https://github.com/nrsundar/pgvector-hybrid-search-demo-py-v1.0)** — semantic + lexical hybrid retrieval using pgvector
+- **[postgis-property-search-demo](https://github.com/nrsundar/postgis-property-search-demo-py-v2)** — geospatial property search with PostGIS
 - **[pgroute-transportation-demo](https://github.com/nrsundar/pgroute-transportation-demo-py-v1.0-2)** — transportation network routing with pgRouting
 
-Each demo is generated end-to-end, including:
+Each demo is generated end-to-end:
 
 - Database schema and extensions
 - Seed data and ingestion pipelines
@@ -36,62 +32,49 @@ Each demo is generated end-to-end, including:
 - Infrastructure (AWS CloudFormation)
 - Documentation and setup instructions
 
-This positions the generator as a **meta-tool** that produces production-ready, deployable PostgreSQL solutions — not just sample code.
+> Reduce demo setup time from hours to minutes, while ensuring production-quality outputs.
 
 ---
 
 ## Overview
 
-The **Cloud Demo Generator v3** is an AI-powered platform that generates complete, deployable PostgreSQL demo repositories for real-world customer use cases.
+The **Cloud Demo Generator** is an AI-powered platform that generates complete, deployable PostgreSQL demo repositories for real-world use cases.
 
-It is designed for:
+Designed for:
 
-- Solutions Architects
-- Sales Engineers
+- Solutions Architects preparing customer demonstrations
+- Sales Engineers building proof-of-concept environments
 - Developers exploring PostgreSQL extensions on AWS
-
-The goal is simple:
-
-> Reduce demo setup time from hours to minutes, while ensuring production-quality outputs.
 
 ---
 
-## Architecture Summary
+## Architecture
 
-```
-                    ┌─────────────────────────────────────────────┐
-                    │              AWS Account (sundaar4)          │
-                    │              633384844157 / us-east-2        │
-                    │                                             │
-  Internet ────────►│  ┌─────────┐    ┌──────────────────────┐   │
-                    │  │   ALB   │───►│  ECS Fargate (private)│   │
-                    │  │ (public)│    │  Node.js 18 + React  │   │
-                    │  └─────────┘    └──────────┬───────────┘   │
-                    │                            │               │
-                    │                 ┌──────────▼───────────┐   │
-                    │                 │  RDS PostgreSQL 16.13 │   │
-                    │                 │  (private, encrypted) │   │
-                    │                 └──────────────────────┘   │
-                    │                                             │
-                    │  ┌──────────────────────┐                  │
-                    │  │  Cognito User Pool   │                  │
-                    │  │  (email/password SRP) │                  │
-                    │  └──────────────────────┘                  │
-                    └─────────────────────────────────────────────┘
-```
+![Architecture](screenshots/architecture.png)
 
 ### AWS Services
 
 | Service | Purpose |
 |---------|---------|
 | **Amazon Cognito** | User authentication (email/password with SRP) |
-| **Amazon ECS Fargate** | Containerized app hosting (256 CPU / 512 MB, no EC2) |
-| **Amazon RDS PostgreSQL 16.13** | Database (db.t4g.micro, private subnet, encrypted) |
+| **Amazon ECS Fargate** | Containerized app hosting (no EC2 instances) |
+| **Amazon RDS PostgreSQL 16** | Database (private subnet, encrypted at rest) |
 | **Application Load Balancer** | Internet-facing entry point |
-| **Amazon ECR** | Container image registry (scan on push) |
-| **Amazon VPC** | 10.0.0.0/16 — 2 public + 2 private subnets, NAT Gateway |
-| **AWS CloudFormation** | Infrastructure as Code |
-| **Amazon CloudWatch** | Logs (/ecs/demo-gen, 14-day retention) |
+| **Amazon ECR** | Container image registry with scan-on-push |
+| **Amazon VPC** | Isolated networking with public/private subnets |
+| **AWS CloudFormation** | Infrastructure as Code — one-command deploy |
+| **Amazon CloudWatch** | Centralized logging and monitoring |
+
+### Security
+
+- RDS in private subnets, not publicly accessible
+- ECS tasks in private subnets with NAT Gateway for outbound only
+- Least-privilege security groups: ALB → ECS → RDS chain
+- RDS storage encrypted at rest
+- Cognito SRP authentication (no passwords in transit)
+- ECR image scanning on push
+- No hardcoded credentials — all via environment variables
+- Input validation with Zod on all API endpoints
 
 ---
 
@@ -99,37 +82,65 @@ The goal is simple:
 
 ### Repository Generation Engine
 
-- Generates complete, downloadable demo repositories
+- Generates complete, downloadable demo repositories as ZIP packages
+- Configurable: language, database type/version, instance type, region, use cases, complexity
 - Includes CloudFormation templates for AWS deployment
-- Configurable: language, DB type/version, instance type, region, use cases, complexity
 - Produces structured learning modules per generated demo
-- 3+ production use cases shipped (pgvector, PostGIS, pgRouting)
 
 ### Supported Use Cases
 
-- Hybrid Search (pgvector)
-- Geospatial Analytics (PostGIS)
-- Time-Series Analytics (TimescaleDB)
-- Multi-Tenant SaaS (Row-Level Security)
-- Analytics Dashboard
-- High Availability Setup (Aurora)
+| Use Case | Technologies |
+|----------|-------------|
+| Hybrid Search | pgvector · OpenAI · LangChain |
+| Geospatial Analytics | PostGIS · QGIS · Leaflet |
+| Time-Series Analytics | TimescaleDB · Grafana · Python |
+| Multi-Tenant SaaS | Row-Level Security · JWT · REST API |
+| Analytics Dashboard | Metabase · PostgreSQL · Docker |
+| High Availability | Aurora · Read Replicas · CloudWatch |
 
 ### Authentication
 
-- Amazon Cognito (email/password with SRP flow)
-- Sign up with email verification
-- Session management client-side (JWT tokens)
+- Amazon Cognito User Pool
+- Email/password sign-up with verification
+- SRP-based sign-in (secure, no password transmission)
 
 ### Admin Dashboard
 
-- Tracks downloads and usage patterns
+- Download and usage analytics
 - Repository status monitoring
 - Feedback collection and management
-- Use case popularity analytics
+- Use case popularity tracking
 
 ---
 
-## Directory Structure
+## Technology Stack
+
+### Frontend
+
+- React 18 + TypeScript
+- [Cloudscape Design System](https://cloudscape.design) (AWS Console UI)
+- TanStack Query (data fetching)
+- Wouter (routing)
+
+### Backend
+
+- Node.js 18 + Express.js (TypeScript)
+- Drizzle ORM + PostgreSQL
+- Archiver (ZIP generation)
+- Zod (input validation)
+
+### Infrastructure
+
+- AWS ECS Fargate (compute)
+- Amazon RDS PostgreSQL 16 (database)
+- Amazon Cognito (authentication)
+- Application Load Balancer (ingress)
+- Amazon ECR (container registry)
+- AWS CloudFormation (IaC)
+
+---
+
+## Project Structure
 
 ```
 cloud-demo-generator-v3/
@@ -155,47 +166,18 @@ cloud-demo-generator-v3/
 ├── server/                         # Backend (Express)
 │   ├── index.ts                    # Dev server (with Vite HMR)
 │   ├── production.ts              # Production server (static files)
-│   ├── routes.ts                   # API routes (repos, feedback, analytics)
-│   ├── storage.ts                  # DB queries (Drizzle ORM) + ZIP generation
-│   ├── db.ts                       # PostgreSQL connection (pg + Drizzle)
+│   ├── routes.ts                   # API routes
+│   ├── storage.ts                  # DB queries + ZIP generation
+│   ├── db.ts                       # PostgreSQL connection
 │   └── vite.ts                     # Vite dev middleware
 ├── shared/
-│   └── schema.ts                   # Drizzle schema (repos, users, logs, feedback)
-├── screenshots/                    # UI screenshots for documentation
+│   └── schema.ts                   # Drizzle schema
+├── screenshots/                    # App screenshots + architecture diagram
 ├── cloudformation.yaml             # Full infrastructure stack
 ├── Dockerfile                      # Multi-stage build for ECS
-├── DEPLOY.md                       # Deployment guide with resource IDs
-├── LICENSE                         # Amazon internal use only
+├── DEPLOY.md                       # Deployment guide
 └── package.json
 ```
-
----
-
-## Technology Stack
-
-### Frontend
-
-- React 18 + TypeScript
-- [Cloudscape Design System](https://cloudscape.design) (AWS Console UI)
-- TanStack Query (data fetching)
-- Wouter (routing)
-- amazon-cognito-identity-js (auth)
-
-### Backend
-
-- Node.js 18 + Express.js (TypeScript)
-- Drizzle ORM + PostgreSQL
-- Archiver (ZIP generation)
-- Zod (input validation)
-
-### Infrastructure
-
-- AWS ECS Fargate (compute)
-- Amazon RDS PostgreSQL 16.13 (database)
-- Amazon Cognito (authentication)
-- Application Load Balancer (ingress)
-- Amazon ECR (container registry)
-- AWS CloudFormation (IaC)
 
 ---
 
@@ -224,83 +206,111 @@ cloud-demo-generator-v3/
 ### Setup
 
 ```bash
-git clone git@ssh.gitlab.aws.dev:raghasun/cloud-demo-generator-v2.git
+git clone <repository-url>
 cd cloud-demo-generator-v3
 npm install
 ```
 
+### Configure
+
 ```bash
 export DATABASE_URL="postgresql://user:pass@localhost:5432/demogen"
+
+# Optional: override Cognito defaults
+export VITE_COGNITO_USER_POOL_ID="your-pool-id"
+export VITE_COGNITO_CLIENT_ID="your-client-id"
+```
+
+### Run
+
+```bash
 npm run db:push    # Push schema to database
 npm run dev        # Start dev server with Vite HMR
 ```
 
-App runs at: `http://localhost:3000`
+App runs at `http://localhost:3000`.
 
 ---
 
-## Deployment (AWS)
+## Deploy to AWS
 
-Deployed to Isengard account **sundaar4** (`633384844157`) in **us-east-2**.
+The included `cloudformation.yaml` provisions the entire stack in your AWS account.
 
-### Deployed Resources
+### Prerequisites
 
-| Resource | Value |
-|----------|-------|
-| CloudFormation Stack | `cloud-demo-generator-v3` |
-| App URL | http://demo-gen-alb-29620839.us-east-2.elb.amazonaws.com |
-| Cognito User Pool | `us-east-2_sndKJLxLR` |
-| Cognito Client ID | `4bm8gt0i2of69v9g0vm5nnh2k0` |
-| RDS Endpoint | `demo-gen-db.cierbquhdtv6.us-east-2.rds.amazonaws.com` |
-| ECR Repository | `633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3` |
-| ECS Cluster | `demo-gen-cluster` |
-| ECS Service | `demo-gen-service` (Fargate, 1 task) |
+- AWS CLI v2 configured with appropriate IAM permissions
+- Docker installed
 
-### Deploy from scratch
+### 1. Create a Cognito User Pool
 
 ```bash
-# 1. Federate: https://isengard.amazon.com/federate?account=633384844157&role=Admin
+aws cognito-idp create-user-pool \
+  --pool-name cloud-demo-generator \
+  --auto-verified-attributes email \
+  --username-attributes email \
+  --region <your-region>
 
-# 2. Deploy infrastructure
+# Note the UserPoolId, then create a client:
+aws cognito-idp create-user-pool-client \
+  --user-pool-id <pool-id> \
+  --client-name cloud-demo-generator-spa \
+  --no-generate-secret \
+  --explicit-auth-flows ALLOW_USER_SRP_AUTH ALLOW_REFRESH_TOKEN_AUTH \
+  --region <your-region>
+```
+
+### 2. Create ECR Repository
+
+```bash
+aws ecr create-repository \
+  --repository-name cloud-demo-generator-v3 \
+  --image-scanning-configuration scanOnPush=true \
+  --region <your-region>
+```
+
+### 3. Deploy Infrastructure
+
+```bash
 aws cloudformation create-stack \
-  --stack-name cloud-demo-generator-v3 \
+  --stack-name cloud-demo-generator \
   --template-body file://cloudformation.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameters \
     ParameterKey=DBUsername,ParameterValue=demoadmin \
-    ParameterKey=DBPassword,ParameterValue=<YOUR_PASSWORD> \
-  --region us-east-2
+    ParameterKey=DBPassword,ParameterValue=<your-password> \
+    ParameterKey=CognitoUserPoolId,ParameterValue=<pool-id> \
+    ParameterKey=CognitoClientId,ParameterValue=<client-id> \
+  --region <your-region>
+```
 
-# 3. Build and push Docker image
-aws ecr get-login-password --region us-east-2 | \
-  docker login --username AWS --password-stdin 633384844157.dkr.ecr.us-east-2.amazonaws.com
+### 4. Build and Push Docker Image
+
+```bash
+aws ecr get-login-password --region <your-region> | \
+  docker login --username AWS --password-stdin <account-id>.dkr.ecr.<your-region>.amazonaws.com
+
 docker build -t cloud-demo-generator-v3 .
 docker tag cloud-demo-generator-v3:latest \
-  633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
-docker push 633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
+  <account-id>.dkr.ecr.<your-region>.amazonaws.com/cloud-demo-generator-v3:latest
+docker push <account-id>.dkr.ecr.<your-region>.amazonaws.com/cloud-demo-generator-v3:latest
+```
 
-# 4. Force new deployment
-aws ecs update-service --cluster demo-gen-cluster --service demo-gen-service \
-  --force-new-deployment --region us-east-2
+### 5. Get App URL
+
+```bash
+aws cloudformation describe-stacks \
+  --stack-name cloud-demo-generator \
+  --query 'Stacks[0].Outputs[?OutputKey==`AppURL`].OutputValue' \
+  --output text --region <your-region>
 ```
 
 ### Tear-down
 
 ```bash
-aws cloudformation delete-stack --stack-name cloud-demo-generator-v3 --region us-east-2
-aws cognito-idp delete-user-pool --user-pool-id us-east-2_sndKJLxLR --region us-east-2
-aws ecr delete-repository --repository-name cloud-demo-generator-v3 --force --region us-east-2
+aws cloudformation delete-stack --stack-name cloud-demo-generator --region <your-region>
 ```
 
----
-
-## Evolution
-
-Three-generation evolution of the same core concept, each generation deepening the Claude-tooling integration:
-
-- **V1 — Replit Agent (Claude-powered), 2024.** Original prototype. See precursor repo: [database-demo-generator](https://github.com/nrsundar/database-demo-generator).
-- **V2 — Kiro on Claude Opus, Render deployment.** Re-architected into a portable TypeScript/Postgres platform with Drizzle ORM, Firebase Auth, and a Render deployment target. Used shadcn/ui + Tailwind + Neon serverless.
-- **V3 — Kiro in AgentSpaces, AWS-native.** Current state. Migrated to Cloudscape Design System + Cognito + ECS Fargate + RDS PostgreSQL. CloudFormation templates for one-command deploy. Fully Epoxy/Orthanc compliant.
+See [DEPLOY.md](DEPLOY.md) for detailed instructions.
 
 ---
 
@@ -310,7 +320,7 @@ Three-generation evolution of the same core concept, each generation deepening t
 2. Selects demo configuration (language, DB type, region, use cases, complexity)
 3. The generator produces:
    - Database schema + extensions
-   - Seed data
+   - Seed data and ingestion pipelines
    - Application code
    - CloudFormation infrastructure templates
    - Documentation
@@ -320,28 +330,25 @@ Three-generation evolution of the same core concept, each generation deepening t
 
 ---
 
-## Security Considerations
+## Evolution
 
-- Input validation with Zod on all API endpoints
-- Amazon Cognito SRP authentication (no passwords transmitted in plaintext)
-- RDS in private subnets, not publicly accessible
-- Security groups enforce ALB → ECS → RDS chain only
-- RDS storage encrypted at rest
-- ECR image scanning on push
-- No hardcoded credentials (DATABASE_URL via environment)
-- Epoxy/Orthanc compliant for Isengard accounts
+| Version | Year | Platform | Key Changes |
+|---------|------|----------|-------------|
+| **V1** | 2024 | Replit Agent | Original prototype ([database-demo-generator](https://github.com/nrsundar/database-demo-generator)) |
+| **V2** | 2025 | Kiro CLI | TypeScript rewrite, Drizzle ORM, Firebase Auth, shadcn/ui, Render deployment |
+| **V3** | 2026 | Kiro in AgentSpaces | AWS-native: Cloudscape UI, Cognito, ECS Fargate, RDS, CloudFormation |
 
 ---
 
 ## Built With
 
-- **[Kiro](https://kiro.dev)** (powered by Anthropic Claude) in **AgentSpaces** — entire V3 build: code conversion, Cloudscape UI, Cognito auth, CloudFormation, Docker, ECR push, ECS deployment, screenshots, documentation
-- **Replit Agent** (Claude-powered) — V1 prototype, 2024
-- TypeScript / React / Cloudscape — frontend
+- **[Kiro](https://kiro.dev)** (powered by Anthropic Claude) — entire V3 build: code conversion, UI, auth, infrastructure, deployment, documentation
+- **Replit Agent** (Claude-powered) — V1 prototype
+- React / Cloudscape Design System — frontend
 - Node.js / Express / Drizzle ORM — backend
-- Amazon RDS PostgreSQL 16 — data layer
+- Amazon RDS PostgreSQL — data layer
 - Amazon Cognito — authentication
-- AWS ECS Fargate, ALB, VPC, CloudFormation — cloud infrastructure
+- AWS ECS Fargate, ALB, VPC, CloudFormation — infrastructure
 
 ---
 
@@ -351,11 +358,9 @@ Three-generation evolution of the same core concept, each generation deepening t
 - [pgvector-hybrid-search-demo](https://github.com/nrsundar/pgvector-hybrid-search-demo-py-v1.0) — generated output
 - [postgis-property-search-demo](https://github.com/nrsundar/postgis-property-search-demo-py-v2) — generated output
 - [pgroute-transportation-demo](https://github.com/nrsundar/pgroute-transportation-demo-py-v1.0-2) — generated output
-- [gitlab-mcp-server](https://ssh.gitlab.aws.dev/raghasun/gitlab-mcp-server) — GitLab MCP server (also built with Kiro)
 
 ---
 
 ## License
 
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-This project is for internal Amazon use only.
