@@ -63,7 +63,7 @@ export default function AdminPage() {
 
   return (
     <ContentLayout
-      header={<Header variant="h1" description="Analytics and management for Cloud Demo Generator v3.">Admin Dashboard</Header>}
+      header={<Header variant="h1" description="Monitor usage, track generated repositories, and manage demo requests.">Admin Dashboard</Header>}
     >
       <SpaceBetween size="l">
         <ColumnLayout columns={4} variant="text-grid">

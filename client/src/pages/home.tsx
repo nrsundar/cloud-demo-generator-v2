@@ -129,7 +129,11 @@ export default function HomePage() {
   return (
     <ContentLayout
       header={
-        <Header variant="h1" description="Configure and generate cloud infrastructure demo repositories.">
+        <Header
+          variant="h1"
+          description="Configure your demo repository and generate a complete, downloadable package with infrastructure, code, data, and documentation."
+          info={<Box color="text-status-info" display="inline">Tip: Select multiple use cases to create a comprehensive demo.</Box>}
+        >
           Demo Generator
         </Header>
       }
