@@ -2,7 +2,7 @@
 
 > **Built with [Kiro](https://kiro.dev) (powered by [Anthropic Claude](https://www.anthropic.com/claude))** — AI-driven development from code conversion through cloud deployment.
 
-**🔗 Try it live:** [https://main.d1s77hhl4y34ji.amplifyapp.com](https://main.d1s77hhl4y34ji.amplifyapp.com)
+**🔗 Try it live:** [https://your-app.amplifyapp.com](https://your-app.amplifyapp.com)
 
 > **Note:** This is a demo environment and may not be available at all times. To run your own instance, follow the [Deploy to AWS](#deploy-to-aws) instructions below — it takes about 15 minutes to set up in any AWS account.
 

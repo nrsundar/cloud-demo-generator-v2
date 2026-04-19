@@ -133,7 +133,7 @@ $SSH_CMD "echo 'SSH works'" 2>/dev/null && pass "SSH to bastion works" || fail "
 
 # ── Step 5: Test database connectivity from bastion ──
 info "Step 5: Testing database connectivity from bastion"
-DB_URL="postgresql://postgres:SecurePassword123!@${DB_ENDPOINT}:5432/postgres"
+DB_URL="postgresql://postgres:${DB_PASSWORD:-ChangeMe123!}@${DB_ENDPOINT}:5432/postgres"
 
 $SSH_CMD "psql '$DB_URL' -c 'SELECT version()'" 2>/dev/null && pass "Database connection works" || fail "Database connection failed"
 
