@@ -55,13 +55,23 @@ app.use((req, res, next) => {
     res.status(status).json({ error: err.message || "Internal Server Error" });
   });
 
-  // Serve static files
+  // Serve static files only in dev or if accessed directly (not Amplify setup)
+  // In production with Amplify, redirect non-API requests to Amplify
+  const AMPLIFY_URL = "https://main.d1s77hhl4y34ji.amplifyapp.com";
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const publicPath = path.resolve(__dirname, "public");
-  app.use(express.static(publicPath));
-  app.get("*", (_req, res) => {
-    res.sendFile(path.resolve(publicPath, "index.html"));
-  });
+
+  if (process.env.AMPLIFY_URL || process.env.NODE_ENV === "production") {
+    // Only serve API routes — redirect everything else to Amplify
+    app.get("*", (_req, res) => {
+      res.redirect(301, process.env.AMPLIFY_URL || AMPLIFY_URL);
+    });
+  } else {
+    app.use(express.static(publicPath));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.resolve(publicPath, "index.html"));
+    });
+  }
 
   const server = createServer(app);
   server.listen(PORT, () => {
