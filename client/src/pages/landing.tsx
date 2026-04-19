@@ -32,7 +32,7 @@ const USE_CASES = [
 
 const STATS = [
   { value: "6+", label: "Use Cases" },
-  { value: "4", label: "Languages" },
+  { value: "4", label: "Programming Languages" },
   { value: "< 2 min", label: "Generation Time" },
   { value: "1-Click", label: "AWS Deploy" },
 ];
