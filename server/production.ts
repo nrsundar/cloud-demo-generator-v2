@@ -3,6 +3,7 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
+import { ensureSchema } from "./migrate";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,23 +42,29 @@ app.use((req, res, next) => {
   next();
 });
 
-registerRoutes(app);
+(async () => {
+  // Create tables before starting
+  await ensureSchema();
 
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  const status = err.status || err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  res.status(status).json({ message });
-});
+  registerRoutes(app);
 
-// Serve static files
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const publicPath = path.resolve(__dirname, "public");
-app.use(express.static(publicPath));
-app.get("*", (_req, res) => {
-  res.sendFile(path.resolve(publicPath, "index.html"));
-});
+  // Error handler — don't crash the process
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    console.error("Unhandled error:", err.message || err);
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || "Internal Server Error" });
+  });
 
-const server = createServer(app);
-server.listen(PORT, () => {
-  console.log(`🚀 Server listening on http://localhost:${PORT}`);
-});
+  // Serve static files
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const publicPath = path.resolve(__dirname, "public");
+  app.use(express.static(publicPath));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.resolve(publicPath, "index.html"));
+  });
+
+  const server = createServer(app);
+  server.listen(PORT, () => {
+    console.log(`🚀 Server listening on http://localhost:${PORT}`);
+  });
+})();

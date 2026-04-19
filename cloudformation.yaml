@@ -201,9 +201,10 @@ Resources:
           Essential: true
           PortMappings: [{ ContainerPort: 5000, Protocol: tcp }]
           Environment:
-            - { Name: DATABASE_URL, Value: !Sub 'postgresql://${DBUsername}:${DBPassword}@${Database.Endpoint.Address}:5432/demogen' }
+            - { Name: DATABASE_URL, Value: !Sub 'postgresql://${DBUsername}:${DBPassword}@${Database.Endpoint.Address}:5432/demogen?sslmode=require' }
             - { Name: NODE_ENV, Value: production }
             - { Name: PORT, Value: '5000' }
+            - { Name: NODE_TLS_REJECT_UNAUTHORIZED, Value: '0' }
             - { Name: VITE_COGNITO_USER_POOL_ID, Value: !Ref CognitoUserPoolId }
             - { Name: VITE_COGNITO_CLIENT_ID, Value: !Ref CognitoClientId }
           LogConfiguration:
