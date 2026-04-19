@@ -12,12 +12,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // CORS for Amplify frontend
-const ALLOWED_ORIGINS = [
-  "https://main.d1s77hhl4y34ji.amplifyapp.com",
-  "https://d1s77hhl4y34ji.amplifyapp.com",
-  "http://localhost:3000",
-  "http://localhost:5000",
-];
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "http://localhost:3000,http://localhost:5000").split(",");
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && ALLOWED_ORIGINS.some((o) => origin.startsWith(o))) {
@@ -57,7 +52,7 @@ app.use((req, res, next) => {
 
   // Serve static files only in dev or if accessed directly (not Amplify setup)
   // In production with Amplify, redirect non-API requests to Amplify
-  const AMPLIFY_URL = "https://main.d1s77hhl4y34ji.amplifyapp.com";
+  const AMPLIFY_URL = process.env.AMPLIFY_URL || "https://localhost:3000";
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const publicPath = path.resolve(__dirname, "public");
 

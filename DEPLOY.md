@@ -1,68 +1,135 @@
-# Deployment Guide — Cloud Demo Generator v3
+# Deployment Guide
 
-## Live App
+## Prerequisites
 
-**URL:** http://demo-gen-alb-29620839.us-east-2.elb.amazonaws.com
+- AWS CLI v2 configured
+- Docker installed
+- An AWS account with appropriate permissions
 
-**Test credentials:**
-- Email: `demo@example.com`
-- Password: `DemoUser2026!`
-
-## Architecture
-
-```
-Internet → ALB (public subnets) → ECS Fargate (private subnets) → RDS PostgreSQL (private subnets)
-                                                                ↕
-                                                         Cognito User Pool
-```
-
-## AWS Resources (sundaar4 / 633384844157 / us-east-2)
-
-| Resource | ID/Name |
-|----------|---------|
-| CloudFormation Stack | `cloud-demo-generator-v3` |
-| Cognito User Pool | `us-east-2_sndKJLxLR` |
-| Cognito Client ID | `4bm8gt0i2of69v9g0vm5nnh2k0` |
-| RDS PostgreSQL 16.13 | `demo-gen-db` (private, encrypted) |
-| ECS Cluster | `demo-gen-cluster` |
-| ECS Service | `demo-gen-service` (Fargate, 256 CPU / 512 MB) |
-| ALB | `demo-gen-alb` |
-| ECR | `cloud-demo-generator-v3` |
-| VPC | 10.0.0.0/16 (2 public + 2 private subnets) |
-
-## Epoxy/Orthanc Compliance
-
-- ✅ RDS NOT publicly accessible — won't trigger `personal-orthanc-rds-publicly-accessible`
-- ✅ ECS tasks in private subnets with NAT Gateway
-- ✅ Security groups: ALB → ECS → RDS (least privilege)
-- ✅ RDS storage encrypted
-- ✅ ECR image scanning on push
-- ✅ No EC2 instances — Fargate only
-
-## Redeploying
+## Step 1: Create Cognito User Pool
 
 ```bash
-# 1. Federate
-# https://isengard.amazon.com/federate?account=633384844157&role=Admin
+aws cognito-idp create-user-pool \
+  --pool-name cloud-demo-generator \
+  --auto-verified-attributes email \
+  --username-attributes email \
+  --admin-create-user-config AllowAdminCreateUserOnly=false \
+  --region <your-region>
 
-# 2. Build and push Docker image
-cd cloud-demo-generator-v3
-aws ecr get-login-password --region us-east-2 | \
-  docker login --username AWS --password-stdin 633384844157.dkr.ecr.us-east-2.amazonaws.com
+# Note the UserPoolId, then create a client:
+aws cognito-idp create-user-pool-client \
+  --user-pool-id <pool-id> \
+  --client-name cloud-demo-generator-spa \
+  --no-generate-secret \
+  --explicit-auth-flows ALLOW_USER_SRP_AUTH ALLOW_REFRESH_TOKEN_AUTH \
+  --region <your-region>
+
+# Create admin group:
+aws cognito-idp create-group \
+  --user-pool-id <pool-id> \
+  --group-name admin \
+  --region <your-region>
+```
+
+## Step 2: Create ECR Repository
+
+```bash
+aws ecr create-repository \
+  --repository-name cloud-demo-generator-v3 \
+  --image-scanning-configuration scanOnPush=true \
+  --region <your-region>
+```
+
+## Step 3: Deploy Infrastructure
+
+```bash
+aws cloudformation create-stack \
+  --stack-name cloud-demo-generator \
+  --template-body file://cloudformation.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameters \
+    ParameterKey=DBUsername,ParameterValue=demoadmin \
+    ParameterKey=DBPassword,ParameterValue=<your-password> \
+    ParameterKey=CognitoUserPoolId,ParameterValue=<pool-id> \
+    ParameterKey=CognitoClientId,ParameterValue=<client-id> \
+  --region <your-region>
+
+# Wait for completion (~10-15 min):
+aws cloudformation wait stack-create-complete \
+  --stack-name cloud-demo-generator --region <your-region>
+```
+
+## Step 4: Build and Push Docker Image
+
+```bash
+aws ecr get-login-password --region <your-region> | \
+  docker login --username AWS --password-stdin <account-id>.dkr.ecr.<your-region>.amazonaws.com
+
 docker build -t cloud-demo-generator-v3 .
 docker tag cloud-demo-generator-v3:latest \
-  633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
-docker push 633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
+  <account-id>.dkr.ecr.<your-region>.amazonaws.com/cloud-demo-generator-v3:latest
+docker push <account-id>.dkr.ecr.<your-region>.amazonaws.com/cloud-demo-generator-v3:latest
+```
 
-# 3. Force ECS to pick up new image
-aws ecs update-service --cluster demo-gen-cluster --service demo-gen-service \
-  --force-new-deployment --region us-east-2
+## Step 5: Deploy Frontend to Amplify (optional, for HTTPS)
+
+```bash
+aws amplify create-app --name cloud-demo-generator-v3 --platform WEB --region <your-region>
+aws amplify create-branch --app-id <app-id> --branch-name main --region <your-region>
+
+# Build frontend with API URL:
+VITE_API_URL=http://<alb-dns-name> \
+VITE_COGNITO_USER_POOL_ID=<pool-id> \
+VITE_COGNITO_CLIENT_ID=<client-id> \
+  npx vite build
+
+# Deploy:
+cd dist/public && zip -r /tmp/frontend.zip .
+# Use Amplify create-deployment + start-deployment APIs
+```
+
+## Step 6: Configure Environment Variables
+
+Set these on the ECS task definition or in CloudFormation parameters:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string (auto-set by CloudFormation) |
+| `VITE_COGNITO_USER_POOL_ID` | Cognito User Pool ID |
+| `VITE_COGNITO_CLIENT_ID` | Cognito App Client ID |
+| `ALLOWED_ORIGINS` | Comma-separated allowed CORS origins |
+| `AMPLIFY_URL` | Amplify frontend URL (for ALB redirect) |
+
+## Step 7: Create Admin User
+
+```bash
+aws cognito-idp admin-create-user \
+  --user-pool-id <pool-id> \
+  --username admin@example.com \
+  --temporary-password TempPass1! \
+  --message-action SUPPRESS \
+  --user-attributes Name=email,Value=admin@example.com Name=email_verified,Value=true Name=name,Value=Admin \
+  --region <your-region>
+
+aws cognito-idp admin-set-user-password \
+  --user-pool-id <pool-id> \
+  --username admin@example.com \
+  --password <permanent-password> \
+  --permanent \
+  --region <your-region>
+
+aws cognito-idp admin-add-user-to-group \
+  --user-pool-id <pool-id> \
+  --username admin@example.com \
+  --group-name admin \
+  --region <your-region>
 ```
 
 ## Cleanup
 
 ```bash
-aws cloudformation delete-stack --stack-name cloud-demo-generator-v3 --region us-east-2
-aws cognito-idp delete-user-pool --user-pool-id us-east-2_sndKJLxLR --region us-east-2
-aws ecr delete-repository --repository-name cloud-demo-generator-v3 --force --region us-east-2
+aws cloudformation delete-stack --stack-name cloud-demo-generator --region <your-region>
+aws cognito-idp delete-user-pool --user-pool-id <pool-id> --region <your-region>
+aws ecr delete-repository --repository-name cloud-demo-generator-v3 --force --region <your-region>
+aws amplify delete-app --app-id <app-id> --region <your-region>
 ```

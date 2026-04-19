@@ -78,7 +78,7 @@ export default function DemoRequestPage() {
             <Container header={<Header variant="h2">Demo Request Details</Header>}>
               <SpaceBetween size="l">
                 <FormField label="Contact Email">
-                  <Input value={email} onChange={({ detail }) => setEmail(detail.value)} placeholder="alias@amazon.com" type="email" />
+                  <Input value={email} onChange={({ detail }) => setEmail(detail.value)} placeholder="you@example.com" type="email" />
                 </FormField>
                 <FormField label="Demo Type">
                   <Select selectedOption={demoType} onChange={({ detail }) => setDemoType(detail.selectedOption)} options={DEMO_TYPES} placeholder="Select demo type" />

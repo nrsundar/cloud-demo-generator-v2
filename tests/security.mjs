@@ -93,7 +93,7 @@ console.log("\nCORS:");
 await test("OPTIONS returns 204 with CORS headers for allowed origin", async () => {
   const res = await fetchApi("/api/repositories", {
     method: "OPTIONS",
-    headers: { Origin: "https://main.d1s77hhl4y34ji.amplifyapp.com" },
+    headers: { Origin: "https://example.amplifyapp.com" },
   });
   assert(res.status === 204, `Expected 204, got ${res.status}`);
 });

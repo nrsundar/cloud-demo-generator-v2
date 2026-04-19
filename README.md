@@ -270,4 +270,4 @@ This project has evolved through three generations, each deepening the AI-toolin
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+Licensed under the MIT-0 License. See [LICENSE](LICENSE) for details.

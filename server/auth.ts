@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 
-const USER_POOL_ID = process.env.VITE_COGNITO_USER_POOL_ID ?? "us-east-2_sndKJLxLR";
-const CLIENT_ID = process.env.VITE_COGNITO_CLIENT_ID ?? "4bm8gt0i2of69v9g0vm5nnh2k0";
+const USER_POOL_ID = process.env.VITE_COGNITO_USER_POOL_ID ?? "";
+const CLIENT_ID = process.env.VITE_COGNITO_CLIENT_ID ?? "";
 
 const verifier = CognitoJwtVerifier.create({
   userPoolId: USER_POOL_ID,
