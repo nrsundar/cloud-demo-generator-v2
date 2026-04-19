@@ -6,3 +6,6 @@ cloudformation.yaml
 .gitignore
 .env
 .dockerignore
+screenshots
+tests
+.github
