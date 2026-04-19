@@ -95,21 +95,6 @@ The goal is simple:
 
 ---
 
-## 🔒 Epoxy/Orthanc Compliance
-
-This application meets [Epoxy Orthanc](https://w.amazon.com/bin/view/AWS_IT_Security/Epoxy/orthanc) security requirements for Isengard accounts:
-
-| Requirement | Status | Details |
-|-------------|--------|---------|
-| RDS not publicly accessible | ✅ | `PubliclyAccessible: false` — won't trigger `personal-orthanc-rds-publicly-accessible` |
-| ECS in private subnets | ✅ | Tasks in 10.0.10.0/24 and 10.0.11.0/24 |
-| Least-privilege security groups | ✅ | ALB → ECS (5000) → RDS (5432) chain only |
-| Storage encryption | ✅ | RDS `StorageEncrypted: true` |
-| No EC2 instances | ✅ | Fargate only — minimizes GuardDuty surface |
-| ECR image scanning | ✅ | `scanOnPush: true` |
-
----
-
 ## Key Features
 
 ### Repository Generation Engine
