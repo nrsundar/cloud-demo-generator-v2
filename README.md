@@ -31,10 +31,13 @@ Instead of spending a day building a pgvector demo, you spend two minutes config
 | Step | Screenshot |
 |------|------------|
 | Landing / feature overview | ![Landing](screenshots/01-landing.png) |
-| Authentication (Cognito) | ![Auth](screenshots/02-auth.png) |
+| Authentication — Sign In | ![Auth Sign In](screenshots/02-auth-signin.png) |
+| Authentication — Create Account | ![Auth Sign Up](screenshots/06-auth-signup.png) |
 | Generator configuration | ![Generator](screenshots/03-generator.png) |
 | Custom demo request | ![Demo Request](screenshots/04-demo-request.png) |
-| Admin analytics dashboard | ![Admin](screenshots/05-admin.png) |
+| Admin — Overview & Repositories | ![Admin Overview](screenshots/05-admin-overview.png) |
+| Admin — Feedback & Requests | ![Admin Feedback](screenshots/07-admin-feedback.png) |
+| Admin — Use Case Analytics | ![Admin Use Cases](screenshots/08-admin-usecases.png) |
 
 ---
 
