@@ -171,8 +171,10 @@ export class Storage {
     if (existsSync(paramsPath)) {
       const params = JSON.parse(readFileSync(paramsPath, "utf-8"));
       params.ProjectName = repoName;
-      params.PostgreSQLVersion = pgVersion;
-      params.DatabaseInstanceType = instanceType;
+      params.PostgreSQLVersion = pgVersion.includes(".") ? pgVersion : pgVersion + ".6";
+      // Aurora requires minimum db.t4g.medium
+      const auroraCompatible = instanceType.includes("micro") ? "db.t4g.medium" : instanceType;
+      params.DatabaseInstanceType = dbType === "Aurora" ? auroraCompatible : instanceType;
       writeFileSync(paramsPath, JSON.stringify(params, null, 2));
     }
 
