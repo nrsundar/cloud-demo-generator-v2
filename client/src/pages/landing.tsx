@@ -13,7 +13,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "../hooks/useAuth";
 
 const FEATURES = [
-  { title: "⚡ AI-Powered Generator", description: "Each repository is intelligently assembled based on your selected use case, complexity level, and deployment preferences — configured in seconds, not hours." },
+  { title: "⚡ Smart Generator", description: "Each repository is intelligently assembled based on your selected use case, complexity level, and deployment preferences — configured in seconds, not hours." },
   { title: "☁️ AWS Infrastructure", description: "Complete CloudFormation templates for Amazon RDS, Aurora, Lambda, ECS, and more — deploy to any AWS account with a single command." },
   { title: "🌐 Multi-Language", description: "Generated code in Python with idiomatic patterns, error handling, and comprehensive documentation. Additional languages coming soon." },
   { title: "📚 Learning Modules", description: "Structured learning paths with exercises, documentation, and hands-on examples tailored to different skill levels." },
