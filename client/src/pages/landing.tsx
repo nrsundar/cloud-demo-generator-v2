@@ -63,11 +63,11 @@ export default function LandingPage() {
       <SpaceBetween size="xl">
         {/* Stats bar */}
         <Container>
-          <ColumnLayout columns={4} variant="text-grid">
+          <ColumnLayout columns={4} variant="text-grid" minColumnWidth={120}>
             {STATS.map((s) => (
-              <div key={s.label}>
-                <Box variant="awsui-key-label">{s.label}</Box>
-                <Box variant="h1" fontSize="display-l" fontWeight="bold">{s.value}</Box>
+              <div key={s.label} style={{ textAlign: "center" }}>
+                <Box variant="awsui-key-label" fontSize="body-s">{s.label}</Box>
+                <Box variant="h2" fontSize="heading-l" fontWeight="bold">{s.value}</Box>
               </div>
             ))}
           </ColumnLayout>
