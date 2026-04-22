@@ -10,11 +10,13 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
 import Tabs from "@cloudscape-design/components/tabs";
 import Box from "@cloudscape-design/components/box";
+import ColumnLayout from "@cloudscape-design/components/column-layout";
+import Icon from "@cloudscape-design/components/icon";
 import { useAuth } from "../hooks/useAuth";
 import { useLocation } from "wouter";
 
 export default function AuthPage() {
-  const { login, register, confirm } = useAuth();
+  const { user, login, register, confirm } = useAuth();
   const [, navigate] = useLocation();
   const [tab, setTab] = useState("signin");
   const [email, setEmail] = useState("");
@@ -24,6 +26,12 @@ export default function AuthPage() {
   const [pendingEmail, setPendingEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [flash, setFlash] = useState<FlashbarProps.MessageDefinition[]>([]);
+
+  // Redirect if already logged in
+  if (user) {
+    navigate("/home");
+    return null;
+  }
 
   const showError = (msg: string) => setFlash([{ type: "error", content: msg, dismissible: true, onDismiss: () => setFlash([]) }]);
   const showSuccess = (msg: string) => setFlash([{ type: "success", content: msg, dismissible: true, onDismiss: () => setFlash([]) }]);
@@ -48,7 +56,7 @@ export default function AuthPage() {
       await register(email, password, name);
       setPendingEmail(email);
       setTab("confirm");
-      showSuccess("Account created. Check your email for a verification code.");
+      showSuccess("Account created! Check your email for a verification code.");
     } catch (e: any) {
       showError(e.message || "Sign up failed.");
     } finally {
@@ -71,11 +79,19 @@ export default function AuthPage() {
   };
 
   return (
-    <ContentLayout header={<Header variant="h1">Cloud Demo Generator v3</Header>}>
+    <ContentLayout
+      header={
+        <Header variant="h1" description="Sign in to generate and download cloud infrastructure demos.">
+          Welcome to Cloud Demo Generator
+        </Header>
+      }
+    >
       <SpaceBetween size="l">
         <Flashbar items={flash} />
-        <Box margin={{ left: "xxxl", right: "xxxl" }} padding={{ left: "xxxl", right: "xxxl" }}>
-          <Container header={<Header variant="h2">Authentication</Header>}>
+
+        <ColumnLayout columns={2}>
+          {/* Left: Auth form */}
+          <Container>
             <Tabs
               activeTabId={tab}
               onChange={({ detail }) => setTab(detail.activeTabId)}
@@ -84,57 +100,101 @@ export default function AuthPage() {
                   id: "signin",
                   label: "Sign In",
                   content: (
-                    <Form actions={<Button variant="primary" loading={loading} onClick={handleSignIn}>Sign In</Button>}>
-                      <SpaceBetween size="l">
-                        <FormField label="Email">
-                          <Input value={email} onChange={({ detail }) => setEmail(detail.value)} type="email" placeholder="you@example.com" />
-                        </FormField>
-                        <FormField label="Password">
-                          <Input value={password} onChange={({ detail }) => setPassword(detail.value)} type="password" />
-                        </FormField>
-                      </SpaceBetween>
-                    </Form>
+                    <SpaceBetween size="l">
+                      <Box padding={{ top: "s" }}>
+                        <Form actions={
+                          <SpaceBetween direction="horizontal" size="xs">
+                            <Button variant="primary" loading={loading} onClick={handleSignIn}>Sign In</Button>
+                            <Button variant="link" onClick={() => setTab("signup")}>Need an account?</Button>
+                          </SpaceBetween>
+                        }>
+                          <SpaceBetween size="l">
+                            <FormField label="Email">
+                              <Input value={email} onChange={({ detail }) => setEmail(detail.value)} type="email" placeholder="you@example.com" />
+                            </FormField>
+                            <FormField label="Password">
+                              <Input value={password} onChange={({ detail }) => setPassword(detail.value)} type="password" placeholder="Enter your password" />
+                            </FormField>
+                          </SpaceBetween>
+                        </Form>
+                      </Box>
+                    </SpaceBetween>
                   ),
                 },
                 {
                   id: "signup",
                   label: "Create Account",
                   content: (
-                    <Form actions={<Button variant="primary" loading={loading} onClick={handleSignUp}>Create Account</Button>}>
-                      <SpaceBetween size="l">
-                        <FormField label="Full Name">
-                          <Input value={name} onChange={({ detail }) => setName(detail.value)} placeholder="Your Name" />
-                        </FormField>
-                        <FormField label="Email">
-                          <Input value={email} onChange={({ detail }) => setEmail(detail.value)} type="email" placeholder="you@example.com" />
-                        </FormField>
-                        <FormField label="Password" description="Min 8 chars, uppercase, lowercase, number">
-                          <Input value={password} onChange={({ detail }) => setPassword(detail.value)} type="password" />
-                        </FormField>
-                      </SpaceBetween>
-                    </Form>
+                    <SpaceBetween size="l">
+                      <Box padding={{ top: "s" }}>
+                        <Form actions={
+                          <SpaceBetween direction="horizontal" size="xs">
+                            <Button variant="primary" loading={loading} onClick={handleSignUp}>Create Account</Button>
+                            <Button variant="link" onClick={() => setTab("signin")}>Already have an account?</Button>
+                          </SpaceBetween>
+                        }>
+                          <SpaceBetween size="l">
+                            <FormField label="Full Name">
+                              <Input value={name} onChange={({ detail }) => setName(detail.value)} placeholder="Your Name" />
+                            </FormField>
+                            <FormField label="Email">
+                              <Input value={email} onChange={({ detail }) => setEmail(detail.value)} type="email" placeholder="you@example.com" />
+                            </FormField>
+                            <FormField label="Password" description="Min 8 characters, uppercase, lowercase, and a number">
+                              <Input value={password} onChange={({ detail }) => setPassword(detail.value)} type="password" placeholder="Create a password" />
+                            </FormField>
+                          </SpaceBetween>
+                        </Form>
+                      </Box>
+                    </SpaceBetween>
                   ),
                 },
                 {
                   id: "confirm",
                   label: "Verify Email",
                   content: (
-                    <Form actions={<Button variant="primary" loading={loading} onClick={handleConfirm}>Verify</Button>}>
-                      <SpaceBetween size="l">
-                        <FormField label="Email">
-                          <Input value={pendingEmail || email} onChange={({ detail }) => setPendingEmail(detail.value)} type="email" />
-                        </FormField>
-                        <FormField label="Verification Code">
-                          <Input value={code} onChange={({ detail }) => setCode(detail.value)} placeholder="123456" />
-                        </FormField>
-                      </SpaceBetween>
-                    </Form>
+                    <SpaceBetween size="l">
+                      <Box padding={{ top: "s" }}>
+                        <Form actions={<Button variant="primary" loading={loading} onClick={handleConfirm}>Verify Email</Button>}>
+                          <SpaceBetween size="l">
+                            <FormField label="Email">
+                              <Input value={pendingEmail || email} onChange={({ detail }) => setPendingEmail(detail.value)} type="email" />
+                            </FormField>
+                            <FormField label="Verification Code" description="Check your email for the 6-digit code">
+                              <Input value={code} onChange={({ detail }) => setCode(detail.value)} placeholder="123456" />
+                            </FormField>
+                          </SpaceBetween>
+                        </Form>
+                      </Box>
+                    </SpaceBetween>
                   ),
                 },
               ]}
             />
           </Container>
-        </Box>
+
+          {/* Right: Benefits */}
+          <Container header={<Header variant="h2">Why Sign In?</Header>}>
+            <SpaceBetween size="m">
+              <Box>
+                <Box variant="h4">📦 Generate Demo Repositories</Box>
+                <Box color="text-body-secondary">Configure and download complete PostgreSQL demo packages with CloudFormation, application code, and learning modules.</Box>
+              </Box>
+              <Box>
+                <Box variant="h4">⚡ Deploy in Minutes</Box>
+                <Box color="text-body-secondary">Each demo includes a one-command CloudFormation deployment — Aurora PostgreSQL, VPC, bastion host, everything.</Box>
+              </Box>
+              <Box>
+                <Box variant="h4">🔧 3 Use Cases Available</Box>
+                <Box color="text-body-secondary">pgvector (hybrid search), PostGIS (geospatial), and pgRouting (transportation routing) — with more coming soon.</Box>
+              </Box>
+              <Box>
+                <Box variant="h4">📊 Admin Dashboard</Box>
+                <Box color="text-body-secondary">Track downloads, monitor generated repositories, and manage demo requests.</Box>
+              </Box>
+            </SpaceBetween>
+          </Container>
+        </ColumnLayout>
       </SpaceBetween>
     </ContentLayout>
   );
