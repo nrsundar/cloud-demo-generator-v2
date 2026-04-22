@@ -8,71 +8,35 @@ import Input from "@cloudscape-design/components/input";
 import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
-import Tabs from "@cloudscape-design/components/tabs";
 import Box from "@cloudscape-design/components/box";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
-import Icon from "@cloudscape-design/components/icon";
 import { useAuth } from "../hooks/useAuth";
 import { useLocation } from "wouter";
 
 export default function AuthPage() {
-  const { user, login, register, confirm } = useAuth();
+  const { user, login } = useAuth();
   const [, navigate] = useLocation();
-  const [tab, setTab] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [pendingEmail, setPendingEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [flash, setFlash] = useState<FlashbarProps.MessageDefinition[]>([]);
 
-  // Redirect if already logged in
   if (user) {
     navigate("/home");
     return null;
   }
 
-  const showError = (msg: string) => setFlash([{ type: "error", content: msg, dismissible: true, onDismiss: () => setFlash([]) }]);
-  const showSuccess = (msg: string) => setFlash([{ type: "success", content: msg, dismissible: true, onDismiss: () => setFlash([]) }]);
-
   const handleSignIn = async () => {
-    if (!email || !password) return showError("Email and password required.");
+    if (!email || !password) {
+      setFlash([{ type: "error", content: "Email and password required.", dismissible: true, onDismiss: () => setFlash([]) }]);
+      return;
+    }
     setLoading(true);
     try {
       await login(email, password);
       navigate("/home");
     } catch (e: any) {
-      showError(e.message || "Sign in failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignUp = async () => {
-    if (!email || !password || !name) return showError("All fields required.");
-    setLoading(true);
-    try {
-      await register(email, password, name);
-      setPendingEmail(email);
-      setTab("confirm");
-      showSuccess("Account created! Check your email for a verification code.");
-    } catch (e: any) {
-      showError(e.message || "Sign up failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirm = async () => {
-    if (!code) return showError("Verification code required.");
-    setLoading(true);
-    try {
-      await confirm(pendingEmail || email, code);
-      showSuccess("Email verified! You can now sign in.");
-      setTab("signin");
-    } catch (e: any) {
-      showError(e.message || "Verification failed.");
+      setFlash([{ type: "error", content: e.message || "Sign in failed.", dismissible: true, onDismiss: () => setFlash([]) }]);
     } finally {
       setLoading(false);
     }
@@ -88,92 +52,23 @@ export default function AuthPage() {
     >
       <SpaceBetween size="l">
         <Flashbar items={flash} />
-
         <ColumnLayout columns={2}>
-          {/* Left: Auth form */}
-          <Container>
-            <Tabs
-              activeTabId={tab}
-              onChange={({ detail }) => setTab(detail.activeTabId)}
-              tabs={[
-                {
-                  id: "signin",
-                  label: "Sign In",
-                  content: (
-                    <SpaceBetween size="l">
-                      <Box padding={{ top: "s" }}>
-                        <Form actions={
-                          <SpaceBetween direction="horizontal" size="xs">
-                            <Button variant="primary" loading={loading} onClick={handleSignIn}>Sign In</Button>
-                            <Button variant="link" onClick={() => setTab("signup")}>Need an account?</Button>
-                          </SpaceBetween>
-                        }>
-                          <SpaceBetween size="l">
-                            <FormField label="Email">
-                              <Input value={email} onChange={({ detail }) => setEmail(detail.value)} type="email" placeholder="you@example.com" />
-                            </FormField>
-                            <FormField label="Password">
-                              <Input value={password} onChange={({ detail }) => setPassword(detail.value)} type="password" placeholder="Enter your password" />
-                            </FormField>
-                          </SpaceBetween>
-                        </Form>
-                      </Box>
-                    </SpaceBetween>
-                  ),
-                },
-                {
-                  id: "signup",
-                  label: "Create Account",
-                  content: (
-                    <SpaceBetween size="l">
-                      <Box padding={{ top: "s" }}>
-                        <Form actions={
-                          <SpaceBetween direction="horizontal" size="xs">
-                            <Button variant="primary" loading={loading} onClick={handleSignUp}>Create Account</Button>
-                            <Button variant="link" onClick={() => setTab("signin")}>Already have an account?</Button>
-                          </SpaceBetween>
-                        }>
-                          <SpaceBetween size="l">
-                            <FormField label="Full Name">
-                              <Input value={name} onChange={({ detail }) => setName(detail.value)} placeholder="Your Name" />
-                            </FormField>
-                            <FormField label="Email">
-                              <Input value={email} onChange={({ detail }) => setEmail(detail.value)} type="email" placeholder="you@example.com" />
-                            </FormField>
-                            <FormField label="Password" description="Min 8 characters, uppercase, lowercase, and a number">
-                              <Input value={password} onChange={({ detail }) => setPassword(detail.value)} type="password" placeholder="Create a password" />
-                            </FormField>
-                          </SpaceBetween>
-                        </Form>
-                      </Box>
-                    </SpaceBetween>
-                  ),
-                },
-                {
-                  id: "confirm",
-                  label: "Verify Email",
-                  content: (
-                    <SpaceBetween size="l">
-                      <Box padding={{ top: "s" }}>
-                        <Form actions={<Button variant="primary" loading={loading} onClick={handleConfirm}>Verify Email</Button>}>
-                          <SpaceBetween size="l">
-                            <FormField label="Email">
-                              <Input value={pendingEmail || email} onChange={({ detail }) => setPendingEmail(detail.value)} type="email" />
-                            </FormField>
-                            <FormField label="Verification Code" description="Check your email for the 6-digit code">
-                              <Input value={code} onChange={({ detail }) => setCode(detail.value)} placeholder="123456" />
-                            </FormField>
-                          </SpaceBetween>
-                        </Form>
-                      </Box>
-                    </SpaceBetween>
-                  ),
-                },
-              ]}
-            />
+          <Container header={<Header variant="h2">Sign In</Header>}>
+            <Form actions={<Button variant="primary" loading={loading} onClick={handleSignIn}>Sign In</Button>}>
+              <SpaceBetween size="l">
+                <FormField label="Email">
+                  <Input value={email} onChange={({ detail }) => setEmail(detail.value)} type="email" placeholder="you@example.com" />
+                </FormField>
+                <FormField label="Password">
+                  <Input value={password} onChange={({ detail }) => setPassword(detail.value)} type="password" placeholder="Enter your password" />
+                </FormField>
+              </SpaceBetween>
+            </Form>
+            <Box padding={{ top: "s" }} color="text-body-secondary" fontSize="body-s">
+              Contact your administrator to request an account.
+            </Box>
           </Container>
 
-          {/* Right: Benefits */}
           <Container header={<Header variant="h2">Why Sign In?</Header>}>
             <SpaceBetween size="m">
               <Box>
@@ -187,10 +82,6 @@ export default function AuthPage() {
               <Box>
                 <Box variant="h4">🔧 3 Use Cases Available</Box>
                 <Box color="text-body-secondary">pgvector (hybrid search), PostGIS (geospatial), and pgRouting (transportation routing) — with more coming soon.</Box>
-              </Box>
-              <Box>
-                <Box variant="h4">📊 Admin Dashboard</Box>
-                <Box color="text-body-secondary">Track downloads, monitor generated repositories, and manage demo requests.</Box>
               </Box>
             </SpaceBetween>
           </Container>
