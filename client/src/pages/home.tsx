@@ -14,6 +14,7 @@ import Table from "@cloudscape-design/components/table";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
 import Box from "@cloudscape-design/components/box";
+import Modal from "@cloudscape-design/components/modal";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
 import { apiRequest } from "../lib/queryClient";
 import { useAuth } from "../hooks/useAuth";
@@ -116,9 +117,11 @@ export default function HomePage() {
     mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/repositories/${id}`); },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
-      setFlash([{ type: "success", content: "Demo deleted.", dismissible: true, onDismiss: () => setFlash([]) }]);
+      setFlash([{ type: "success", content: "Demo removed from your list.", dismissible: true, onDismiss: () => setFlash([]) }]);
     },
   });
+
+  const [cleanupModal, setCleanupModal] = useState<any>(null);
 
   const handleCreate = () => {
     if (!useCases.length) {
@@ -218,7 +221,7 @@ export default function HomePage() {
                 cell: (item: any) => (
                   <SpaceBetween direction="horizontal" size="xs">
                     <Button variant="primary" iconName="download" onClick={() => handleDownload(item.id)}>Download</Button>
-                    <Button variant="link" onClick={() => { if (confirm(`Delete "${item.name}"?`)) deleteMutation.mutate(item.id); }}>Delete</Button>
+                    <Button variant="link" onClick={() => setCleanupModal(item)}>Cleanup</Button>
                   </SpaceBetween>
                 ),
               },
@@ -248,7 +251,7 @@ export default function HomePage() {
               cell: (item: any) => (
                 <SpaceBetween direction="horizontal" size="xs">
                   <Button variant="inline-link" disabled={item.status !== "complete"} onClick={() => handleDownload(item.id)}>Download ZIP</Button>
-                  <Button variant="inline-link" onClick={() => { if (confirm(`Delete "${item.name}"?`)) deleteMutation.mutate(item.id); }}>Delete</Button>
+                  <Button variant="inline-link" onClick={() => setCleanupModal(item)}>Cleanup</Button>
                 </SpaceBetween>
               ),
             },
@@ -258,6 +261,26 @@ export default function HomePage() {
           loadingText="Loading repositories..."
           empty={<Box textAlign="center" padding="l">No repositories generated yet. Create one above or download from the AI Catalog.</Box>}
         />
+
+        {cleanupModal && (
+          <Modal visible={true} onDismiss={() => setCleanupModal(null)} header={`Cleanup: ${cleanupModal.name}`}
+            footer={<Box float="right"><SpaceBetween direction="horizontal" size="xs">
+              <Button variant="link" onClick={() => setCleanupModal(null)}>Close</Button>
+              <Button variant="primary" onClick={() => { deleteMutation.mutate(cleanupModal.id); setCleanupModal(null); }}>Remove from list</Button>
+            </SpaceBetween></Box>}>
+            <SpaceBetween size="m">
+              <Box>To delete the deployed stack from your AWS account, run:</Box>
+              <Box variant="code"><pre>{`aws cloudformation delete-stack \\
+  --stack-name ${cleanupModal.name} \\
+  --region ${cleanupModal.awsRegion || "us-east-2"}`}</pre></Box>
+              <Box>To verify deletion is complete:</Box>
+              <Box variant="code"><pre>{`aws cloudformation wait stack-delete-complete \\
+  --stack-name ${cleanupModal.name} \\
+  --region ${cleanupModal.awsRegion || "us-east-2"}`}</pre></Box>
+              <Box color="text-body-secondary">This will delete the Aurora cluster, VPC, and all associated resources. Click "Remove from list" to also remove it from this dashboard.</Box>
+            </SpaceBetween>
+          </Modal>
+        )}
       </SpaceBetween>
     </ContentLayout>
   );
