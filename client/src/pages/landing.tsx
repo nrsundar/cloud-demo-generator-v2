@@ -119,15 +119,15 @@ export default function LandingPage() {
           <ColumnLayout columns={3}>
             <Box>
               <Box variant="h3">🤖 AI-Powered Generation</Box>
-              <Box color="text-body-secondary">Describe what you need in plain English — our AI agent builds the full demo package for you</Box>
+              <Box color="text-body-secondary">Describe what you need in plain English — our AI agent builds a complete learning package for your customer engagement</Box>
             </Box>
             <Box>
               <Box variant="h3">🔌 Any PostgreSQL Extension</Box>
-              <Box color="text-body-secondary">pgvector, PostGIS, pgRouting, pg_cron, auto_explain, Apache AGE — or any extension you need</Box>
+              <Box color="text-body-secondary">pgvector, PostGIS, pgRouting, pg_cron, auto_explain, Apache AGE — or any extension your customer needs to evaluate</Box>
             </Box>
             <Box>
-              <Box variant="h3">📦 Production-Ready Output</Box>
-              <Box color="text-body-secondary">CloudFormation, app code, SQL schema, 10+ modules, demo scripts — ready to deploy and present</Box>
+              <Box variant="h3">📚 Hands-On Enablement</Box>
+              <Box color="text-body-secondary">Structured modules, working examples, and guided exercises — teach customers how to build with AWS databases, not just show them</Box>
             </Box>
           </ColumnLayout>
         </Container>
