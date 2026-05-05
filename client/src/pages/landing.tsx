@@ -31,9 +31,9 @@ const USE_CASES = [
 ];
 
 const STATS = [
-  { value: "3", label: "Use Cases" },
-  { value: "Python", label: "Language" },
-  { value: "< 2 min", label: "Generation Time" },
+  { value: "Any", label: "Extension" },
+  { value: "AI Agent", label: "Powered By" },
+  { value: "10+", label: "Modules/Demo" },
   { value: "1-Click", label: "AWS Deploy" },
 ];
 
