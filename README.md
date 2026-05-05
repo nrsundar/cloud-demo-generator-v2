@@ -37,12 +37,10 @@ Instead of spending a day building a pgvector demo, you spend two minutes config
 | Landing / feature overview | ![Landing](screenshots/01-landing.png) |
 | Authentication — Sign In | ![Auth Sign In](screenshots/02-auth-signin.png) |
 | Generator configuration | ![Generator](screenshots/03-generator.png) |
-| AI Demo Catalog — pre-built demos | ![AI Catalog](screenshots/09-ai-catalog.png) |
 | Request Demo — AI-powered form | ![Demo Request](screenshots/04-demo-request.png) |
-| My Requests — answer AI questions | ![My Requests](screenshots/10-my-requests.png) |
-| Admin — Demo Requests & Approval | ![Admin Requests](screenshots/11-admin-requests.png) |
-| Admin — Agent Actions | ![Admin Agents](screenshots/12-admin-agents.png) |
 | Admin — Overview & Repositories | ![Admin Overview](screenshots/05-admin-overview.png) |
+
+> **New screens (screenshots pending):** AI Demo Catalog, My Requests (clarifying questions), Admin Demo Requests (approve/reject), Admin Agent Actions (view plan/bulk approve)
 
 ---
 
