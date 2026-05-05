@@ -4,6 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import archiver from "archiver";
 import { PassThrough } from "stream";
+import { getSkillPromptContext } from "./skills/extensions";
 
 const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "us-east-2" });
 const MODEL_ID = "us.anthropic.claude-opus-4-6-v1";
@@ -23,6 +24,21 @@ async function invokeModel(prompt: string, systemPrompt: string): Promise<string
   const response = await client.send(command);
   const result = JSON.parse(new TextDecoder().decode(response.body));
   return result.content[0]?.text || "";
+}
+
+// Retry wrapper — retries up to 2 times if output is empty or contains markdown fences
+async function invokeWithRetry(prompt: string, systemPrompt: string, minLength = 100): Promise<string> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const result = await invokeModel(
+      attempt > 0 ? `${prompt}\n\nIMPORTANT: Your previous response was empty or malformed. Return ONLY the raw file content. No markdown fences. No explanations.` : prompt,
+      systemPrompt
+    );
+    // Strip markdown fences if present
+    const cleaned = result.replace(/^```(?:\w+)?\n?/m, "").replace(/\n?```\s*$/m, "").trim();
+    if (cleaned.length >= minLength) return cleaned;
+    console.warn(`⚠️ Attempt ${attempt + 1}: output too short (${cleaned.length} chars), retrying...`);
+  }
+  return "";
 }
 
 interface DemoSpec {
@@ -228,10 +244,19 @@ This demo was AI-generated. To contribute improvements:
 
     for (let i = 0; i < modules.length; i++) {
       const mod = modules[i];
-      const modDir = join(tmpDir, "modules", `module_${String(i + 1).padStart(2, "0")}`);
+      const modDir = join(tmpDir, "modules", `module_${String(i + 1).padStart(2, "0")}_${mod.name.replace(/\s+/g, "_").toLowerCase()}`);
       mkdirSync(modDir);
-      writeFileSync(join(modDir, "README.md"), `# ${mod.name}\n\n${mod.description}\n\n## Features\n${mod.features.map(f => `- ${f}`).join("\n")}\n`);
-      writeFileSync(join(modDir, "example.py"), `"""${mod.name} - ${mod.description}"""\nimport psycopg2\nimport os\n\ndef run():\n    conn = psycopg2.connect(os.environ["DATABASE_URL"])\n    cur = conn.cursor()\n    # ${mod.description}\n    cur.execute("SELECT 1")\n    print(f"Module ${mod.name} executed successfully")\n    conn.close()\n\nif __name__ == "__main__":\n    run()\n`);
+
+      // Generate real module content via Bedrock
+      const skillContext = getSkillPromptContext(spec.extension);
+      const moduleContent = await invokeWithRetry(
+        `Generate a Python example for module "${mod.name}" (${mod.description}) of a ${spec.extension} PostgreSQL demo. Features: ${mod.features.join(", ")}. Use psycopg2. Include real ${spec.extension} queries that demonstrate the feature.\n${skillContext}`,
+        "You are a senior Python developer. Return ONLY raw Python code. NO markdown fences. Include docstrings and comments explaining each step.",
+        50
+      );
+
+      writeFileSync(join(modDir, "README.md"), `# Module ${i + 1}: ${mod.name}\n\n${mod.description}\n\n## Features\n\n${mod.features.map(f => `- ${f}`).join("\n")}\n\n## Usage\n\n\`\`\`bash\npython example.py\n\`\`\`\n\n## What You'll Learn\n\nThis module teaches you how to use ${spec.extension} for ${mod.description.toLowerCase()}.\n`);
+      writeFileSync(join(modDir, "example.py"), moduleContent || `"""${mod.name} — ${mod.description}"""\nimport psycopg2\nimport os\n\ndef run():\n    conn = psycopg2.connect(os.environ["DATABASE_URL"])\n    cur = conn.cursor()\n    cur.execute("SELECT 1")\n    print("Module executed — replace with real queries")\n    conn.close()\n\nif __name__ == "__main__":\n    run()\n`);
     }
 
     // ── Eval: validate generated output ──
@@ -332,6 +357,36 @@ This demo was AI-generated. To contribute improvements:
       auditErrors.push(`Module count mismatch: spec has ${spec.modules.length}, generated ${modDirs.length}`);
     }
 
+    // Hallucination check: verify extension-specific content is present
+    const { getExtensionSkill } = require("./skills/extensions");
+    const skill = getExtensionSkill(spec.extension);
+    if (skill) {
+      // SQL should reference the extension
+      if (sqlContent && !sqlContent.toLowerCase().includes(skill.name.toLowerCase()) && !sqlContent.includes("CREATE EXTENSION")) {
+        auditErrors.push(`Hallucination: setup.sql doesn't reference ${skill.name} extension`);
+      }
+      // App.py should use extension-related patterns
+      const hasExtensionUsage = skill.validFunctions.some((fn: string) => appPyContent.toLowerCase().includes(fn.toLowerCase()));
+      if (appPyContent && !hasExtensionUsage && appPyContent.length > 200) {
+        auditErrors.push(`Hallucination: app.py doesn't use any ${skill.name} functions (${skill.validFunctions.slice(0, 3).join(", ")}...)`);
+      }
+    }
+
+    // Check for empty module content (the main issue reported)
+    let emptyModules = 0;
+    for (const m of modDirs) {
+      const exPath = join(tmpDir, "modules", m, "example.py");
+      if (existsSync(exPath)) {
+        const content = readFileSync(exPath, "utf-8");
+        if (content.length < 50 || content.includes('cur.execute("SELECT 1")')) {
+          emptyModules++;
+        }
+      }
+    }
+    if (emptyModules > 2) {
+      auditErrors.push(`Empty content: ${emptyModules}/${modDirs.length} modules have placeholder/empty code`);
+    }
+
     // Validate modules have content
     const modDirs = readdirSync(join(tmpDir, "modules"));
     if (modDirs.length < 3) auditErrors.push(`Only ${modDirs.length} modules generated (expected 10+)`);
@@ -385,27 +440,28 @@ This demo was AI-generated. To contribute improvements:
 
 async function generateAppPy(spec: DemoSpec): Promise<string> {
   const endpoints = spec.apiEndpoints?.map(e => `${e.method} ${e.path} - ${e.description}`).join("\n") || "GET /api/health - Health check";
-  const response = await invokeModel(
-    `Generate a Flask app.py for a PostgreSQL ${spec.extension} demo called "${spec.displayName}". Include these endpoints:\n${endpoints}\n\nMust include /api/health endpoint. Use psycopg2 and python-dotenv. Keep it production-ready but concise.`,
-    "You are a Python developer. Return ONLY the Python code, no markdown fences."
+  const skillContext = getSkillPromptContext(spec.extension);
+  return invokeWithRetry(
+    `Generate a Flask app.py for a PostgreSQL ${spec.extension} demo called "${spec.displayName}". Include these endpoints:\n${endpoints}\n\nMust include /api/health endpoint. Use psycopg2 and python-dotenv.\n${skillContext}`,
+    "You are a senior Python developer. Return ONLY raw Python code. NO markdown fences. NO explanations. The output will be written directly to app.py."
   );
-  return response.replace(/^```python\n?/, "").replace(/\n?```$/, "");
 }
 
 async function generateSetupSql(spec: DemoSpec): Promise<string> {
-  const response = await invokeModel(
-    `Generate PostgreSQL setup SQL for a ${spec.extension} demo called "${spec.name}". Data model: ${spec.dataModel || "Create appropriate tables for " + spec.displayName}. Enable the ${spec.extension} extension. Include CREATE EXTENSION, CREATE TABLE, and sample INSERT statements.`,
-    "You are a PostgreSQL expert. Return ONLY SQL, no markdown fences."
+  const skillContext = getSkillPromptContext(spec.extension);
+  return invokeWithRetry(
+    `Generate PostgreSQL setup SQL for a ${spec.extension} demo called "${spec.name}". Data model: ${spec.dataModel || "Create appropriate tables for " + spec.displayName}. Include CREATE EXTENSION, CREATE TABLE with proper types, and INSERT sample data (at least 20 rows).\n${skillContext}`,
+    "You are a PostgreSQL expert. Return ONLY raw SQL. NO markdown fences. NO explanations. The output will be written directly to setup.sql."
   );
-  return response.replace(/^```sql\n?/, "").replace(/\n?```$/, "");
 }
 
 async function generateCfnTemplate(spec: DemoSpec): Promise<string> {
-  const response = await invokeModel(
-    `Generate an AWS CloudFormation YAML template for deploying a PostgreSQL demo with ${spec.extension}. Include: VPC (public+private subnets), Aurora PostgreSQL cluster (private, encrypted, ${spec.extension} extension), Bastion host (SSM AMI via AWS::SSM::Parameter::Value), Security Groups. Use NoEcho for password parameter. ${spec.cloudformationNotes || ""}`,
-    "You are a CloudFormation expert. Return ONLY valid YAML, no markdown fences. Use db.t4g.medium minimum for Aurora."
+  const skillContext = getSkillPromptContext(spec.extension);
+  const sharedLibs = skillContext.includes("shared_preload_libraries") ? `Ensure shared_preload_libraries includes ${spec.extension}.` : "";
+  return invokeWithRetry(
+    `Generate an AWS CloudFormation YAML template for deploying a PostgreSQL demo with ${spec.extension}. Include: VPC (2 AZs, public+private subnets), Aurora PostgreSQL 16 cluster (private, encrypted), Bastion host (Amazon Linux 2023, SSM), Security Groups (bastion→aurora only). Use NoEcho for password. ${sharedLibs} ${spec.cloudformationNotes || ""}`,
+    "You are a CloudFormation expert. Return ONLY valid YAML starting with AWSTemplateFormatVersion. NO markdown fences. NO explanations."
   );
-  return response.replace(/^```yaml\n?/, "").replace(/\n?```$/, "");
 }
 
 async function generateReadme(spec: DemoSpec): Promise<string> {
