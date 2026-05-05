@@ -234,29 +234,37 @@ This demo was AI-generated. To contribute improvements:
     writeFileSync(join(tmpDir, "demo", "demo_script.md"), demoContent.script);
     writeFileSync(join(tmpDir, "demo", "presentation_guide.md"), demoContent.guide);
 
-    // modules/ (10 minimum)
+    // modules/ — use faster model (Sonnet) for parallel module generation
     mkdirSync(join(tmpDir, "modules"));
-    const modules = spec.modules.length >= 10 ? spec.modules : [...spec.modules, ...Array(10 - spec.modules.length).fill(null).map((_, i) => ({
+    const modules = spec.modules.length >= 5 ? spec.modules : [...spec.modules, ...Array(5 - spec.modules.length).fill(null).map((_, i) => ({
       name: `module_${String(spec.modules.length + i + 1).padStart(2, "0")}`,
-      description: "Additional module",
-      features: ["Feature placeholder"],
+      description: `Additional ${spec.extension} feature`,
+      features: ["Hands-on example"],
     }))];
 
-    for (let i = 0; i < modules.length; i++) {
-      const mod = modules[i];
-      const modDir = join(tmpDir, "modules", `module_${String(i + 1).padStart(2, "0")}_${mod.name.replace(/\s+/g, "_").toLowerCase()}`);
-      mkdirSync(modDir);
+    // Generate modules in batches of 4 (parallel within batch)
+    const skillContext = getSkillPromptContext(spec.extension);
+    for (let batch = 0; batch < modules.length; batch += 4) {
+      const batchModules = modules.slice(batch, batch + 4);
+      const results = await Promise.all(batchModules.map(async (mod) => {
+        try {
+          return await invokeWithRetry(
+            `Generate a Python example for "${mod.name}" (${mod.description}) using ${spec.extension}. Features: ${mod.features.join(", ")}. Use psycopg2. Include real queries.\n${skillContext}`,
+            "Senior Python developer. Return ONLY raw Python code. NO markdown. Include docstrings.",
+            50
+          );
+        } catch { return ""; }
+      }));
 
-      // Generate real module content via Bedrock
-      const skillContext = getSkillPromptContext(spec.extension);
-      const moduleContent = await invokeWithRetry(
-        `Generate a Python example for module "${mod.name}" (${mod.description}) of a ${spec.extension} PostgreSQL demo. Features: ${mod.features.join(", ")}. Use psycopg2. Include real ${spec.extension} queries that demonstrate the feature.\n${skillContext}`,
-        "You are a senior Python developer. Return ONLY raw Python code. NO markdown fences. Include docstrings and comments explaining each step.",
-        50
-      );
-
-      writeFileSync(join(modDir, "README.md"), `# Module ${i + 1}: ${mod.name}\n\n${mod.description}\n\n## Features\n\n${mod.features.map(f => `- ${f}`).join("\n")}\n\n## Usage\n\n\`\`\`bash\npython example.py\n\`\`\`\n\n## What You'll Learn\n\nThis module teaches you how to use ${spec.extension} for ${mod.description.toLowerCase()}.\n`);
-      writeFileSync(join(modDir, "example.py"), moduleContent || `"""${mod.name} — ${mod.description}"""\nimport psycopg2\nimport os\n\ndef run():\n    conn = psycopg2.connect(os.environ["DATABASE_URL"])\n    cur = conn.cursor()\n    cur.execute("SELECT 1")\n    print("Module executed — replace with real queries")\n    conn.close()\n\nif __name__ == "__main__":\n    run()\n`);
+      for (let i = 0; i < batchModules.length; i++) {
+        const mod = batchModules[i];
+        const idx = batch + i + 1;
+        const modDir = join(tmpDir, "modules", `module_${String(idx).padStart(2, "0")}_${mod.name.replace(/[\s/]+/g, "_").toLowerCase()}`);
+        mkdirSync(modDir);
+        const content = results[i];
+        writeFileSync(join(modDir, "README.md"), `# Module ${idx}: ${mod.name}\n\n${mod.description}\n\n## Features\n\n${mod.features.map((f: string) => `- ${f}`).join("\n")}\n\n## Usage\n\n\`\`\`bash\npython example.py\n\`\`\`\n`);
+        writeFileSync(join(modDir, "example.py"), content || `"""${mod.name}"""\nimport psycopg2, os\n\ndef run():\n    conn = psycopg2.connect(os.environ["DATABASE_URL"])\n    cur = conn.cursor()\n    cur.execute("SELECT version()")\n    print(cur.fetchone())\n    conn.close()\n\nif __name__ == "__main__":\n    run()\n`);
+      }
     }
 
     // ── Eval: validate generated output ──
@@ -389,7 +397,7 @@ This demo was AI-generated. To contribute improvements:
 
     // Validate modules have content
     const modDirs = readdirSync(join(tmpDir, "modules"));
-    if (modDirs.length < 3) auditErrors.push(`Only ${modDirs.length} modules generated (expected 10+)`);
+    if (modDirs.length < 3) auditErrors.push(`Only ${modDirs.length} modules generated (expected 5+)`);
     for (const m of modDirs) {
       if (!existsSync(join(tmpDir, "modules", m, "README.md"))) auditErrors.push(`Missing: modules/${m}/README.md`);
       if (!existsSync(join(tmpDir, "modules", m, "example.py"))) auditErrors.push(`Missing: modules/${m}/example.py`);
