@@ -36,12 +36,13 @@ Instead of spending a day building a pgvector demo, you spend two minutes config
 |------|------------|
 | Landing / feature overview | ![Landing](screenshots/01-landing.png) |
 | Authentication — Sign In | ![Auth Sign In](screenshots/02-auth-signin.png) |
-| Authentication — Create Account | ![Auth Sign Up](screenshots/06-auth-signup.png) |
 | Generator configuration | ![Generator](screenshots/03-generator.png) |
-| Custom demo request | ![Demo Request](screenshots/04-demo-request.png) |
+| AI Demo Catalog — pre-built demos | ![AI Catalog](screenshots/09-ai-catalog.png) |
+| Request Demo — AI-powered form | ![Demo Request](screenshots/04-demo-request.png) |
+| My Requests — answer AI questions | ![My Requests](screenshots/10-my-requests.png) |
+| Admin — Demo Requests & Approval | ![Admin Requests](screenshots/11-admin-requests.png) |
+| Admin — Agent Actions | ![Admin Agents](screenshots/12-admin-agents.png) |
 | Admin — Overview & Repositories | ![Admin Overview](screenshots/05-admin-overview.png) |
-| Admin — Feedback & Requests | ![Admin Feedback](screenshots/07-admin-feedback.png) |
-| Admin — Use Case Analytics | ![Admin Use Cases](screenshots/08-admin-usecases.png) |
 
 ---
 
@@ -77,10 +78,36 @@ Each ZIP contains: CloudFormation templates, Python application code, database s
 
 ![Architecture](screenshots/architecture.png)
 
+### AI Agent System (New in v3.1)
+
+Two self-evolving AI agents powered by **Claude Opus 4.6 on Amazon Bedrock**:
+
+| Agent | Purpose | Trigger |
+|-------|---------|---------|
+| **New Demo Agent** | Generates complete demo templates from natural language requests | User submits request |
+| **Bug Fix Agent** | Reads CloudWatch logs, identifies errors, proposes fixes | Scheduled (daily) or manual |
+
+**How the New Demo Agent works:**
+
+```
+1. User submits request    →  "I need a pgvector fraud detection demo"
+2. AI generates questions  →  5 clarifying questions (audience, scale, features)
+3. User answers            →  Responses guide the spec generation
+4. AI generates spec       →  Full demo specification (modules, endpoints, schema)
+5. Admin approves          →  Single click or bulk approve
+6. AI generates template   →  Complete ZIP: app.py, CloudFormation, SQL, 10+ modules, docs
+7. User downloads          →  Ready to import into GitHub/GitLab and deploy
+```
+
+**Human-in-the-loop:** Agents propose → Admin approves → Agent executes. No autonomous deployments.
+
+**Duplicate detection:** If a matching demo already exists in the catalog, users are redirected to download it instead of regenerating.
+
 ### AWS Services
 
 | Service | Purpose |
 |---------|---------|
+| **Amazon Bedrock** | AI agent backbone (Claude Opus 4.6 for spec + template generation) |
 | **Amazon Cognito** | User authentication (email/password with SRP) |
 | **Amazon ECS Fargate** | Containerized app hosting (no EC2 instances) |
 | **Amazon RDS PostgreSQL 16** | Application database (private subnet, encrypted) |
@@ -166,6 +193,7 @@ The generator is designed to be forked and extended. Any team can add demos for 
 |-------|-----------|
 | **Frontend** | React 18, [Cloudscape Design System](https://cloudscape.design), TanStack Query, Wouter |
 | **Backend** | Node.js 18, Express.js, Drizzle ORM, Zod, Archiver |
+| **AI** | Amazon Bedrock (Claude Opus 4.6) — spec generation, template creation, bug analysis |
 | **Database** | PostgreSQL 16 (Amazon RDS) |
 | **Auth** | Amazon Cognito (SRP) |
 | **Infrastructure** | CloudFormation, ECS Fargate, ALB, VPC, ECR |
@@ -182,10 +210,14 @@ cloud-demo-generator-v3/
 │       ├── components/AppLayout.tsx # AWS Console shell (TopNav + SideNav)
 │       ├── hooks/useAuth.tsx        # Cognito auth context
 │       ├── lib/auth.ts              # Cognito client SDK wrapper
-│       └── pages/                   # Landing, Auth, Generator, Admin, Demo Request
+│       └── pages/                   # Landing, Auth, Generator, Admin, Demo Request, My Requests
 ├── server/                         # Backend (Express)
 │   ├── production.ts               # Production entry point
 │   ├── routes.ts                   # REST API (repos, feedback, analytics)
+│   ├── agentRoutes.ts              # Agent system API (demo requests, approvals)
+│   ├── agent.ts                    # Bedrock integration (questions + spec generation)
+│   ├── templateGenerator.ts        # Full template generation from spec (Bedrock)
+│   ├── bugFixAgent.ts              # Bug Fix Agent (reads logs, proposes fixes)
 │   ├── storage.ts                  # DB queries + ZIP generation engine
 │   └── db.ts                       # PostgreSQL connection (Drizzle)
 ├── shared/schema.ts                # Database schema (Drizzle ORM)
@@ -205,8 +237,17 @@ cloud-demo-generator-v3/
 | `POST` | `/api/repositories` | Create and generate a new demo repository |
 | `GET` | `/api/repositories` | List all generated repositories |
 | `GET` | `/api/repositories/:id/zip` | Download a repository as ZIP |
-| `POST` | `/api/feedback` | Submit a custom demo request |
-| `GET` | `/api/analytics/stats` | Usage analytics (downloads, users, popular use cases) |
+| `DELETE` | `/api/repositories/:id` | Remove a repository |
+| `POST` | `/api/demo-requests` | Submit AI-powered demo request |
+| `GET` | `/api/demo-requests` | List user's own requests |
+| `POST` | `/api/demo-requests/:id/answers` | Answer clarifying questions |
+| `GET` | `/api/demo-requests/:id/download` | Download generated template |
+| `GET` | `/api/admin/demo-requests` | Admin: list all requests |
+| `POST` | `/api/admin/demo-requests/:id/approve` | Admin: approve (triggers generation) |
+| `POST` | `/api/admin/demo-requests/:id/reject` | Admin: reject request |
+| `POST` | `/api/admin/bulk-approve` | Admin: bulk approve requests |
+| `GET` | `/api/admin/agent-actions` | Admin: list agent proposals |
+| `POST` | `/api/admin/run-bug-fix-agent` | Admin: trigger bug fix scan |
 
 ---
 
@@ -249,6 +290,7 @@ This project has evolved through three generations, each deepening the AI-toolin
 | **V1** | 2024 | Replit Agent (Claude) | Original prototype — [database-demo-generator](https://github.com/nrsundar/database-demo-generator) |
 | **V2** | 2025 | Kiro CLI (Claude Opus) | TypeScript rewrite, Drizzle ORM, Firebase Auth, shadcn/ui, Render deployment |
 | **V3** | 2026 | Kiro in AgentSpaces | AWS-native: Cloudscape UI, Cognito, ECS Fargate, RDS, CloudFormation. Entire build — code, infra, deployment, docs — done through AI conversation |
+| **V3.1** | 2026 | Kiro + Bedrock Opus 4.6 | Self-evolving agent system: AI generates demos from natural language, human-in-the-loop approval, bug fix agent, duplicate detection |
 
 ---
 
