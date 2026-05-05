@@ -14,6 +14,7 @@ import Alert from "@cloudscape-design/components/alert";
 import Button from "@cloudscape-design/components/button";
 import Modal from "@cloudscape-design/components/modal";
 import Textarea from "@cloudscape-design/components/textarea";
+import FormField from "@cloudscape-design/components/form-field";
 import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
 import { apiRequest } from "../lib/queryClient";
 import { useAuth } from "../hooks/useAuth";
@@ -26,6 +27,8 @@ export default function AdminPage() {
   const [flash, setFlash] = useState<FlashbarProps.MessageDefinition[]>([]);
   const [specModal, setSpecModal] = useState<any>(null);
   const [rejectModal, setRejectModal] = useState<any>(null);
+  const [questionsModal, setQuestionsModal] = useState<any>(null);
+  const [adminAnswers, setAdminAnswers] = useState<Record<string, string>>({});
   const [rejectNotes, setRejectNotes] = useState("");
   const [selectedRequestIds, setSelectedRequestIds] = useState<number[]>([]);
   const [selectedActionIds, setSelectedActionIds] = useState<number[]>([]);
@@ -68,6 +71,20 @@ export default function AdminPage() {
       setFlash([{ type: "success", content: "Request approved.", dismissible: true, onDismiss: () => setFlash([]) }]);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] });
+    },
+  });
+
+  const adminAnswerMutation = useMutation({
+    mutationFn: async ({ id, answers }: { id: number; answers: Record<string, string> }) => {
+      await apiRequest("POST", `/api/demo-requests/${id}/answers`, { answers });
+    },
+    onSuccess: () => {
+      setFlash([{ type: "success", content: "Answers submitted. AI is generating the spec...", dismissible: true, onDismiss: () => setFlash([]) }]);
+      setQuestionsModal(null); setAdminAnswers({});
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
+    },
+    onError: (err: any) => {
+      setFlash([{ type: "error", content: `Failed: ${err.message}`, dismissible: true, onDismiss: () => setFlash([]) }]);
     },
   });
 
@@ -162,6 +179,7 @@ export default function AdminPage() {
                   { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
                   { id: "actions", header: "Actions", cell: (item: any) => (
                     <SpaceBetween direction="horizontal" size="xs">
+                      {item.status === "clarifying" && <Button onClick={() => { setQuestionsModal(item); setAdminAnswers({}); }}>Answer Questions</Button>}
                       {item.spec && <Button variant="link" onClick={() => setSpecModal(item)}>View Spec</Button>}
                       {item.status === "spec_ready" && (
                         <>
@@ -200,12 +218,19 @@ export default function AdminPage() {
                 columnDefinitions={[
                   { id: "type", header: "Agent", cell: (item: any) => <Badge>{item.agentType}</Badge> },
                   { id: "trigger", header: "Trigger", cell: (item: any) => item.triggerSource || "—" },
+                  { id: "detail", header: "Details", cell: (item: any) => {
+                    const plan = item.proposedPlan || {};
+                    if (item.agentType === "new_demo") return plan.name || plan.displayName || plan.title || "Demo spec";
+                    if (item.agentType === "bug_fix") return plan.title || plan.rootCause || "Fix proposal";
+                    return "—";
+                  }},
                   { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status) },
                   { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
                   { id: "actions", header: "Actions", cell: (item: any) => (
-                    item.status === "proposed"
-                      ? <Button variant="primary" onClick={() => approveActionMutation.mutate(item.id)}>Approve</Button>
-                      : null
+                    <SpaceBetween direction="horizontal" size="xs">
+                      {item.proposedPlan && <Button variant="link" onClick={() => setSpecModal({ title: `Action #${item.id}`, spec: item.proposedPlan })}>View Plan</Button>}
+                      {item.status === "proposed" && <Button variant="primary" onClick={() => approveActionMutation.mutate(item.id)}>Approve</Button>}
+                    </SpaceBetween>
                   )},
                 ]}
                 items={agentActions ?? []}
@@ -266,6 +291,28 @@ export default function AdminPage() {
         {specModal && (
           <Modal visible={true} onDismiss={() => setSpecModal(null)} header={`Spec: ${specModal.title}`} size="large">
             <Box variant="code"><pre style={{ whiteSpace: "pre-wrap", maxHeight: "60vh", overflow: "auto" }}>{JSON.stringify(specModal.spec, null, 2)}</pre></Box>
+          </Modal>
+        )}
+
+        {/* Questions Modal — admin answers on behalf of requester */}
+        {questionsModal && (
+          <Modal visible={true} onDismiss={() => setQuestionsModal(null)}
+            header={`Clarifying Questions — ${questionsModal.title}`}
+            footer={<Box float="right"><SpaceBetween direction="horizontal" size="xs">
+              <Button variant="link" onClick={() => setQuestionsModal(null)}>Cancel</Button>
+              <Button variant="primary" loading={adminAnswerMutation.isPending}
+                onClick={() => adminAnswerMutation.mutate({ id: questionsModal.id, answers: adminAnswers })}>
+                Submit Answers
+              </Button>
+            </SpaceBetween></Box>}>
+            <SpaceBetween size="l">
+              <Alert type="info">Answering on behalf of {questionsModal.requesterEmail}</Alert>
+              {questionsModal.clarifyingQuestions?.map((q: string, i: number) => (
+                <FormField key={i} label={q}>
+                  <Textarea value={adminAnswers[q] || ""} onChange={({ detail }) => setAdminAnswers(prev => ({ ...prev, [q]: detail.value }))} rows={2} />
+                </FormField>
+              ))}
+            </SpaceBetween>
           </Modal>
         )}
 
