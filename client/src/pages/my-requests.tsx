@@ -46,7 +46,7 @@ export default function MyRequestsPage() {
       return res.json();
     },
     onSuccess: () => {
-      setFlash([{ type: "success", content: "Answers submitted! AI is generating the demo spec. An admin will review it.", dismissible: true, onDismiss: () => setFlash([]) }]);
+      setFlash([{ type: "success", content: "✅ Answers submitted! AI is building your demo spec in the background. Check back in ~1 minute — you'll receive an email when it's ready.", dismissible: true, onDismiss: () => setFlash([]) }]);
       setSelectedRequest(null);
       setAnswers({});
       queryClient.invalidateQueries({ queryKey: ["/api/demo-requests"] });

@@ -68,43 +68,46 @@ export function registerAgentRoutes(app: Express) {
     const [request] = await db.select().from(demoRequests).where(eq(demoRequests.id, id));
     if (!request) return res.status(404).json({ error: "Not found" });
 
-    // Save answers and generate spec
+    // Save answers and respond immediately
     await db.update(demoRequests)
       .set({ clarifyingAnswers: answers, status: "generating_spec", updatedAt: new Date() })
       .where(eq(demoRequests.id, id));
 
-    try {
-      const spec = await generateDemoSpec({
-        title: request.title,
-        description: request.description,
-        targetExtension: request.targetExtension ?? undefined,
-        customerIndustry: request.customerIndustry ?? undefined,
-        complexity: request.complexity ?? undefined,
-        clarifyingAnswers: answers,
-      });
+    res.json({ status: "generating_spec", message: "Answers received. AI is generating the demo spec — you'll see it in the dashboard shortly." });
 
-      await db.update(demoRequests)
-        .set({ spec, status: "spec_ready", updatedAt: new Date() })
-        .where(eq(demoRequests.id, id));
+    // Generate spec in background
+    (async () => {
+      try {
+        const spec = await generateDemoSpec({
+          title: request.title,
+          description: request.description,
+          targetExtension: request.targetExtension ?? undefined,
+          customerIndustry: request.customerIndustry ?? undefined,
+          complexity: request.complexity ?? undefined,
+          clarifyingAnswers: answers,
+        });
 
-      // Create agent action for admin review
-      await db.insert(agentActions).values({
-        agentType: "new_demo",
-        triggerSource: "user_request",
-        requestId: id,
-        inputData: { title: request.title, answers },
-        proposedPlan: spec,
-        status: "proposed",
-      });
+        await db.update(demoRequests)
+          .set({ spec, status: "spec_ready", updatedAt: new Date() })
+          .where(eq(demoRequests.id, id));
 
-      res.json({ status: "spec_ready", spec });
-    } catch (err: any) {
-      console.error("Spec generation failed:", err);
-      await db.update(demoRequests)
-        .set({ status: "clarifying", updatedAt: new Date() })
-        .where(eq(demoRequests.id, id));
-      res.status(500).json({ error: "Spec generation failed. Please try again." });
-    }
+        await db.insert(agentActions).values({
+          agentType: "new_demo",
+          triggerSource: "user_request",
+          requestId: id,
+          inputData: { title: request.title, answers },
+          proposedPlan: spec,
+          status: "proposed",
+        });
+
+        console.log(`✅ Spec generated for request ${id}`);
+      } catch (err: any) {
+        console.error(`❌ Spec generation failed for request ${id}:`, err);
+        await db.update(demoRequests)
+          .set({ status: "clarifying", updatedAt: new Date() })
+          .where(eq(demoRequests.id, id));
+      }
+    })();
   });
 
   app.get("/api/demo-requests/:id/download", requireAuth, async (req, res) => {

@@ -76,10 +76,11 @@ export default function AdminPage() {
 
   const adminAnswerMutation = useMutation({
     mutationFn: async ({ id, answers }: { id: number; answers: Record<string, string> }) => {
-      await apiRequest("POST", `/api/demo-requests/${id}/answers`, { answers });
+      const res = await apiRequest("POST", `/api/demo-requests/${id}/answers`, { answers });
+      return res.json();
     },
     onSuccess: () => {
-      setFlash([{ type: "success", content: "Answers submitted. AI is generating the spec...", dismissible: true, onDismiss: () => setFlash([]) }]);
+      setFlash([{ type: "success", content: "✅ Answers submitted. AI is generating the demo spec in the background — check back in ~1 minute. You'll receive an email when it's ready for approval.", dismissible: true, onDismiss: () => setFlash([]) }]);
       setQuestionsModal(null); setAdminAnswers({});
       queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
     },
