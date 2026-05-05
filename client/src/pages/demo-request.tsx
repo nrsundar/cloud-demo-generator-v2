@@ -6,6 +6,7 @@ import Form from "@cloudscape-design/components/form";
 import FormField from "@cloudscape-design/components/form-field";
 import Input from "@cloudscape-design/components/input";
 import Textarea from "@cloudscape-design/components/textarea";
+import Autosuggest from "@cloudscape-design/components/autosuggest";
 import Select from "@cloudscape-design/components/select";
 import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
@@ -16,12 +17,18 @@ import { useAuth } from "../hooks/useAuth";
 import { useLocation } from "wouter";
 
 const EXTENSIONS = [
-  { label: "pgvector — AI/ML vector similarity search", value: "pgvector" },
-  { label: "PostGIS — Geospatial data and queries", value: "postgis" },
-  { label: "pgRouting — Network routing and graph analysis", value: "pgrouting" },
-  { label: "pg_cron — Job scheduling", value: "pg_cron" },
-  { label: "pg_partman — Partition management", value: "pg_partman" },
-  { label: "Other (describe below)", value: "other" },
+  { value: "pgvector" },
+  { value: "postgis" },
+  { value: "pgrouting" },
+  { value: "pg_cron" },
+  { value: "pg_partman" },
+  { value: "pg_trgm" },
+  { value: "auto_explain" },
+  { value: "pg_stat_statements" },
+  { value: "hstore" },
+  { value: "ltree" },
+  { value: "apache_age" },
+  { value: "timescaledb" },
 ];
 
 const INDUSTRIES = [
@@ -45,7 +52,7 @@ export default function DemoRequestPage() {
   const [, navigate] = useLocation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [extension, setExtension] = useState<any>(null);
+  const [extension, setExtension] = useState("");
   const [industry, setIndustry] = useState<any>(null);
   const [complexity, setComplexity] = useState<any>(null);
   const [flash, setFlash] = useState<FlashbarProps.MessageDefinition[]>([]);
@@ -56,7 +63,7 @@ export default function DemoRequestPage() {
         requesterEmail: user?.email || "",
         title,
         description,
-        targetExtension: extension?.value,
+        targetExtension: extension || undefined,
         customerIndustry: industry?.value,
         complexity: complexity?.value,
       });
@@ -72,7 +79,7 @@ export default function DemoRequestPage() {
         onDismiss: () => setFlash([]),
         action: <Button onClick={() => navigate("/my-requests")}>View My Requests</Button>,
       }]);
-      setTitle(""); setDescription(""); setExtension(null); setIndustry(null); setComplexity(null);
+      setTitle(""); setDescription(""); setExtension(""); setIndustry(null); setComplexity(null);
     },
     onError: (err: any) => {
       setFlash([{ type: "error", content: err.message || "Submission failed.", dismissible: true, onDismiss: () => setFlash([]) }]);
@@ -113,15 +120,15 @@ export default function DemoRequestPage() {
                   <Textarea value={description} onChange={({ detail }) => setDescription(detail.value)} rows={4}
                     placeholder="e.g., Need a demo showing how pgvector can be used for real-time fraud detection in financial transactions. Target audience is technical decision makers at banks..." />
                 </FormField>
-                <FormField label="Primary PostgreSQL Extension">
-                  <Select selectedOption={extension} onChange={({ detail }) => setExtension(detail.selectedOption)}
-                    options={EXTENSIONS} placeholder="Select extension" />
+                <FormField label="PostgreSQL Extension" description="Type any extension name or pick from suggestions (optional)">
+                  <Autosuggest value={extension} onChange={({ detail }) => setExtension(detail.value)}
+                    options={EXTENSIONS} placeholder="e.g., auto_explain, pgvector, postgis" enteredTextLabel={v => `Use: "${v}"`} empty="Type any extension name" />
                 </FormField>
-                <FormField label="Customer Industry">
+                <FormField label="Customer Industry" description="Optional">
                   <Select selectedOption={industry} onChange={({ detail }) => setIndustry(detail.selectedOption)}
                     options={INDUSTRIES} placeholder="Select industry" />
                 </FormField>
-                <FormField label="Complexity Level">
+                <FormField label="Complexity Level" description="Optional">
                   <Select selectedOption={complexity} onChange={({ detail }) => setComplexity(detail.selectedOption)}
                     options={COMPLEXITY} placeholder="Select complexity" />
                 </FormField>
