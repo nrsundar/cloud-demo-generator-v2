@@ -4,6 +4,10 @@ import { db } from "./db";
 import { demoRequests, agentActions, insertDemoRequestSchema } from "@shared/schema";
 import { requireAuth, requireAdmin } from "./auth";
 import { generateClarifyingQuestions, generateDemoSpec } from "./agent";
+import { generateDemoTemplate } from "./templateGenerator";
+
+// In-memory cache for generated ZIPs (cleared on restart, fine for this use case)
+const generatedZips = new Map<number, Buffer>();
 
 export function registerAgentRoutes(app: Express) {
   // ── User endpoints ──
@@ -102,6 +106,20 @@ export function registerAgentRoutes(app: Express) {
     }
   });
 
+  app.get("/api/demo-requests/:id/download", requireAuth, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const [request] = await db.select().from(demoRequests).where(eq(demoRequests.id, id));
+    if (!request) return res.status(404).json({ error: "Not found" });
+    if (request.status !== "complete") return res.status(400).json({ error: "Template not ready" });
+
+    const zip = generatedZips.get(id);
+    if (!zip) return res.status(404).json({ error: "ZIP not available (server may have restarted). Request re-generation." });
+
+    const name = (request.spec as any)?.name || `demo-${id}`;
+    res.set({ "Content-Type": "application/zip", "Content-Disposition": `attachment; filename=${name}.zip` });
+    res.send(zip);
+  });
+
   // ── Admin endpoints ──
 
   app.get("/api/admin/demo-requests", requireAuth, requireAdmin, async (_req, res) => {
@@ -122,6 +140,37 @@ export function registerAgentRoutes(app: Express) {
       .where(eq(agentActions.requestId, id));
 
     res.json({ success: true });
+
+    // Trigger template generation in background
+    (async () => {
+      try {
+        const [request] = await db.select().from(demoRequests).where(eq(demoRequests.id, id));
+        if (!request?.spec) return;
+
+        await db.update(demoRequests)
+          .set({ status: "generating", updatedAt: new Date() })
+          .where(eq(demoRequests.id, id));
+
+        const zipBuffer = await generateDemoTemplate(request.spec as any);
+        generatedZips.set(id, zipBuffer);
+
+        // Store the generated ZIP as base64 in execution result
+        await db.update(agentActions)
+          .set({ status: "complete", executionResult: { zipSize: zipBuffer.length, generatedAt: new Date().toISOString() }, updatedAt: new Date() })
+          .where(eq(agentActions.requestId, id));
+
+        await db.update(demoRequests)
+          .set({ status: "complete", updatedAt: new Date() })
+          .where(eq(demoRequests.id, id));
+
+        console.log(`✅ Template generated for request ${id} (${zipBuffer.length} bytes)`);
+      } catch (err) {
+        console.error(`❌ Template generation failed for request ${id}:`, err);
+        await db.update(demoRequests)
+          .set({ status: "approved", updatedAt: new Date() })
+          .where(eq(demoRequests.id, id));
+      }
+    })();
   });
 
   app.post("/api/admin/demo-requests/:id/reject", requireAuth, requireAdmin, async (req, res) => {

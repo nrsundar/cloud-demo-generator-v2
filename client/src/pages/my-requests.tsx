@@ -12,6 +12,7 @@ import Textarea from "@cloudscape-design/components/textarea";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
 import { apiRequest } from "../lib/queryClient";
+import { API_BASE } from "../lib/config";
 import { useAuth } from "../hooks/useAuth";
 import { useLocation } from "wouter";
 
@@ -81,6 +82,8 @@ export default function MyRequestsPage() {
             { id: "action", header: "Action", cell: (item: any) => (
               item.status === "clarifying" && item.clarifyingQuestions?.length
                 ? <Button variant="primary" onClick={() => { setSelectedRequest(item); setAnswers({}); }}>Answer Questions</Button>
+                : item.status === "complete"
+                ? <Button variant="primary" iconName="download" href={`${API_BASE}/api/demo-requests/${item.id}/download`}>Download</Button>
                 : null
             )},
           ]}
