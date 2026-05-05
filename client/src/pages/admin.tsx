@@ -220,7 +220,12 @@ export default function AdminPage() {
             content: (
               <Table
                 columnDefinitions={[
-                  { id: "name", header: "Name", cell: (item: any) => item.name },
+                  { id: "name", header: "Name", cell: (item: any) => (
+                    <SpaceBetween direction="horizontal" size="xs">
+                      {item.name}
+                      {item.databaseType === "Aurora" && <Badge color="blue">🤖 AI Generated</Badge>}
+                    </SpaceBetween>
+                  )},
                   { id: "language", header: "Language", cell: (item: any) => item.language },
                   { id: "dbType", header: "Database", cell: (item: any) => `${item.databaseType} ${item.databaseVersion}` },
                   { id: "region", header: "Region", cell: (item: any) => item.awsRegion },

@@ -90,11 +90,26 @@ Generate the full demo specification as JSON:`;
 
   const response = await invokeModel(prompt, systemPrompt);
   try {
-    // Strip markdown code fences if present
-    const cleaned = response.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "");
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    return match ? JSON.parse(match[0]) : { error: "Failed to parse spec" };
-  } catch {
+    // Strip any markdown code fences and surrounding text
+    let cleaned = response;
+    // Remove ```json ... ``` wrapper
+    const fenceMatch = cleaned.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+    if (fenceMatch) {
+      cleaned = fenceMatch[1];
+    }
+    // Find the outermost JSON object
+    const start = cleaned.indexOf("{");
+    if (start === -1) return { error: "No JSON object found" };
+    // Find matching closing brace
+    let depth = 0;
+    let end = -1;
+    for (let i = start; i < cleaned.length; i++) {
+      if (cleaned[i] === "{") depth++;
+      else if (cleaned[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
+    }
+    if (end === -1) return { error: "Incomplete JSON object" };
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch (e: any) {
     return { error: "Failed to generate spec", raw: response.slice(0, 500) };
   }
 }
