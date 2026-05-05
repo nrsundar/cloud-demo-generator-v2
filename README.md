@@ -287,7 +287,7 @@ This project has evolved through three generations, each deepening the AI-toolin
 |---------|------|------------|-------------|
 | **V1** | 2024 | Replit Agent (Claude) | Original prototype — [database-demo-generator](https://github.com/nrsundar/database-demo-generator) |
 | **V2** | 2025 | Kiro CLI (Claude Opus) | TypeScript rewrite, Drizzle ORM, Firebase Auth, shadcn/ui, Render deployment |
-| **V3** | 2026 | Kiro in AgentSpaces | AWS-native: Cloudscape UI, Cognito, ECS Fargate, RDS, CloudFormation. Entire build — code, infra, deployment, docs — done through AI conversation |
+| **V3** | 2026 | Kiro (Claude Opus) | AWS-native: Cloudscape UI, Cognito, ECS Fargate, RDS, CloudFormation. Entire build — code, infra, deployment, docs — done through AI conversation |
 | **V3.1** | 2026 | Kiro + Bedrock Opus 4.6 | Self-evolving agent system: AI generates demos from natural language, human-in-the-loop approval, bug fix agent, duplicate detection |
 
 ---

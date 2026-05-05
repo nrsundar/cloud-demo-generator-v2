@@ -1,7 +1,7 @@
 # Cloud Demo Generator v3 — Project Context Transfer
 
 ## What This Is
-You are continuing maintenance of **Cloud Demo Generator v3**, an AI-powered web application that generates complete, deployable PostgreSQL demo repositories (pgvector, PostGIS, pgRouting) for customer engagements. The entire application was built by Kiro AI in AgentSpaces over 6 days.
+You are continuing maintenance of **Cloud Demo Generator v3**, an AI-powered web application that generates complete, deployable PostgreSQL demo repositories (pgvector, PostGIS, pgRouting) for customer engagements. The entire application was built by Kiro AI over 6 days.
 
 ---
 
