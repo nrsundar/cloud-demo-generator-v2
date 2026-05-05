@@ -87,11 +87,15 @@ export async function generateDemoSpec(request: {
 - name: short kebab-case name
 - displayName: human-readable title
 - extension: primary PG extension
+- industry: the customer industry (used to generate relevant sample data)
 - modules: array of 10+ module objects with {name, description, features[]}
 - demoScripts: array of demo scenario descriptions
-- dataModel: description of tables and relationships
+- dataModel: description of tables and relationships — MUST use industry-specific entities (e.g., healthcare→patients, retail→products, financial→transactions)
 - apiEndpoints: array of {method, path, description}
 - cloudformationNotes: any special CFN requirements
+- sampleDataDescription: describe what realistic sample data to generate (entity names, volumes, relationships) — MUST be relevant to the customer's industry
+
+CRITICAL: The data model and sample data MUST be tailored to the customer's industry. Do NOT use generic "items" or "records" — use domain-specific entities.
 
 Return ONLY valid JSON.`;
 

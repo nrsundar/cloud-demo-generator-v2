@@ -11,11 +11,14 @@ const NAV_ITEMS: SideNavigationProps.Item[] = [
   { type: "link", text: "Request Demo", href: "/demo-request" },
   { type: "link", text: "My Requests", href: "/my-requests" },
   { type: "divider" },
+  { type: "section", text: "Resources", items: [
+    { type: "link", text: "User Guide", href: "/guide" },
+    { type: "link", text: "Presentation", href: "/presentation" },
+  ]},
+  { type: "divider" },
   { type: "section", text: "Management", items: [
     { type: "link", text: "Admin Dashboard", href: "/admin" },
   ]},
-  { type: "divider" },
-  { type: "link", text: "Documentation", href: "https://cloudscape.design", external: true },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

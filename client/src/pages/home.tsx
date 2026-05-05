@@ -122,6 +122,9 @@ export default function HomePage() {
   });
 
   const [cleanupModal, setCleanupModal] = useState<any>(null);
+  const [deployModal, setDeployModal] = useState<any>(null);
+  const [awsAccount, setAwsAccount] = useState("");
+  const [awsRegion, setAwsRegion] = useState("us-east-2");
 
   const handleCreate = () => {
     if (!useCases.length) {
@@ -221,6 +224,7 @@ export default function HomePage() {
                 cell: (item: any) => (
                   <SpaceBetween direction="horizontal" size="xs">
                     <Button variant="primary" iconName="download" onClick={() => handleDownload(item.id)}>Download</Button>
+                    <Button onClick={() => setDeployModal(item)}>Deploy</Button>
                     <Button variant="link" onClick={() => setCleanupModal(item)}>Cleanup</Button>
                   </SpaceBetween>
                 ),
@@ -261,6 +265,35 @@ export default function HomePage() {
           loadingText="Loading repositories..."
           empty={<Box textAlign="center" padding="l">No repositories generated yet. Create one above or download from the AI Catalog.</Box>}
         />
+
+        {deployModal && (
+          <Modal visible={true} onDismiss={() => setDeployModal(null)} header={`Deploy: ${deployModal.name}`}
+            footer={<Box float="right"><Button variant="link" onClick={() => setDeployModal(null)}>Close</Button></Box>}>
+            <SpaceBetween size="m">
+              <FormField label="AWS Account ID" description="The 12-digit account where you want to deploy this demo">
+                <Input value={awsAccount} onChange={({ detail }) => setAwsAccount(detail.value)} placeholder="123456789012" />
+              </FormField>
+              <FormField label="Region">
+                <Input value={awsRegion} onChange={({ detail }) => setAwsRegion(detail.value)} placeholder="us-east-2" />
+              </FormField>
+              <Box variant="h3">Option 1: CloudFormation Console Launch</Box>
+              <Button variant="primary" iconName="external" onClick={() => {
+                const url = `https://${awsRegion}.console.aws.amazon.com/cloudformation/home?region=${awsRegion}#/stacks/create/review?stackName=${deployModal.name}`;
+                window.open(url, "_blank");
+              }}>Open CloudFormation Console</Button>
+              <Box color="text-body-secondary">Upload the <code>cloudformation/main.yaml</code> from the downloaded ZIP.</Box>
+              <Box variant="h3">Option 2: CLI Deploy</Box>
+              <Box variant="code"><pre>{`# Download and deploy
+aws cloudformation create-stack \\
+  --stack-name ${deployModal.name} \\
+  --template-body file://cloudformation/main.yaml \\
+  --parameters ParameterKey=DBPassword,ParameterValue=<password> \\
+  --capabilities CAPABILITY_NAMED_IAM \\
+  --region ${awsRegion}${awsAccount ? ` \\
+  --profile <profile-for-${awsAccount}>` : ""}`}</pre></Box>
+            </SpaceBetween>
+          </Modal>
+        )}
 
         {cleanupModal && (
           <Modal visible={true} onDismiss={() => setCleanupModal(null)} header={`Cleanup: ${cleanupModal.name}`}

@@ -9,6 +9,8 @@ import DemoRequestPage from "./pages/demo-request";
 import MyRequestsPage from "./pages/my-requests";
 import LandingPage from "./pages/landing";
 import AuthPage from "./pages/auth";
+import GuidePage from "./pages/guide";
+import PresentationPage from "./pages/presentation";
 import NotFound from "./pages/not-found";
 
 function AppRouter() {
@@ -22,6 +24,8 @@ function AppRouter() {
           <Route path="/admin" component={AdminPage} />
           <Route path="/demo-request" component={DemoRequestPage} />
           <Route path="/my-requests" component={MyRequestsPage} />
+          <Route path="/guide" component={GuidePage} />
+          <Route path="/presentation" component={PresentationPage} />
           <Route component={NotFound} />
         </Switch>
       </AppLayout>
