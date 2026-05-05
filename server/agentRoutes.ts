@@ -16,6 +16,23 @@ export function registerAgentRoutes(app: Express) {
   app.post("/api/demo-requests", requireAuth, async (req, res) => {
     try {
       const data = insertDemoRequestSchema.parse(req.body);
+
+      // Check if a similar demo already exists
+      const existing = await db.select().from(repositories)
+        .where(eq(repositories.status, "complete"));
+      const match = existing.find(r => {
+        const useCases = (r.useCases as string[]) || [];
+        const ext = data.targetExtension?.toLowerCase();
+        return ext && (useCases.some(u => u.toLowerCase().includes(ext)) || r.name.toLowerCase().includes(ext));
+      });
+      if (match) {
+        return res.json({
+          existingMatch: true,
+          message: `A demo for "${data.targetExtension}" already exists: "${match.name}". You can download it from the AI Demo Catalog.`,
+          matchedRepo: { id: match.id, name: match.name },
+        });
+      }
+
       const [request] = await db.insert(demoRequests).values(data).returning();
 
       // Generate clarifying questions via Bedrock

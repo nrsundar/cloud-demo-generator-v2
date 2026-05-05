@@ -70,6 +70,16 @@ export default function DemoRequestPage() {
       return res.json();
     },
     onSuccess: (data) => {
+      if (data.existingMatch) {
+        setFlash([{
+          type: "info",
+          content: data.message,
+          dismissible: true,
+          onDismiss: () => setFlash([]),
+          action: <Button onClick={() => navigate("/home")}>Go to Catalog</Button>,
+        }]);
+        return;
+      }
       setFlash([{
         type: "success",
         content: data.clarifyingQuestions
