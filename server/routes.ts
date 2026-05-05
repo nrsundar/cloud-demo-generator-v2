@@ -11,8 +11,10 @@ export function registerRoutes(app: Express) {
   registerAgentRoutes(app);
 
   // Public
+  const APP_VERSION = "3.1.0";
+
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+    res.json({ status: "ok", version: APP_VERSION, timestamp: new Date().toISOString() });
   });
 
   // Authenticated

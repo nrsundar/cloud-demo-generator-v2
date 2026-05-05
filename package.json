@@ -1,6 +1,6 @@
 {
   "name": "cloud-demo-generator-v3",
-  "version": "1.0.0",
+  "version": "3.1.0",
   "type": "module",
   "license": "MIT-0",
   "description": "Cloud Demo Generator v3 - AWS Cloudscape web app with Cognito auth",

@@ -51,8 +51,8 @@ export async function runBugFixAgent(): Promise<{ proposalCount: number }> {
   const errorSummary = errors.slice(0, 30).join("\n");
 
   const response = await invokeModel(
-    `Analyze these application errors from a Node.js/Express ECS service (Cloud Demo Generator v3). Group related errors, identify root causes, and propose fixes.\n\nErrors:\n${errorSummary}\n\nReturn a JSON array of fix proposals: [{\"title\": \"...\", \"rootCause\": \"...\", \"proposedFix\": \"...\", \"severity\": \"high|medium|low\", \"affectedFile\": \"...\"}]`,
-    "You are a senior Node.js/TypeScript developer analyzing production errors. Be specific about file paths and code changes needed. Return ONLY valid JSON."
+    `Analyze these application errors from a Node.js/Express ECS service (Cloud Demo Generator v3.1.0). Group related errors, identify root causes, and propose fixes.\n\nErrors:\n${errorSummary}\n\nReturn a JSON array of fix proposals: [{\"id\": \"BUG-001\", \"title\": \"...\", \"rootCause\": \"...\", \"proposedFix\": \"...\", \"severity\": \"critical|high|medium|low\", \"affectedFile\": \"...\", \"status\": \"pending\"}]`,
+    "You are a senior Node.js/TypeScript developer analyzing production errors. Be specific about file paths and code changes needed. Assign sequential IDs starting from BUG-001. Return ONLY valid JSON."
   );
 
   let proposals: any[] = [];

@@ -278,8 +278,8 @@ export function registerAgentRoutes(app: Express) {
     }
   });
 
-  // Schedule bug fix agent to run daily (every 24h)
+  // Schedule bug fix agent to run hourly
   setInterval(() => {
     runBugFixAgent().catch(err => console.error("Scheduled bug fix agent failed:", err));
-  }, 24 * 60 * 60 * 1000);
+  }, 60 * 60 * 1000);
 }

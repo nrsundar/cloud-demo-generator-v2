@@ -144,7 +144,7 @@ export default function AdminPage() {
   };
 
   return (
-    <ContentLayout header={<Header variant="h1" description="Monitor usage, manage demo requests, and review agent proposals.">Admin Dashboard</Header>}>
+    <ContentLayout header={<Header variant="h1" description="Monitor usage, manage demo requests, and review agent proposals. v3.1.0">Admin Dashboard</Header>}>
       <SpaceBetween size="l">
         <Flashbar items={flash} />
 
@@ -293,6 +293,45 @@ export default function AdminPage() {
                 items={feedback ?? []}
                 loading={isLoading}
                 empty={<Box textAlign="center" padding="l">No feedback yet.</Box>}
+              />
+            ),
+          },
+          {
+            label: "Bug Tracker",
+            id: "bugs",
+            content: (
+              <Table
+                header={<Header variant="h2" description="Bugs detected by the AI agent (scans hourly). Version: 3.1.0">Bugs & Fixes</Header>}
+                columnDefinitions={[
+                  { id: "id", header: "ID", cell: (item: any) => {
+                    const plan = item.proposedPlan || {};
+                    const fixes = Array.isArray(plan) ? plan : plan.fixes || [];
+                    return fixes.map((f: any) => f.id || "—").join(", ") || `BUG-${item.id}`;
+                  }},
+                  { id: "title", header: "Issue", cell: (item: any) => {
+                    const plan = item.proposedPlan || {};
+                    const fixes = Array.isArray(plan) ? plan : plan.fixes || [];
+                    return fixes[0]?.title || plan.title || "Error detected";
+                  }},
+                  { id: "severity", header: "Severity", cell: (item: any) => {
+                    const plan = item.proposedPlan || {};
+                    const fixes = Array.isArray(plan) ? plan : plan.fixes || [];
+                    const sev = fixes[0]?.severity || "medium";
+                    return <Badge color={sev === "critical" ? "red" : sev === "high" ? "red" : sev === "medium" ? "blue" : "grey"}>{sev}</Badge>;
+                  }},
+                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status) },
+                  { id: "version", header: "Version", cell: () => "3.1.0" },
+                  { id: "detected", header: "Detected", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
+                  { id: "actions", header: "Actions", cell: (item: any) => (
+                    <SpaceBetween direction="horizontal" size="xs">
+                      {item.proposedPlan && <Button variant="link" onClick={() => setSpecModal({ title: "Bug Details", spec: item.proposedPlan })}>View Fix</Button>}
+                      {item.status === "proposed" && <Button variant="primary" onClick={() => approveActionMutation.mutate(item.id)}>Mark Fixed</Button>}
+                    </SpaceBetween>
+                  )},
+                ]}
+                items={(agentActions ?? []).filter((a: any) => a.agentType === "bug_fix")}
+                loading={isLoading}
+                empty={<Box textAlign="center" padding="l">✅ No bugs detected. Agent scans hourly.</Box>}
               />
             ),
           },
