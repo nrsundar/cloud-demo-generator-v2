@@ -1,7 +1,7 @@
 import { Express } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
-import { demoRequests, agentActions, insertDemoRequestSchema } from "@shared/schema";
+import { demoRequests, agentActions, repositories, insertDemoRequestSchema } from "@shared/schema";
 import { requireAuth, requireAdmin } from "./auth";
 import { generateClarifyingQuestions, generateDemoSpec } from "./agent";
 import { generateDemoTemplate } from "./templateGenerator";
@@ -163,6 +163,21 @@ export function registerAgentRoutes(app: Express) {
         await db.update(demoRequests)
           .set({ status: "complete", updatedAt: new Date() })
           .where(eq(demoRequests.id, id));
+
+        // Create repository entry so it appears on the dashboard
+        const specData = request.spec as any;
+        await db.insert(repositories).values({
+          name: specData.name || request.title,
+          language: "python",
+          databaseVersion: "16",
+          databaseType: "Aurora",
+          instanceType: "db.t4g.medium",
+          awsRegion: "us-east-2",
+          useCases: [specData.extension || request.targetExtension || "custom"],
+          complexityLevel: request.complexity || "intermediate",
+          status: "complete",
+          progress: 100,
+        });
 
         console.log(`✅ Template generated for request ${id} (${zipBuffer.length} bytes)`);
       } catch (err) {
