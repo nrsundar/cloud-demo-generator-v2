@@ -114,20 +114,20 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* Roadmap teaser */}
-        <Container header={<Header variant="h2">Coming Soon</Header>}>
+        {/* AI-powered requests */}
+        <Container header={<Header variant="h2">Request Any Demo</Header>}>
           <ColumnLayout columns={3}>
             <Box>
-              <Box variant="h3">More PostgreSQL Extensions</Box>
-              <Box color="text-body-secondary">TimescaleDB (EC2), Citus, pg_partman, and more</Box>
+              <Box variant="h3">🤖 AI-Powered Generation</Box>
+              <Box color="text-body-secondary">Describe what you need in plain English — our AI agent builds the full demo package for you</Box>
             </Box>
             <Box>
-              <Box variant="h3">Additional Languages</Box>
-              <Box color="text-body-secondary">JavaScript, TypeScript, and Go demo templates</Box>
+              <Box variant="h3">🔌 Any PostgreSQL Extension</Box>
+              <Box color="text-body-secondary">pgvector, PostGIS, pgRouting, pg_cron, auto_explain, Apache AGE — or any extension you need</Box>
             </Box>
             <Box>
-              <Box variant="h3">More AWS Databases</Box>
-              <Box color="text-body-secondary">Aurora MySQL, DynamoDB, ElastiCache</Box>
+              <Box variant="h3">📦 Production-Ready Output</Box>
+              <Box color="text-body-secondary">CloudFormation, app code, SQL schema, 10+ modules, demo scripts — ready to deploy and present</Box>
             </Box>
           </ColumnLayout>
         </Container>
