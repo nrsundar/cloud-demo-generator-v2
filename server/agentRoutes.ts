@@ -5,6 +5,7 @@ import { demoRequests, agentActions, insertDemoRequestSchema } from "@shared/sch
 import { requireAuth, requireAdmin } from "./auth";
 import { generateClarifyingQuestions, generateDemoSpec } from "./agent";
 import { generateDemoTemplate } from "./templateGenerator";
+import { runBugFixAgent } from "./bugFixAgent";
 
 // In-memory cache for generated ZIPs (cleared on restart, fine for this use case)
 const generatedZips = new Map<number, Buffer>();
@@ -227,4 +228,20 @@ export function registerAgentRoutes(app: Express) {
     }
     res.json({ success: true, count: ids.length });
   });
+
+  // ── Bug Fix Agent ──
+
+  app.post("/api/admin/run-bug-fix-agent", requireAuth, requireAdmin, async (_req, res) => {
+    try {
+      const result = await runBugFixAgent();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Schedule bug fix agent to run daily (every 24h)
+  setInterval(() => {
+    runBugFixAgent().catch(err => console.error("Scheduled bug fix agent failed:", err));
+  }, 24 * 60 * 60 * 1000);
 }

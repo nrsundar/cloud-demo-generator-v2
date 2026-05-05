@@ -109,6 +109,17 @@ export default function AdminPage() {
     },
   });
 
+  const runBugFixMutation = useMutation({
+    mutationFn: async () => { const res = await apiRequest("POST", "/api/admin/run-bug-fix-agent", {}); return res.json(); },
+    onSuccess: (data: any) => {
+      setFlash([{ type: "success", content: `Bug Fix Agent completed: ${data.proposalCount} fix(es) proposed.`, dismissible: true, onDismiss: () => setFlash([]) }]);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] });
+    },
+    onError: (err: any) => {
+      setFlash([{ type: "error", content: `Bug Fix Agent failed: ${err.message}`, dismissible: true, onDismiss: () => setFlash([]) }]);
+    },
+  });
+
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = { pending: "grey", clarifying: "blue", spec_ready: "blue", approved: "green", rejected: "red", complete: "green" };
     return <Badge color={(colors[status] || "grey") as any}>{status}</Badge>;
@@ -177,10 +188,13 @@ export default function AdminPage() {
                 onSelectionChange={({ detail }) => setSelectedActionIds(detail.selectedItems.map((i: any) => i.id))}
                 header={
                   <Header actions={
-                    <Button disabled={selectedActionIds.length === 0} loading={bulkApproveActionsMutation.isPending}
-                      onClick={() => bulkApproveActionsMutation.mutate(selectedActionIds)}>
-                      Bulk Approve ({selectedActionIds.length})
-                    </Button>
+                    <SpaceBetween direction="horizontal" size="xs">
+                      <Button onClick={() => runBugFixMutation.mutate()} loading={runBugFixMutation.isPending}>Run Bug Fix Agent</Button>
+                      <Button disabled={selectedActionIds.length === 0} loading={bulkApproveActionsMutation.isPending}
+                        onClick={() => bulkApproveActionsMutation.mutate(selectedActionIds)}>
+                        Bulk Approve ({selectedActionIds.length})
+                      </Button>
+                    </SpaceBetween>
                   }>Agent Actions</Header>
                 }
                 columnDefinitions={[
