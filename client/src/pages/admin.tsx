@@ -225,6 +225,16 @@ export default function AdminPage() {
                     if (item.agentType === "bug_fix") return plan.title || plan.rootCause || "Fix proposal";
                     return "—";
                   }},
+                  { id: "tokens", header: "Tokens", cell: (item: any) => {
+                    const m = item.executionResult?.metrics;
+                    if (!m) return "—";
+                    return `${((m.totalInputTokens + m.totalOutputTokens) / 1000).toFixed(1)}K`;
+                  }},
+                  { id: "time", header: "Time", cell: (item: any) => {
+                    const m = item.executionResult?.metrics;
+                    if (!m) return "—";
+                    return `${(m.totalDurationMs / 1000).toFixed(0)}s`;
+                  }},
                   { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status) },
                   { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
                   { id: "actions", header: "Actions", cell: (item: any) => (

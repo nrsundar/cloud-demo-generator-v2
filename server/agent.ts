@@ -3,6 +3,19 @@ import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedroc
 const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "us-east-2" });
 const MODEL_ID = "us.anthropic.claude-opus-4-6-v1";
 
+export interface AgentMetrics {
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalDurationMs: number;
+  calls: number;
+}
+
+// Accumulator for per-request metrics
+let currentMetrics: AgentMetrics = { totalInputTokens: 0, totalOutputTokens: 0, totalDurationMs: 0, calls: 0 };
+
+export function resetMetrics() { currentMetrics = { totalInputTokens: 0, totalOutputTokens: 0, totalDurationMs: 0, calls: 0 }; }
+export function getMetrics(): AgentMetrics { return { ...currentMetrics }; }
+
 async function invokeModel(prompt: string, systemPrompt: string): Promise<string> {
   const body = JSON.stringify({
     anthropic_version: "bedrock-2023-05-31",
@@ -11,6 +24,7 @@ async function invokeModel(prompt: string, systemPrompt: string): Promise<string
     messages: [{ role: "user", content: prompt }],
   });
 
+  const start = Date.now();
   const command = new InvokeModelCommand({
     modelId: MODEL_ID,
     contentType: "application/json",
@@ -18,7 +32,16 @@ async function invokeModel(prompt: string, systemPrompt: string): Promise<string
   });
 
   const response = await client.send(command);
+  const elapsed = Date.now() - start;
   const result = JSON.parse(new TextDecoder().decode(response.body));
+
+  // Track metrics
+  const usage = result.usage || {};
+  currentMetrics.totalInputTokens += usage.input_tokens || 0;
+  currentMetrics.totalOutputTokens += usage.output_tokens || 0;
+  currentMetrics.totalDurationMs += elapsed;
+  currentMetrics.calls++;
+
   return result.content[0]?.text || "";
 }
 

@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
 import { demoRequests, agentActions, repositories, insertDemoRequestSchema } from "@shared/schema";
 import { requireAuth, requireAdmin } from "./auth";
-import { generateClarifyingQuestions, generateDemoSpec } from "./agent";
+import { generateClarifyingQuestions, generateDemoSpec, resetMetrics, getMetrics } from "./agent";
 import { generateDemoTemplate } from "./templateGenerator";
 import { runBugFixAgent } from "./bugFixAgent";
 
@@ -95,6 +95,7 @@ export function registerAgentRoutes(app: Express) {
     // Generate spec in background
     (async () => {
       try {
+        resetMetrics();
         const spec = await generateDemoSpec({
           title: request.title,
           description: request.description,
@@ -103,6 +104,7 @@ export function registerAgentRoutes(app: Express) {
           complexity: request.complexity ?? undefined,
           clarifyingAnswers: answers,
         });
+        const metrics = getMetrics();
 
         await db.update(demoRequests)
           .set({ spec, status: "spec_ready", updatedAt: new Date() })
@@ -114,10 +116,11 @@ export function registerAgentRoutes(app: Express) {
           requestId: id,
           inputData: { title: request.title, answers },
           proposedPlan: spec,
+          executionResult: { metrics },
           status: "proposed",
         });
 
-        console.log(`✅ Spec generated for request ${id}`);
+        console.log(`✅ Spec generated for request ${id} (${metrics.totalInputTokens + metrics.totalOutputTokens} tokens, ${(metrics.totalDurationMs / 1000).toFixed(1)}s)`);
       } catch (err: any) {
         console.error(`❌ Spec generation failed for request ${id}:`, err);
         await db.update(demoRequests)
