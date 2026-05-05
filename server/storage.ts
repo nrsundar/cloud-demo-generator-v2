@@ -54,6 +54,10 @@ export class Storage {
     await db.update(repositories).set({ status, progress }).where(eq(repositories.id, id));
   }
 
+  async deleteRepository(id: number) {
+    await db.delete(repositories).where(eq(repositories.id, id));
+  }
+
   // ── Users ──
   async upsertUser(data: UpsertUser) {
     const [user] = await db

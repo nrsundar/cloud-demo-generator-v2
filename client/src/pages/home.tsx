@@ -112,6 +112,14 @@ export default function HomePage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/repositories/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/repositories"] });
+      setFlash([{ type: "success", content: "Demo deleted.", dismissible: true, onDismiss: () => setFlash([]) }]);
+    },
+  });
+
   const handleCreate = () => {
     if (!useCases.length) {
       setFlash([{ type: "error", content: "Please select at least one use case.", dismissible: true, onDismiss: () => setFlash([]) }]);
@@ -208,7 +216,10 @@ export default function HomePage() {
               {
                 id: "actions", header: "",
                 cell: (item: any) => (
-                  <Button variant="primary" iconName="download" onClick={() => handleDownload(item.id)}>Download</Button>
+                  <SpaceBetween direction="horizontal" size="xs">
+                    <Button variant="primary" iconName="download" onClick={() => handleDownload(item.id)}>Download</Button>
+                    <Button variant="link" onClick={() => { if (confirm(`Delete "${item.name}"?`)) deleteMutation.mutate(item.id); }}>Delete</Button>
+                  </SpaceBetween>
                 ),
               },
             ]}
@@ -235,9 +246,10 @@ export default function HomePage() {
             {
               id: "actions", header: "Actions",
               cell: (item: any) => (
-                <Button variant="inline-link" disabled={item.status !== "complete"} onClick={() => handleDownload(item.id)}>
-                  Download ZIP
-                </Button>
+                <SpaceBetween direction="horizontal" size="xs">
+                  <Button variant="inline-link" disabled={item.status !== "complete"} onClick={() => handleDownload(item.id)}>Download ZIP</Button>
+                  <Button variant="inline-link" onClick={() => { if (confirm(`Delete "${item.name}"?`)) deleteMutation.mutate(item.id); }}>Delete</Button>
+                </SpaceBetween>
               ),
             },
           ]}

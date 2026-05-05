@@ -64,6 +64,15 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.delete("/api/repositories/:id", requireAuth, async (req, res) => {
+    try {
+      await storage.deleteRepository(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post("/api/feedback", requireAuth, async (req, res) => {
     try {
       const fb = await storage.createFeedback(req.body);
