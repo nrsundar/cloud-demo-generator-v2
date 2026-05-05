@@ -361,6 +361,7 @@ This demo was AI-generated. To contribute improvements:
     }
 
     // Module count matches spec
+    const modDirs = readdirSync(join(tmpDir, "modules"));
     if (spec.modules && modDirs.length < spec.modules.length) {
       auditErrors.push(`Module count mismatch: spec has ${spec.modules.length}, generated ${modDirs.length}`);
     }
@@ -396,7 +397,6 @@ This demo was AI-generated. To contribute improvements:
     }
 
     // Validate modules have content
-    const modDirs = readdirSync(join(tmpDir, "modules"));
     if (modDirs.length < 3) auditErrors.push(`Only ${modDirs.length} modules generated (expected 5+)`);
     for (const m of modDirs) {
       if (!existsSync(join(tmpDir, "modules", m, "README.md"))) auditErrors.push(`Missing: modules/${m}/README.md`);

@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "../hooks/useAuth";
 
 const STATS = [
-  { value: "Any", label: "AWS Database" },
+  { value: "6+", label: "AWS Databases" },
   { value: "AI Agent", label: "Powered By" },
   { value: "10+", label: "Modules/Demo" },
   { value: "1-Click", label: "AWS Deploy" },
@@ -84,6 +84,36 @@ export default function LandingPage() {
         </Container>
 
         {/* What the agent builds */}
+        <Container header={<Header variant="h2">Supported AWS Databases</Header>}>
+          <ColumnLayout columns={3}>
+            <Box>
+              <Box variant="h3">Aurora PostgreSQL</Box>
+              <Box color="text-body-secondary">pgvector, PostGIS, pgRouting, pg_trgm, pg_cron, auto_explain, and any extension</Box>
+            </Box>
+            <Box>
+              <Box variant="h3">Aurora MySQL</Box>
+              <Box color="text-body-secondary">JSON, full-text search, spatial indexes, read replicas, multi-tenant patterns</Box>
+            </Box>
+            <Box>
+              <Box variant="h3">Amazon DynamoDB</Box>
+              <Box color="text-body-secondary">Single-table design, GSIs, streams, event sourcing, TTL patterns</Box>
+            </Box>
+            <Box>
+              <Box variant="h3">Amazon Neptune</Box>
+              <Box color="text-body-secondary">Knowledge graphs, fraud detection, social networks, Gremlin & SPARQL</Box>
+            </Box>
+            <Box>
+              <Box variant="h3">Amazon RDS</Box>
+              <Box color="text-body-secondary">PostgreSQL, MySQL, Oracle, SQL Server, Db2 — managed instances</Box>
+            </Box>
+            <Box>
+              <Box variant="h3">ElastiCache / MemoryDB</Box>
+              <Box color="text-body-secondary">Caching patterns, pub/sub, session management, real-time leaderboards</Box>
+            </Box>
+          </ColumnLayout>
+        </Container>
+
+        {/* What the agent produces */}
         <Container header={<Header variant="h2">What the AI Agent Builds</Header>}>
           <ColumnLayout columns={3}>
             <Box>
