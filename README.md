@@ -36,11 +36,11 @@ Instead of spending a day building a pgvector demo, you spend two minutes config
 |------|------------|
 | Landing / feature overview | ![Landing](screenshots/01-landing.png) |
 | Authentication — Sign In | ![Auth Sign In](screenshots/02-auth-signin.png) |
-| Generator configuration | ![Generator](screenshots/03-generator.png) |
+| Generator + AI Demo Catalog | ![Generator](screenshots/03-generator.png) |
 | Request Demo — AI-powered form | ![Demo Request](screenshots/04-demo-request.png) |
-| Admin — Overview & Repositories | ![Admin Overview](screenshots/05-admin-overview.png) |
+| My Requests — track & answer AI questions | ![My Requests](screenshots/10-my-requests.png) |
 
-> **New screens (screenshots pending):** AI Demo Catalog, My Requests (clarifying questions), Admin Demo Requests (approve/reject), Admin Agent Actions (view plan/bulk approve)
+> **Admin Dashboard** requires Cognito admin group membership. Screenshots available after login at `/admin`.
 
 ---
 
