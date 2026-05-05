@@ -42,7 +42,8 @@ Generate clarifying questions as a JSON array:`;
 
   const response = await invokeModel(prompt, systemPrompt);
   try {
-    const match = response.match(/\[[\s\S]*\]/);
+    const cleaned = response.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "");
+    const match = cleaned.match(/\[[\s\S]*\]/);
     return match ? JSON.parse(match[0]) : [];
   } catch {
     return ["What specific PostgreSQL features are most important for your use case?",
@@ -89,7 +90,9 @@ Generate the full demo specification as JSON:`;
 
   const response = await invokeModel(prompt, systemPrompt);
   try {
-    const match = response.match(/\{[\s\S]*\}/);
+    // Strip markdown code fences if present
+    const cleaned = response.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "");
+    const match = cleaned.match(/\{[\s\S]*\}/);
     return match ? JSON.parse(match[0]) : { error: "Failed to parse spec" };
   } catch {
     return { error: "Failed to generate spec", raw: response.slice(0, 500) };
