@@ -75,16 +75,21 @@ aws cloudformation create-stack \\
           </SpaceBetween>
         </Container>
 
-        <Container header={<Header variant="h2">Supported Extensions</Header>}>
-          <ColumnLayout columns={3}>
-            <Box><strong>pgvector</strong> — AI/ML vector similarity, RAG, recommendations</Box>
-            <Box><strong>PostGIS</strong> — Geospatial queries, distance, geofencing</Box>
-            <Box><strong>pgRouting</strong> — Network routing, shortest path, TSP</Box>
-            <Box><strong>pg_trgm</strong> — Fuzzy text search, typo tolerance</Box>
-            <Box><strong>pg_cron</strong> — Job scheduling, automated maintenance</Box>
-            <Box><strong>auto_explain</strong> — Query plan logging, performance tuning</Box>
-          </ColumnLayout>
-          <Box padding={{ top: "m" }} color="text-body-secondary">You can request ANY extension — the AI agent will generate a demo even for extensions not listed here.</Box>
+        <Container header={<Header variant="h2">Supported Databases & Extensions</Header>}>
+          <SpaceBetween size="m">
+            <Box variant="h3">Amazon Managed Databases</Box>
+            <ColumnLayout columns={3}>
+              <Box>• Amazon Aurora PostgreSQL</Box>
+              <Box>• Amazon Aurora MySQL</Box>
+              <Box>• Amazon RDS (PostgreSQL, MySQL, Oracle, SQL Server, Db2)</Box>
+              <Box>• Amazon DynamoDB</Box>
+              <Box>• Amazon Neptune</Box>
+              <Box>• Amazon ElastiCache / MemoryDB</Box>
+            </ColumnLayout>
+            <Box variant="h3" padding={{ top: "m" }}>PostgreSQL Extensions (any)</Box>
+            <Box>pgvector, PostGIS, pgRouting, pg_trgm, pg_cron, auto_explain, pg_partman, Apache AGE, TimescaleDB, hstore, ltree, and any other extension available on Aurora/RDS.</Box>
+            <Box color="text-body-secondary" padding={{ top: "s" }}>The AI agent generates demos for whatever you request. It's not limited to a fixed list — describe your use case and the agent builds it.</Box>
+          </SpaceBetween>
         </Container>
 
         <Container header={<Header variant="h2">Tips for Better Demos</Header>}>

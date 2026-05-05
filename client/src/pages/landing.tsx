@@ -12,7 +12,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "../hooks/useAuth";
 
 const STATS = [
-  { value: "Any", label: "Use Case" },
+  { value: "Any", label: "AWS Database" },
   { value: "AI Agent", label: "Powered By" },
   { value: "10+", label: "Modules/Demo" },
   { value: "1-Click", label: "AWS Deploy" },
@@ -43,7 +43,7 @@ export default function LandingPage() {
       header={
         <Header
           variant="h1"
-          description="Describe any customer demo you need — our AI agent builds a complete enablement package with infrastructure, code, exercises, and documentation. For SAs, TAMs, and field teams."
+          description="Describe any customer demo you need — our AI agent builds a complete enablement package with infrastructure, code, exercises, and documentation. Any AWS managed database. Any use case. For SAs, TAMs, and field teams."
           actions={
             <SpaceBetween direction="horizontal" size="xs">
               <Button variant="primary" iconName="gen-ai" onClick={() => navigate(user ? "/demo-request" : "/auth")}>
@@ -88,7 +88,7 @@ export default function LandingPage() {
           <ColumnLayout columns={3}>
             <Box>
               <Box variant="h3">☁️ AWS Infrastructure</Box>
-              <Box color="text-body-secondary">CloudFormation templates — VPC, Aurora PostgreSQL, Bastion, Security Groups. Deploy to any account with one command.</Box>
+              <Box color="text-body-secondary">CloudFormation templates — VPC, Aurora, RDS, DynamoDB, Neptune — whatever your demo needs. Deploy to any account with one command.</Box>
             </Box>
             <Box>
               <Box variant="h3">📚 Learning Modules</Box>
@@ -116,7 +116,7 @@ export default function LandingPage() {
         {/* Examples */}
         <div>
           <Box variant="h2" padding={{ bottom: "s" }}>Examples of What's Been Built</Box>
-          <Box color="text-body-secondary" padding={{ bottom: "m" }}>These are just examples — you can request any PostgreSQL extension, any industry, any use case.</Box>
+          <Box color="text-body-secondary" padding={{ bottom: "m" }}>These are just examples — you can request any AWS managed database, any extension, any use case.</Box>
           <Cards
             cardDefinition={{
               header: (item) => <span style={{ fontSize: "15px", fontWeight: 700 }}>{item.title}</span>,

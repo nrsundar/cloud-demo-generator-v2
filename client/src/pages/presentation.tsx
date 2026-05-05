@@ -53,17 +53,17 @@ const SLIDES = [
     footer: "Tell the AI your customer's industry — it generates relevant data",
   },
   {
-    title: "Supported Extensions",
-    subtitle: "Any PostgreSQL extension — not limited to this list",
-    content: `• pgvector — AI/ML vector similarity, RAG, recommendations
-• PostGIS — Geospatial queries, distance, geofencing
-• pgRouting — Network routing, shortest path, TSP
-• pg_trgm — Fuzzy text search, typo tolerance
-• pg_cron — Job scheduling, automated maintenance
-• auto_explain — Query plan logging, performance tuning
+    title: "Supported Databases",
+    subtitle: "Any AWS managed database — not limited to PostgreSQL",
+    content: `Amazon Aurora PostgreSQL — pgvector, PostGIS, pgRouting, pg_trgm, pg_cron, any extension
+Amazon Aurora MySQL — JSON, full-text search, spatial
+Amazon RDS — PostgreSQL, MySQL, Oracle, SQL Server, Db2
+Amazon DynamoDB — Single-table design, event sourcing, streams
+Amazon Neptune — Knowledge graphs, fraud detection, social networks
+Amazon ElastiCache / MemoryDB — Caching, pub/sub, session management
 
-Plus: pg_partman, Apache AGE, hstore, ltree, timescaledb...`,
-    footer: "Request any extension — the AI agent handles it",
+Plus any extension or feature available on these engines.`,
+    footer: "Describe your use case — the AI agent handles the rest",
   },
   {
     title: "Quality Assurance",
