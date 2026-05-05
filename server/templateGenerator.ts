@@ -273,6 +273,65 @@ This demo was AI-generated. To contribute improvements:
       auditErrors.push("database/setup.sql: Contains markdown code fences — raw LLM output leaked");
     }
 
+    // Python AST compile check
+    if (appPyContent) {
+      try {
+        const { execSync } = require("child_process");
+        execSync(`python3 -c "compile(open('app.py').read(), 'app.py', 'exec')"`, { cwd: tmpDir, timeout: 5000 });
+      } catch (e: any) {
+        const msg = e.stderr?.toString()?.split("\n").pop() || "syntax error";
+        auditErrors.push(`app.py: Python syntax error — ${msg.trim()}`);
+      }
+    }
+
+    // YAML parse validation
+    if (cfnContent) {
+      try {
+        const yaml = require("js-yaml");
+        const parsed = yaml.load(cfnContent);
+        if (!parsed || typeof parsed !== "object") auditErrors.push("cloudformation/main.yaml: YAML parsed to non-object");
+      } catch (e: any) {
+        auditErrors.push(`cloudformation/main.yaml: Invalid YAML — ${e.message?.split("\n")[0]}`);
+      }
+    }
+
+    // JSON parse validation (parameters.json)
+    const paramsPath = join(tmpDir, "cloudformation", "parameters.json");
+    if (existsSync(paramsPath)) {
+      try { JSON.parse(readFileSync(paramsPath, "utf-8")); }
+      catch { auditErrors.push("cloudformation/parameters.json: Invalid JSON"); }
+    }
+
+    // deploy.sh has shebang
+    const deployContent = existsSync(join(tmpDir, "deploy.sh")) ? readFileSync(join(tmpDir, "deploy.sh"), "utf-8") : "";
+    if (deployContent && !deployContent.startsWith("#!/")) {
+      auditErrors.push("deploy.sh: Missing shebang (#!/bin/bash)");
+    }
+
+    // requirements.txt format check
+    const reqContent = existsSync(join(tmpDir, "requirements.txt")) ? readFileSync(join(tmpDir, "requirements.txt"), "utf-8") : "";
+    if (reqContent) {
+      const badLines = reqContent.split("\n").filter(l => l.trim() && !l.startsWith("#") && !/^[a-zA-Z0-9_-]+/.test(l.trim()));
+      if (badLines.length > 0) auditErrors.push(`requirements.txt: Invalid lines — ${badLines[0]}`);
+    }
+
+    // Security: no hardcoded secrets
+    const allFiles = [appPyContent, cfnContent, sqlContent, deployContent];
+    const secretPatterns = [/AKIA[0-9A-Z]{16}/, /password\s*=\s*["'][^"']+["']/, /secret_key\s*=\s*["'][^"']+["']/i];
+    for (const content of allFiles) {
+      for (const pat of secretPatterns) {
+        if (pat.test(content)) {
+          auditErrors.push(`Security: Hardcoded secret detected (${pat.source.slice(0, 20)}...)`);
+          break;
+        }
+      }
+    }
+
+    // Module count matches spec
+    if (spec.modules && modDirs.length < spec.modules.length) {
+      auditErrors.push(`Module count mismatch: spec has ${spec.modules.length}, generated ${modDirs.length}`);
+    }
+
     // Validate modules have content
     const modDirs = readdirSync(join(tmpDir, "modules"));
     if (modDirs.length < 3) auditErrors.push(`Only ${modDirs.length} modules generated (expected 10+)`);
