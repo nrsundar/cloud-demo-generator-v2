@@ -14,6 +14,7 @@ import Table from "@cloudscape-design/components/table";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
 import Box from "@cloudscape-design/components/box";
+import Badge from "@cloudscape-design/components/badge";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
 import { apiRequest } from "../lib/queryClient";
 import { useAuth } from "../hooks/useAuth";
@@ -52,9 +53,12 @@ const REGIONS = [
 ];
 
 const USE_CASES = [
+  { label: "Vector Database (pgVector)", value: "vector" },
   { label: "Geospatial Analytics (PostGIS)", value: "geospatial" },
   { label: "Network Routing (pgRouting)", value: "timeseries" },
-  { label: "Vector Database (pgVector)", value: "vector" },
+  { label: "Full-text Search (pg_trgm)", value: "pg_trgm" },
+  { label: "Job Scheduling (pg_cron)", value: "pg_cron" },
+  { label: "Partition Management (pg_partman)", value: "pg_partman" },
   { label: "Multi-Tenant SaaS", value: "multitenant" },
   { label: "Analytics Dashboard", value: "analytics" },
   { label: "High Availability Setup", value: "ha" },
@@ -192,7 +196,12 @@ export default function HomePage() {
         <Table
           header={<Header variant="h2" counter={`(${repos?.length ?? 0})`}>Generated Repositories</Header>}
           columnDefinitions={[
-            { id: "name", header: "Name", cell: (item: any) => item.name },
+            { id: "name", header: "Name", cell: (item: any) => (
+              <SpaceBetween direction="horizontal" size="xs">
+                {item.name}
+                {item.databaseType === "Aurora" && <Badge color="blue">🤖 AI</Badge>}
+              </SpaceBetween>
+            )},
             { id: "language", header: "Language", cell: (item: any) => item.language },
             { id: "dbType", header: "Database", cell: (item: any) => `${item.databaseType} ${item.databaseVersion}` },
             { id: "region", header: "Region", cell: (item: any) => item.awsRegion },
