@@ -1,5 +1,5 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync, existsSync, statSync, readdirSync, createWriteStream } from "fs";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, existsSync, statSync, readdirSync, readFileSync, createWriteStream } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import archiver from "archiver";
@@ -234,7 +234,7 @@ This demo was AI-generated. To contribute improvements:
       writeFileSync(join(modDir, "example.py"), `"""${mod.name} - ${mod.description}"""\nimport psycopg2\nimport os\n\ndef run():\n    conn = psycopg2.connect(os.environ["DATABASE_URL"])\n    cur = conn.cursor()\n    # ${mod.description}\n    cur.execute("SELECT 1")\n    print(f"Module ${mod.name} executed successfully")\n    conn.close()\n\nif __name__ == "__main__":\n    run()\n`);
     }
 
-    // ── Audit: validate generated output ──
+    // ── Eval: validate generated output ──
     const auditErrors: string[] = [];
     const requiredFiles = ["app.py", "deploy.sh", "README.md", "GETTING_STARTED.md", "LICENSE", "requirements.txt",
       "cloudformation/main.yaml", "cloudformation/parameters.json", "database/setup.sql"];
@@ -243,15 +243,71 @@ This demo was AI-generated. To contribute improvements:
       if (!existsSync(p)) auditErrors.push(`Missing: ${f}`);
       else if (statSync(p).size === 0) auditErrors.push(`Empty: ${f}`);
     }
+
+    // Validate Python syntax
+    const appPyContent = existsSync(join(tmpDir, "app.py")) ? readFileSync(join(tmpDir, "app.py"), "utf-8") : "";
+    if (appPyContent && !appPyContent.includes("def ") && !appPyContent.includes("import ")) {
+      auditErrors.push("app.py: No function definitions or imports found — likely invalid Python");
+    }
+    if (appPyContent && (appPyContent.includes("```") || appPyContent.includes("```python"))) {
+      auditErrors.push("app.py: Contains markdown code fences — raw LLM output leaked");
+    }
+
+    // Validate CloudFormation YAML structure
+    const cfnContent = existsSync(join(tmpDir, "cloudformation", "main.yaml"))
+      ? readFileSync(join(tmpDir, "cloudformation", "main.yaml"), "utf-8") : "";
+    if (cfnContent && !cfnContent.includes("AWSTemplateFormatVersion")) {
+      auditErrors.push("cloudformation/main.yaml: Missing AWSTemplateFormatVersion — invalid CFN template");
+    }
+    if (cfnContent && !cfnContent.includes("Resources:")) {
+      auditErrors.push("cloudformation/main.yaml: Missing Resources section");
+    }
+
+    // Validate SQL
+    const sqlContent = existsSync(join(tmpDir, "database", "setup.sql"))
+      ? readFileSync(join(tmpDir, "database", "setup.sql"), "utf-8") : "";
+    if (sqlContent && !sqlContent.includes("CREATE") && !sqlContent.includes("create")) {
+      auditErrors.push("database/setup.sql: No CREATE statements found");
+    }
+    if (sqlContent && (sqlContent.includes("```") || sqlContent.includes("```sql"))) {
+      auditErrors.push("database/setup.sql: Contains markdown code fences — raw LLM output leaked");
+    }
+
     // Validate modules have content
     const modDirs = readdirSync(join(tmpDir, "modules"));
-    if (modDirs.length < 10) auditErrors.push(`Only ${modDirs.length} modules (need 10+)`);
+    if (modDirs.length < 3) auditErrors.push(`Only ${modDirs.length} modules generated (expected 10+)`);
     for (const m of modDirs) {
       if (!existsSync(join(tmpDir, "modules", m, "README.md"))) auditErrors.push(`Missing: modules/${m}/README.md`);
       if (!existsSync(join(tmpDir, "modules", m, "example.py"))) auditErrors.push(`Missing: modules/${m}/example.py`);
+      else {
+        const ex = readFileSync(join(tmpDir, "modules", m, "example.py"), "utf-8");
+        if (ex.includes("```")) auditErrors.push(`modules/${m}/example.py: Contains markdown fences`);
+      }
     }
+
+    // Report eval failures as bugs
     if (auditErrors.length > 0) {
-      console.warn(`⚠️ Template audit warnings for ${spec.name}:`, auditErrors);
+      console.warn(`⚠️ Template eval failed for ${spec.name} (${auditErrors.length} issues):`, auditErrors);
+      try {
+        const { db } = await import("./db");
+        const { agentActions } = await import("../shared/schema");
+        await db.insert(agentActions).values({
+          agentType: "bug_fix",
+          triggerSource: "template_eval",
+          inputData: { template: spec.name, totalIssues: auditErrors.length },
+          proposedPlan: auditErrors.map((err, i) => ({
+            id: `EVAL-${String(i + 1).padStart(3, "0")}`,
+            title: err,
+            severity: err.includes("Missing:") || err.includes("invalid") ? "high" : "medium",
+            rootCause: "Template generation produced incomplete or malformed output",
+            proposedFix: "Re-run generation or manually fix the affected file",
+            status: "pending",
+          })),
+          status: "proposed",
+        });
+      } catch (e) {
+        console.error("Failed to report eval bugs:", e);
+      }
     }
 
     // Package as ZIP
