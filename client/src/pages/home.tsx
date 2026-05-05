@@ -14,7 +14,6 @@ import Table from "@cloudscape-design/components/table";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
 import Box from "@cloudscape-design/components/box";
-import Badge from "@cloudscape-design/components/badge";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
 import { apiRequest } from "../lib/queryClient";
 import { useAuth } from "../hooks/useAuth";
@@ -91,6 +90,10 @@ export default function HomePage() {
       return hasInProgress ? 3000 : false;
     },
   });
+
+  // Split repos into AI-generated catalog and user-generated
+  const catalogRepos = (repos ?? []).filter((r: any) => r.databaseType === "Aurora" && r.status === "complete");
+  const userRepos = (repos ?? []).filter((r: any) => r.databaseType !== "Aurora");
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -194,15 +197,30 @@ export default function HomePage() {
           </Form>
         </Container>
 
+        {catalogRepos.length > 0 && (
+          <Table
+            header={<Header variant="h2" description="Ready-to-download demos built by our AI agent. No configuration needed." counter={`(${catalogRepos.length})`}>🤖 AI Demo Catalog</Header>}
+            columnDefinitions={[
+              { id: "name", header: "Name", cell: (item: any) => item.name },
+              { id: "useCase", header: "Use Case", cell: (item: any) => (item.useCases as string[])?.[0] || "—" },
+              { id: "dbType", header: "Database", cell: (item: any) => `${item.databaseType} ${item.databaseVersion}` },
+              { id: "region", header: "Region", cell: (item: any) => item.awsRegion },
+              {
+                id: "actions", header: "",
+                cell: (item: any) => (
+                  <Button variant="primary" iconName="download" onClick={() => handleDownload(item.id)}>Download</Button>
+                ),
+              },
+            ]}
+            items={catalogRepos}
+            loading={isLoading}
+          />
+        )}
+
         <Table
-          header={<Header variant="h2" counter={`(${repos?.length ?? 0})`}>Generated Repositories</Header>}
+          header={<Header variant="h2" counter={`(${userRepos.length})`}>Your Generated Repositories</Header>}
           columnDefinitions={[
-            { id: "name", header: "Name", cell: (item: any) => (
-              <SpaceBetween direction="horizontal" size="xs">
-                {item.name}
-                {item.databaseType === "Aurora" && <Badge color="blue">🤖 AI</Badge>}
-              </SpaceBetween>
-            )},
+            { id: "name", header: "Name", cell: (item: any) => item.name },
             { id: "language", header: "Language", cell: (item: any) => item.language },
             { id: "dbType", header: "Database", cell: (item: any) => `${item.databaseType} ${item.databaseVersion}` },
             { id: "region", header: "Region", cell: (item: any) => item.awsRegion },
@@ -223,10 +241,10 @@ export default function HomePage() {
               ),
             },
           ]}
-          items={repos ?? []}
+          items={userRepos}
           loading={isLoading}
           loadingText="Loading repositories..."
-          empty={<Box textAlign="center" padding="l">No repositories generated yet. Create one above.</Box>}
+          empty={<Box textAlign="center" padding="l">No repositories generated yet. Create one above or download from the AI Catalog.</Box>}
         />
       </SpaceBetween>
     </ContentLayout>
