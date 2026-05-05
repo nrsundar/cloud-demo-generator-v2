@@ -110,19 +110,20 @@ export default function HomePage() {
   });
 
   const handleCreate = () => {
-    if (!name || !language || !dbType || !dbVersion || !instanceType || !region || !useCases.length || !complexity) {
-      setFlash([{ type: "error", content: "All fields are required.", dismissible: true, onDismiss: () => setFlash([]) }]);
+    if (!useCases.length) {
+      setFlash([{ type: "error", content: "Please select at least one use case.", dismissible: true, onDismiss: () => setFlash([]) }]);
       return;
     }
+    const useCaseLabel = USE_CASES.find(u => u.value === useCases[0]?.value)?.label?.split("(")[0]?.trim() || "demo";
     createMutation.mutate({
-      name,
-      language: language.value,
-      databaseType: dbType.value,
-      databaseVersion: dbVersion.value,
-      instanceType: instanceType.value,
-      awsRegion: region.value,
+      name: name || `${useCaseLabel.toLowerCase().replace(/\s+/g, "-")}-demo`,
+      language: language?.value || "python",
+      databaseType: dbType?.value || "Aurora",
+      databaseVersion: dbVersion?.value || "16",
+      instanceType: instanceType?.value || "db.t4g.medium",
+      awsRegion: region?.value || "us-east-2",
       useCases: useCases.map((u: any) => u.value),
-      complexityLevel: complexity.value,
+      complexityLevel: complexity?.value || "intermediate",
     });
   };
 
