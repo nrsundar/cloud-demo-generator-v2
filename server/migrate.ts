@@ -47,6 +47,39 @@ CREATE TABLE IF NOT EXISTS feedback_requests (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+
+CREATE TABLE IF NOT EXISTS demo_requests (
+  id SERIAL PRIMARY KEY,
+  requester_email TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  target_extension TEXT,
+  customer_industry TEXT,
+  complexity TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  clarifying_questions JSONB,
+  clarifying_answers JSONB,
+  spec JSONB,
+  admin_notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS agent_actions (
+  id SERIAL PRIMARY KEY,
+  agent_type TEXT NOT NULL,
+  trigger_source TEXT,
+  request_id INTEGER REFERENCES demo_requests(id),
+  input_data JSONB,
+  proposed_plan JSONB,
+  status TEXT NOT NULL DEFAULT 'proposed',
+  admin_decision TEXT,
+  admin_notes TEXT,
+  execution_result JSONB,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
 `;
 
 export async function ensureSchema() {

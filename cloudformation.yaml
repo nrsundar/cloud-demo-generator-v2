@@ -202,6 +202,26 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: demo-gen-task-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - { Effect: Allow, Principal: { Service: ecs-tasks.amazonaws.com }, Action: 'sts:AssumeRole' }
+      Policies:
+        - PolicyName: bedrock-invoke
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource:
+                  - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-opus-4-6-v1'
+                  - !Sub 'arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-opus-4-6-v1'
+
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -217,6 +237,7 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities: [FARGATE]
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
         - Name: demo-gen
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cloud-demo-generator-v3:latest
@@ -226,6 +247,7 @@ Resources:
             - { Name: DATABASE_URL, Value: !Sub 'postgresql://${DBUsername}:${DBPassword}@${Database.Endpoint.Address}:5432/demogen?sslmode=require' }
             - { Name: NODE_ENV, Value: production }
             - { Name: PORT, Value: '5000' }
+            - { Name: AWS_REGION, Value: !Ref 'AWS::Region' }
             - { Name: NODE_TLS_REJECT_UNAUTHORIZED, Value: '0' }
             - { Name: ALLOWED_ORIGINS, Value: 'https://main.d1s77hhl4y34ji.amplifyapp.com,https://d1s77hhl4y34ji.amplifyapp.com,https://d2g4zib7n3kevf.cloudfront.net,http://localhost:3000' }
             - { Name: AMPLIFY_URL, Value: 'http://localhost:3000' }

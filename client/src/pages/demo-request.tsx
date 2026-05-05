@@ -12,82 +12,118 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import Container from "@cloudscape-design/components/container";
 import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
 import { apiRequest } from "../lib/queryClient";
+import { useAuth } from "../hooks/useAuth";
+import { useLocation } from "wouter";
 
-const DEMO_TYPES = [
-  { label: "Customer Presentation", value: "customer-presentation" },
-  { label: "Technical Deep Dive", value: "technical-deep-dive" },
-  { label: "Proof of Concept", value: "proof-of-concept" },
-  { label: "Custom Use Case", value: "custom-use-case" },
+const EXTENSIONS = [
+  { label: "pgvector — AI/ML vector similarity search", value: "pgvector" },
+  { label: "PostGIS — Geospatial data and queries", value: "postgis" },
+  { label: "pgRouting — Network routing and graph analysis", value: "pgrouting" },
+  { label: "pg_cron — Job scheduling", value: "pg_cron" },
+  { label: "pg_partman — Partition management", value: "pg_partman" },
+  { label: "Other (describe below)", value: "other" },
 ];
 
-const PRIORITY_LEVELS = [
-  { label: "Urgent (24 hours)", value: "urgent" },
-  { label: "High (2-3 days)", value: "high" },
-  { label: "Normal (1 week)", value: "normal" },
-  { label: "Low (2+ weeks)", value: "low" },
+const INDUSTRIES = [
+  { label: "Financial Services", value: "financial" },
+  { label: "Healthcare & Life Sciences", value: "healthcare" },
+  { label: "Retail & E-commerce", value: "retail" },
+  { label: "Media & Entertainment", value: "media" },
+  { label: "Manufacturing & IoT", value: "manufacturing" },
+  { label: "Public Sector", value: "public_sector" },
+  { label: "Other", value: "other" },
+];
+
+const COMPLEXITY = [
+  { label: "Basic — Single extension, simple schema", value: "basic" },
+  { label: "Intermediate — Multiple features, moderate data", value: "intermediate" },
+  { label: "Advanced — Multi-extension, complex workflows", value: "advanced" },
 ];
 
 export default function DemoRequestPage() {
-  const [email, setEmail] = useState("");
-  const [demoType, setDemoType] = useState<any>(null);
-  const [priority, setPriority] = useState<any>(null);
-  const [message, setMessage] = useState("");
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [extension, setExtension] = useState<any>(null);
+  const [industry, setIndustry] = useState<any>(null);
+  const [complexity, setComplexity] = useState<any>(null);
   const [flash, setFlash] = useState<FlashbarProps.MessageDefinition[]>([]);
 
   const submitMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await fetch("/api/feedback", {
-        method: "POST",
-        body: JSON.stringify({ ...data, status: "pending" }),
-        headers: { "Content-Type": "application/json" },
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/demo-requests", {
+        requesterEmail: user?.email || "",
+        title,
+        description,
+        targetExtension: extension?.value,
+        customerIndustry: industry?.value,
+        complexity: complexity?.value,
       });
-      if (!res.ok) throw new Error("Failed to submit request");
       return res.json();
     },
-    onSuccess: () => {
-      setFlash([{ type: "success", content: "Demo request submitted. We'll contact you within 24 hours.", dismissible: true, onDismiss: () => setFlash([]) }]);
-      setEmail(""); setDemoType(null); setPriority(null); setMessage("");
+    onSuccess: (data) => {
+      setFlash([{
+        type: "success",
+        content: data.clarifyingQuestions
+          ? "Request submitted! AI has generated clarifying questions. Check 'My Requests' to answer them."
+          : "Request submitted successfully. An admin will review it shortly.",
+        dismissible: true,
+        onDismiss: () => setFlash([]),
+        action: <Button onClick={() => navigate("/my-requests")}>View My Requests</Button>,
+      }]);
+      setTitle(""); setDescription(""); setExtension(null); setIndustry(null); setComplexity(null);
     },
-    onError: () => {
-      setFlash([{ type: "error", content: "Submission failed. Please try again.", dismissible: true, onDismiss: () => setFlash([]) }]);
+    onError: (err: any) => {
+      setFlash([{ type: "error", content: err.message || "Submission failed.", dismissible: true, onDismiss: () => setFlash([]) }]);
     },
   });
 
-  const handleSubmit = () => {
-    if (!email || !demoType || !priority || !message) {
-      setFlash([{ type: "error", content: "Please fill in all required fields.", dismissible: true, onDismiss: () => setFlash([]) }]);
-      return;
-    }
-    submitMutation.mutate({ email, demoType: demoType.value, priority: priority.value, message });
-  };
+  if (!user) {
+    return (
+      <ContentLayout header={<Header variant="h1">Request a New Demo</Header>}>
+        <Container>
+          <Button onClick={() => navigate("/auth")}>Sign in to submit a request</Button>
+        </Container>
+      </ContentLayout>
+    );
+  }
 
   return (
     <ContentLayout
-      header={<Header variant="h1" description="Request a custom cloud infrastructure demonstration.">Request Demo</Header>}
+      header={<Header variant="h1" description="Describe the PostgreSQL demo you need. Our AI agent will generate clarifying questions, then produce a full spec for admin approval.">Request a New Demo</Header>}
     >
       <SpaceBetween size="l">
         <Flashbar items={flash} />
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <form onSubmit={(e) => { e.preventDefault(); submitMutation.mutate(); }}>
           <Form
             actions={
-              <Button variant="primary" loading={submitMutation.isPending} onClick={handleSubmit}>
+              <Button variant="primary" loading={submitMutation.isPending}
+                disabled={!title || !description}>
                 Submit Request
               </Button>
             }
           >
-            <Container header={<Header variant="h2">Demo Request Details</Header>}>
+            <Container header={<Header variant="h2">Demo Details</Header>}>
               <SpaceBetween size="l">
-                <FormField label="Contact Email">
-                  <Input value={email} onChange={({ detail }) => setEmail(detail.value)} placeholder="you@example.com" type="email" />
+                <FormField label="Title" description="Short name for this demo request">
+                  <Input value={title} onChange={({ detail }) => setTitle(detail.value)} placeholder="e.g., Real-time fraud detection with pgvector" />
                 </FormField>
-                <FormField label="Demo Type">
-                  <Select selectedOption={demoType} onChange={({ detail }) => setDemoType(detail.selectedOption)} options={DEMO_TYPES} placeholder="Select demo type" />
+                <FormField label="Description" description="Describe the use case, target audience, and what you want to demonstrate">
+                  <Textarea value={description} onChange={({ detail }) => setDescription(detail.value)} rows={4}
+                    placeholder="e.g., Need a demo showing how pgvector can be used for real-time fraud detection in financial transactions. Target audience is technical decision makers at banks..." />
                 </FormField>
-                <FormField label="Priority">
-                  <Select selectedOption={priority} onChange={({ detail }) => setPriority(detail.selectedOption)} options={PRIORITY_LEVELS} placeholder="Select priority" />
+                <FormField label="Primary PostgreSQL Extension">
+                  <Select selectedOption={extension} onChange={({ detail }) => setExtension(detail.selectedOption)}
+                    options={EXTENSIONS} placeholder="Select extension" />
                 </FormField>
-                <FormField label="Requirements">
-                  <Textarea value={message} onChange={({ detail }) => setMessage(detail.value)} placeholder="Describe your specific requirements..." rows={6} />
+                <FormField label="Customer Industry">
+                  <Select selectedOption={industry} onChange={({ detail }) => setIndustry(detail.selectedOption)}
+                    options={INDUSTRIES} placeholder="Select industry" />
+                </FormField>
+                <FormField label="Complexity Level">
+                  <Select selectedOption={complexity} onChange={({ detail }) => setComplexity(detail.selectedOption)}
+                    options={COMPLEXITY} placeholder="Select complexity" />
                 </FormField>
               </SpaceBetween>
             </Container>

@@ -72,6 +72,53 @@ export const feedbackRequests = pgTable("feedback_requests", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// ── Agent System Tables ──
+
+export const demoRequests = pgTable("demo_requests", {
+  id: serial("id").primaryKey(),
+  requesterEmail: text("requester_email").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  targetExtension: text("target_extension"),
+  customerIndustry: text("customer_industry"),
+  complexity: text("complexity"),
+  status: text("status").notNull().default("pending"),
+  clarifyingQuestions: json("clarifying_questions").$type<string[]>(),
+  clarifyingAnswers: json("clarifying_answers").$type<Record<string, string>>(),
+  spec: json("spec").$type<Record<string, any>>(),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const agentActions = pgTable("agent_actions", {
+  id: serial("id").primaryKey(),
+  agentType: text("agent_type").notNull(),
+  triggerSource: text("trigger_source"),
+  requestId: integer("request_id").references(() => demoRequests.id),
+  inputData: json("input_data").$type<Record<string, any>>(),
+  proposedPlan: json("proposed_plan").$type<Record<string, any>>(),
+  status: text("status").notNull().default("proposed"),
+  adminDecision: text("admin_decision"),
+  adminNotes: text("admin_notes"),
+  executionResult: json("execution_result").$type<Record<string, any>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertDemoRequestSchema = createInsertSchema(demoRequests).pick({
+  requesterEmail: true,
+  title: true,
+  description: true,
+  targetExtension: true,
+  customerIndustry: true,
+  complexity: true,
+});
+
+export type DemoRequest = typeof demoRequests.$inferSelect;
+export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
+export type AgentAction = typeof agentActions.$inferSelect;
+
 export type User = typeof users.$inferSelect;
 export type UpsertUser = typeof users.$inferInsert;
 export type DownloadLog = typeof downloadLogs.$inferSelect;

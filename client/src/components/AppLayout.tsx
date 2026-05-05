@@ -9,6 +9,7 @@ const NAV_ITEMS: SideNavigationProps.Item[] = [
   { type: "link", text: "Home", href: "/" },
   { type: "link", text: "Generator", href: "/home" },
   { type: "link", text: "Request Demo", href: "/demo-request" },
+  { type: "link", text: "My Requests", href: "/my-requests" },
   { type: "divider" },
   { type: "section", text: "Management", items: [
     { type: "link", text: "Admin Dashboard", href: "/admin" },

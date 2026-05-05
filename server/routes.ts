@@ -2,10 +2,14 @@ import { Express } from "express";
 import { Storage } from "./storage";
 import { insertRepositorySchema } from "@shared/schema";
 import { requireAuth, requireAdmin } from "./auth";
+import { registerAgentRoutes } from "./agentRoutes";
 
 const storage = new Storage();
 
 export function registerRoutes(app: Express) {
+  // Register agent system routes
+  registerAgentRoutes(app);
+
   // Public
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });

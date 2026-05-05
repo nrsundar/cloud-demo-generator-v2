@@ -9,8 +9,8 @@ FROM node:18-alpine
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server/templates ./server/templates
-COPY --from=builder /app/package.json ./
-RUN npm install --omit=dev --ignore-scripts
+COPY --from=builder /app/package.json /app/package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts
 EXPOSE 5000
 ENV NODE_ENV=production
 ENV PORT=5000

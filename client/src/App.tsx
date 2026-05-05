@@ -6,6 +6,7 @@ import AppLayout from "./components/AppLayout";
 import Home from "./pages/home";
 import AdminPage from "./pages/admin";
 import DemoRequestPage from "./pages/demo-request";
+import MyRequestsPage from "./pages/my-requests";
 import LandingPage from "./pages/landing";
 import AuthPage from "./pages/auth";
 import NotFound from "./pages/not-found";
@@ -20,6 +21,7 @@ function AppRouter() {
           <Route path="/home" component={Home} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/demo-request" component={DemoRequestPage} />
+          <Route path="/my-requests" component={MyRequestsPage} />
           <Route component={NotFound} />
         </Switch>
       </AppLayout>
