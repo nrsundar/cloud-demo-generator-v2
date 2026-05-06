@@ -9,6 +9,14 @@ const SLIDES = [
     accent: "#ff9900",
   },
   {
+    title: "Architecture",
+    subtitle: "How it's built",
+    bullets: [],
+    note: "All services in us-east-2 • Deployed via CloudFormation • Fully serverless",
+    accent: "#8e44ad",
+    isSvg: true,
+  },
+  {
     title: "The Challenge",
     subtitle: "Why we built this",
     bullets: [
@@ -105,14 +113,6 @@ const SLIDES = [
     accent: "#e74c3c",
   },
   {
-    title: "Architecture",
-    subtitle: "",
-    bullets: [],
-    note: "All services in us-east-2 • Deployed via CloudFormation • Fully serverless",
-    accent: "#8e44ad",
-    isSvg: true,
-  },
-  {
     title: "Impact for Leadership",
     subtitle: "What this means at L8+ level",
     bullets: [
@@ -156,38 +156,38 @@ const SLIDES = [
 
 function ArchDiagram() {
   return (
-    <svg viewBox="0 0 900 480" style={{ width: "100%", maxWidth: "900px", animation: "fadeInUp 0.8s ease-out" }}>
+    <svg viewBox="0 0 900 480" style={{ width: "100%", maxWidth: "950px", animation: "fadeInUp 0.8s ease-out" }}>
       <defs>
-        <linearGradient id="g-user" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#4a90d9" /><stop offset="100%" stopColor="#357abd" /></linearGradient>
-        <linearGradient id="g-amplify" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ff9900" /><stop offset="100%" stopColor="#e88600" /></linearGradient>
-        <linearGradient id="g-cf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#7c3aed" /></linearGradient>
-        <linearGradient id="g-ecs" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f97316" /><stop offset="100%" stopColor="#ea580c" /></linearGradient>
-        <linearGradient id="g-rds" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#3b82f6" /><stop offset="100%" stopColor="#2563eb" /></linearGradient>
-        <linearGradient id="g-bedrock" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#059669" /></linearGradient>
-        <linearGradient id="g-cognito" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ec4899" /><stop offset="100%" stopColor="#db2777" /></linearGradient>
-        <linearGradient id="g-cw" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#06b6d4" /><stop offset="100%" stopColor="#0891b2" /></linearGradient>
-        <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3" /></filter>
-        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#64748b" /></marker>
+        <linearGradient id="g-user" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#60a5fa" /><stop offset="100%" stopColor="#3b82f6" /></linearGradient>
+        <linearGradient id="g-amplify" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ffb347" /><stop offset="100%" stopColor="#ff9900" /></linearGradient>
+        <linearGradient id="g-cf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#a78bfa" /><stop offset="100%" stopColor="#8b5cf6" /></linearGradient>
+        <linearGradient id="g-ecs" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fb923c" /><stop offset="100%" stopColor="#f97316" /></linearGradient>
+        <linearGradient id="g-rds" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#60a5fa" /><stop offset="100%" stopColor="#3b82f6" /></linearGradient>
+        <linearGradient id="g-bedrock" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#10b981" /></linearGradient>
+        <linearGradient id="g-cognito" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f472b6" /><stop offset="100%" stopColor="#ec4899" /></linearGradient>
+        <linearGradient id="g-cw" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#22d3ee" /><stop offset="100%" stopColor="#06b6d4" /></linearGradient>
+        <filter id="sh"><feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity="0.4" /></filter>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#94a3b8" /></marker>
       </defs>
-      <path d="M130,90 L220,90" stroke="#64748b" strokeWidth="2" markerEnd="url(#arr)" strokeDasharray="4,3" />
-      <path d="M380,90 L470,90" stroke="#64748b" strokeWidth="2" markerEnd="url(#arr)" strokeDasharray="4,3" />
-      <path d="M630,90 L720,90" stroke="#64748b" strokeWidth="2" markerEnd="url(#arr)" strokeDasharray="4,3" />
-      <path d="M560,130 L560,200 L200,200 L200,250" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#arr)" strokeDasharray="4,3" />
-      <path d="M560,130 L560,250" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#arr)" strokeDasharray="4,3" />
-      <path d="M560,130 L560,200 L780,200 L780,250" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#arr)" strokeDasharray="4,3" />
-      <path d="M560,340 L560,380 L380,380 L380,410" stroke="#ef4444" strokeWidth="1.5" markerEnd="url(#arr)" strokeDasharray="4,3" />
-      <g filter="url(#sh)"><rect x="40" y="60" width="90" height="60" rx="8" fill="url(#g-user)" /><text x="85" y="87" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">👤 Field SA</text><text x="85" y="104" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Browser</text></g>
-      <g filter="url(#sh)"><rect x="220" y="60" width="160" height="60" rx="8" fill="url(#g-amplify)" /><text x="300" y="85" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">AWS Amplify</text><text x="300" y="102" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">React + Cloudscape</text></g>
-      <g filter="url(#sh)"><rect x="470" y="60" width="160" height="60" rx="8" fill="url(#g-cf)" /><text x="550" y="85" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">CloudFront + ALB</text><text x="550" y="102" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">CDN + Load Balancer</text></g>
-      <g filter="url(#sh)"><rect x="720" y="60" width="160" height="60" rx="8" fill="url(#g-ecs)" /><text x="800" y="85" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">ECS Fargate</text><text x="800" y="102" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Node.js API + Agents</text></g>
-      <g filter="url(#sh)"><rect x="120" y="250" width="160" height="80" rx="8" fill="url(#g-rds)" /><text x="200" y="280" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">Amazon RDS</text><text x="200" y="297" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">PostgreSQL 16</text><text x="200" y="314" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="8">Requests • Specs • Repos</text></g>
-      <g filter="url(#sh)"><rect x="400" y="250" width="200" height="80" rx="8" fill="url(#g-bedrock)" /><text x="500" y="275" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">Amazon Bedrock</text><text x="500" y="295" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Claude Opus 4</text><text x="500" y="312" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="8">Demo Agent + Bug Fix Agent</text></g>
-      <g filter="url(#sh)"><rect x="700" y="250" width="160" height="80" rx="8" fill="url(#g-cognito)" /><text x="780" y="280" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">Amazon Cognito</text><text x="780" y="297" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Authentication</text><text x="780" y="314" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="8">Admin + SA roles</text></g>
-      <g filter="url(#sh)"><rect x="300" y="400" width="160" height="60" rx="8" fill="url(#g-cw)" /><text x="380" y="425" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">CloudWatch</text><text x="380" y="442" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Hourly self-healing scan</text></g>
-      <text x="175" y="50" textAnchor="middle" fill="#94a3b8" fontSize="9">HTTPS</text>
-      <text x="425" y="50" textAnchor="middle" fill="#94a3b8" fontSize="9">TLS</text>
-      <text x="675" y="50" textAnchor="middle" fill="#94a3b8" fontSize="9">Private VPC</text>
-      <text x="470" y="395" textAnchor="middle" fill="#ef4444" fontSize="9">Self-healing loop</text>
+      <path d="M130,90 L220,90" stroke="#94a3b8" strokeWidth="2.5" markerEnd="url(#arr)" strokeDasharray="5,3" />
+      <path d="M380,90 L470,90" stroke="#94a3b8" strokeWidth="2.5" markerEnd="url(#arr)" strokeDasharray="5,3" />
+      <path d="M630,90 L720,90" stroke="#94a3b8" strokeWidth="2.5" markerEnd="url(#arr)" strokeDasharray="5,3" />
+      <path d="M560,130 L560,200 L200,200 L200,250" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arr)" strokeDasharray="5,3" />
+      <path d="M560,130 L560,250" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arr)" strokeDasharray="5,3" />
+      <path d="M560,130 L560,200 L780,200 L780,250" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arr)" strokeDasharray="5,3" />
+      <path d="M560,340 L560,380 L380,380 L380,410" stroke="#f87171" strokeWidth="2.5" markerEnd="url(#arr)" strokeDasharray="5,3" />
+      <g filter="url(#sh)"><rect x="40" y="60" width="90" height="60" rx="10" fill="url(#g-user)" /><text x="85" y="87" textAnchor="middle" fill="white" fontSize="13" fontWeight="700">👤 Field SA</text><text x="85" y="106" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">Browser</text></g>
+      <g filter="url(#sh)"><rect x="220" y="60" width="160" height="60" rx="10" fill="url(#g-amplify)" /><text x="300" y="87" textAnchor="middle" fill="white" fontSize="13" fontWeight="700">AWS Amplify</text><text x="300" y="106" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">React + Cloudscape</text></g>
+      <g filter="url(#sh)"><rect x="470" y="60" width="160" height="60" rx="10" fill="url(#g-cf)" /><text x="550" y="87" textAnchor="middle" fill="white" fontSize="13" fontWeight="700">CloudFront + ALB</text><text x="550" y="106" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">CDN + Load Balancer</text></g>
+      <g filter="url(#sh)"><rect x="720" y="60" width="160" height="60" rx="10" fill="url(#g-ecs)" /><text x="800" y="87" textAnchor="middle" fill="white" fontSize="13" fontWeight="700">ECS Fargate</text><text x="800" y="106" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">Node.js + AI Agents</text></g>
+      <g filter="url(#sh)"><rect x="120" y="250" width="160" height="80" rx="10" fill="url(#g-rds)" /><text x="200" y="282" textAnchor="middle" fill="white" fontSize="13" fontWeight="700">Amazon RDS</text><text x="200" y="302" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">PostgreSQL 16</text><text x="200" y="320" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Requests • Specs • Repos</text></g>
+      <g filter="url(#sh)"><rect x="400" y="250" width="200" height="80" rx="10" fill="url(#g-bedrock)" /><text x="500" y="278" textAnchor="middle" fill="white" fontSize="13" fontWeight="700">Amazon Bedrock</text><text x="500" y="298" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">Claude Opus 4</text><text x="500" y="318" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Demo Agent + Bug Fix Agent</text></g>
+      <g filter="url(#sh)"><rect x="700" y="250" width="160" height="80" rx="10" fill="url(#g-cognito)" /><text x="780" y="282" textAnchor="middle" fill="white" fontSize="13" fontWeight="700">Amazon Cognito</text><text x="780" y="302" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">Authentication</text><text x="780" y="320" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Admin + SA roles</text></g>
+      <g filter="url(#sh)"><rect x="300" y="400" width="160" height="60" rx="10" fill="url(#g-cw)" /><text x="380" y="427" textAnchor="middle" fill="white" fontSize="13" fontWeight="700">CloudWatch</text><text x="380" y="447" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="10">Hourly self-healing</text></g>
+      <text x="175" y="50" textAnchor="middle" fill="#cbd5e1" fontSize="10" fontWeight="600">HTTPS</text>
+      <text x="425" y="50" textAnchor="middle" fill="#cbd5e1" fontSize="10" fontWeight="600">TLS</text>
+      <text x="675" y="50" textAnchor="middle" fill="#cbd5e1" fontSize="10" fontWeight="600">Private VPC</text>
+      <text x="470" y="395" textAnchor="middle" fill="#f87171" fontSize="11" fontWeight="600">Self-healing loop</text>
     </svg>
   );
 }
@@ -232,17 +232,17 @@ export default function PresentationPage() {
         <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>{current + 1} / {SLIDES.length}</span>
       </div>
       <div key={animKey} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "20px 100px", maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
-        <h1 className="slide-title" style={{ color: "#ffffff", fontSize: "52px", fontWeight: 800, margin: "0 0 8px 0", lineHeight: 1.1, letterSpacing: "-1px" }}>{slide.title}</h1>
-        {slide.subtitle && <h2 className="slide-subtitle" style={{ color: slide.accent, fontSize: "24px", fontWeight: 400, margin: "0 0 36px 0" }}>{slide.subtitle}</h2>}
+        <h1 className="slide-title" style={{ color: "#ffffff", fontSize: "60px", fontWeight: 800, margin: "0 0 8px 0", lineHeight: 1.1, letterSpacing: "-1px" }}>{slide.title}</h1>
+        {slide.subtitle && <h2 className="slide-subtitle" style={{ color: slide.accent, fontSize: "28px", fontWeight: 400, margin: "0 0 36px 0" }}>{slide.subtitle}</h2>}
         {slide.bullets.length > 0 && (
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {slide.bullets.map((b: string, i: number) => (
-              <li key={i} className="slide-bullet" style={{ color: b.startsWith("    ") ? "rgba(255,255,255,0.6)" : "#e2e8f0", fontSize: b.startsWith("    ") ? "20px" : "22px", lineHeight: 1.5, padding: b === "" ? "8px 0" : "5px 0", paddingLeft: b.startsWith("    ") ? "32px" : "16px", borderLeft: b === "" || b.startsWith("    ") ? "none" : `3px solid ${slide.accent}44`, marginBottom: "4px", animationDelay: `${0.2 + i * 0.08}s` }}>{b}</li>
+              <li key={i} className="slide-bullet" style={{ color: b.startsWith("    ") ? "rgba(255,255,255,0.7)" : "#f1f5f9", fontSize: b.startsWith("    ") ? "22px" : "24px", lineHeight: 1.6, padding: b === "" ? "8px 0" : "6px 0", paddingLeft: b.startsWith("    ") ? "32px" : "16px", borderLeft: b === "" || b.startsWith("    ") ? "none" : `3px solid ${slide.accent}66`, marginBottom: "4px", animationDelay: `${0.2 + i * 0.08}s` }}>{b}</li>
             ))}
           </ul>
         )}
         {slide.isSvg && <ArchDiagram />}
-        {slide.note && <p className="slide-note" style={{ color: "rgba(255,255,255,0.4)", fontSize: "16px", marginTop: "32px", fontStyle: "italic", borderLeft: `2px solid ${slide.accent}44`, paddingLeft: "12px" }}>{slide.note}</p>}
+        {slide.note && <p className="slide-note" style={{ color: "rgba(255,255,255,0.6)", fontSize: "18px", marginTop: "32px", fontStyle: "italic", borderLeft: `2px solid ${slide.accent}88`, paddingLeft: "12px" }}>{slide.note}</p>}
       </div>
       <div style={{ padding: "12px 50px", display: "flex", justifyContent: "space-between" }}>
         <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px" }}>DemoForge v3.1.0</span>
