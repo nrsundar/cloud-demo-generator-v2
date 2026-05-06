@@ -335,4 +335,47 @@ export function registerAgentRoutes(app: Express) {
   setInterval(() => {
     runBugFixAgent().catch(err => console.error("Scheduled bug fix agent failed:", err));
   }, 60 * 60 * 1000);
+
+  // Nightly dedup: flag similar repos (runs every 24h)
+  setInterval(async () => {
+    try {
+      const allRepos = await db.select().from(repositories).where(eq(repositories.status, "complete"));
+      if (allRepos.length < 2) return;
+      const duplicates: { keep: number; remove: number; reason: string }[] = [];
+      for (let i = 0; i < allRepos.length; i++) {
+        for (let j = i + 1; j < allRepos.length; j++) {
+          const a = allRepos[i], b = allRepos[j];
+          // Same name = exact duplicate
+          if (a.name === b.name) {
+            duplicates.push({ keep: a.id, remove: b.id, reason: `Exact duplicate: ${a.name}` });
+            continue;
+          }
+          // Same extension + same industry keywords = likely duplicate
+          const aUse = ((a.useCases as string[]) || []).join(",").toLowerCase();
+          const bUse = ((b.useCases as string[]) || []).join(",").toLowerCase();
+          const aName = (a.name || "").toLowerCase();
+          const bName = (b.name || "").toLowerCase();
+          if (aUse && aUse === bUse && a.databaseType === b.databaseType) {
+            // Check name similarity (shared words)
+            const aWords = new Set(aName.split("-").filter(w => w.length > 3));
+            const bWords = new Set(bName.split("-").filter(w => w.length > 3));
+            const shared = [...aWords].filter(w => bWords.has(w)).length;
+            if (shared >= 2) {
+              duplicates.push({ keep: a.id, remove: b.id, reason: `Similar: ${a.name} ≈ ${b.name} (${shared} shared words, same extension)` });
+            }
+          }
+        }
+      }
+      if (duplicates.length > 0) {
+        console.log(`🔄 Dedup found ${duplicates.length} similar repos:`);
+        for (const d of duplicates) {
+          console.log(`   Keep #${d.keep}, flag #${d.remove}: ${d.reason}`);
+          // Mark as duplicate (don't delete — admin reviews)
+          await db.update(repositories).set({ status: "duplicate" }).where(eq(repositories.id, d.remove));
+        }
+      }
+    } catch (err) {
+      console.error("Nightly dedup failed:", err);
+    }
+  }, 24 * 60 * 60 * 1000);
 }
