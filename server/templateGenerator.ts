@@ -234,6 +234,25 @@ This demo was AI-generated. To contribute improvements:
     writeFileSync(join(tmpDir, "demo", "demo_script.md"), demoContent.script);
     writeFileSync(join(tmpDir, "demo", "presentation_guide.md"), demoContent.guide);
 
+    // CHEAT_SHEET.md — SA quick reference for the extension
+    const cheatSheet = await invokeWithRetry(
+      `Generate a concise cheat sheet for an AWS Solutions Architect presenting a ${spec.extension} demo to a customer in the ${spec.industry || "technology"} industry.
+
+Include these sections:
+1. "Quick Reference" — 5-8 most important functions/commands with one-line descriptions
+2. "Top 5 Customer Questions & Answers" — real questions a CTO/architect would ask, with confident 2-sentence answers
+3. "Don't Say This" — 3 common mistakes or misconceptions to avoid during the demo
+4. "Performance Numbers to Cite" — 3-4 benchmarks or stats the SA can reference (latency, throughput, scale)
+5. "Comparison Talking Points" — how this compares to 2-3 alternatives (other AWS services or third-party)
+
+${getSkillPromptContext(spec.extension)}
+
+Keep it to 1 page. Use markdown. Be specific and factual — no filler.`,
+      "You are a senior AWS Solutions Architect preparing a colleague for a customer demo. Return ONLY markdown. No fences.",
+      200
+    );
+    writeFileSync(join(tmpDir, "CHEAT_SHEET.md"), cheatSheet || `# ${spec.extension} Cheat Sheet\n\nCheat sheet generation pending.\n`);
+
     // modules/ — use faster model (Sonnet) for parallel module generation
     mkdirSync(join(tmpDir, "modules"));
     const modules = spec.modules.length >= 5 ? spec.modules : [...spec.modules, ...Array(5 - spec.modules.length).fill(null).map((_, i) => ({

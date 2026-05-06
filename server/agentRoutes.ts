@@ -212,6 +212,27 @@ export function registerAgentRoutes(app: Express) {
     })();
   });
 
+  // Regenerate — re-triggers template generation for an existing completed/approved request
+  app.post("/api/admin/demo-requests/:id/regenerate", requireAuth, requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const [request] = await db.select().from(demoRequests).where(eq(demoRequests.id, id));
+    if (!request?.spec) return res.status(400).json({ error: "No spec found" });
+    await db.update(demoRequests).set({ status: "generating", updatedAt: new Date() }).where(eq(demoRequests.id, id));
+    res.json({ success: true, message: "Regenerating..." });
+
+    (async () => {
+      try {
+        const zipBuffer = await generateDemoTemplate(request.spec as any);
+        generatedZips.set(id, zipBuffer);
+        await db.update(demoRequests).set({ status: "complete", updatedAt: new Date() }).where(eq(demoRequests.id, id));
+        console.log(`✅ Regenerated request ${id} (${zipBuffer.length} bytes)`);
+      } catch (err) {
+        console.error(`❌ Regeneration failed for request ${id}:`, err);
+        await db.update(demoRequests).set({ status: "complete", updatedAt: new Date() }).where(eq(demoRequests.id, id));
+      }
+    })();
+  });
+
   app.post("/api/admin/demo-requests/:id/reject", requireAuth, requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     const { notes } = req.body;

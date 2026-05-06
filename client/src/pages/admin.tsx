@@ -74,6 +74,14 @@ export default function AdminPage() {
     },
   });
 
+  const regenerateMutation = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("POST", `/api/admin/demo-requests/${id}/regenerate`, {}); },
+    onSuccess: () => {
+      setFlash([{ type: "success", content: "Regenerating with latest template (includes CHEAT_SHEET.md)...", dismissible: true, onDismiss: () => setFlash([]) }]);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
+    },
+  });
+
   const adminAnswerMutation = useMutation({
     mutationFn: async ({ id, answers }: { id: number; answers: Record<string, string> }) => {
       const res = await apiRequest("POST", `/api/demo-requests/${id}/answers`, { answers });
@@ -185,6 +193,7 @@ export default function AdminPage() {
                       {item.status === "spec_ready" && (
                         <>
                           <Button variant="primary" onClick={() => approveMutation.mutate(item.id)} loading={approveMutation.isPending}>Approve</Button>
+                          <Button onClick={() => regenerateMutation.mutate(item.id)} loading={regenerateMutation.isPending}>Regenerate</Button>
                           <Button onClick={() => setRejectModal(item)}>Reject</Button>
                         </>
                       )}
