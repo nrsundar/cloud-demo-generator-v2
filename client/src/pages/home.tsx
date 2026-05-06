@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import Container from "@cloudscape-design/components/container";
@@ -72,6 +73,7 @@ const COMPLEXITY = [
 
 export default function HomePage() {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const [flash, setFlash] = useState<FlashbarProps.MessageDefinition[]>([]);
   const [name, setName] = useState("");
@@ -164,8 +166,7 @@ export default function HomePage() {
       header={
         <Header
           variant="h1"
-          description="Configure your demo repository and generate a complete, downloadable package with infrastructure, code, data, and documentation."
-          info={<Box color="text-status-info" display="inline">Tip: Select multiple use cases to create a comprehensive demo.</Box>}
+          description="Browse AI-generated demos or request a new one. Each package includes infrastructure, code, modules, and documentation."
         >
           Demo Generator
         </Header>
@@ -174,41 +175,8 @@ export default function HomePage() {
       <SpaceBetween size="l">
         <Flashbar items={flash} />
 
-        <Container header={<Header variant="h2">New Repository</Header>}>
-          <Form actions={<Button variant="primary" loading={createMutation.isPending} onClick={handleCreate}>Generate Repository</Button>}>
-            <SpaceBetween size="l">
-              <FormField label="Repository Name">
-                <Input value={name} onChange={({ detail }) => setName(detail.value)} placeholder="my-postgres-demo" />
-              </FormField>
-              <ColumnLayout columns={2}>
-                <FormField label="Language">
-                  <Select selectedOption={language} onChange={({ detail }) => setLanguage(detail.selectedOption)} options={LANGUAGES} placeholder="Select language" />
-                </FormField>
-                <FormField label="Complexity">
-                  <Select selectedOption={complexity} onChange={({ detail }) => setComplexity(detail.selectedOption)} options={COMPLEXITY} placeholder="Select level" />
-                </FormField>
-              </ColumnLayout>
-              <ColumnLayout columns={2}>
-                <FormField label="Database Type">
-                  <Select selectedOption={dbType} onChange={({ detail }) => setDbType(detail.selectedOption)} options={DB_TYPES} placeholder="Select type" />
-                </FormField>
-                <FormField label="Database Version">
-                  <Select selectedOption={dbVersion} onChange={({ detail }) => setDbVersion(detail.selectedOption)} options={DB_VERSIONS} placeholder="Select version" />
-                </FormField>
-              </ColumnLayout>
-              <ColumnLayout columns={2}>
-                <FormField label="Instance Type">
-                  <Select selectedOption={instanceType} onChange={({ detail }) => setInstanceType(detail.selectedOption)} options={INSTANCE_TYPES} placeholder="Select instance" />
-                </FormField>
-                <FormField label="AWS Region">
-                  <Select selectedOption={region} onChange={({ detail }) => setRegion(detail.selectedOption)} options={REGIONS} placeholder="Select region" />
-                </FormField>
-              </ColumnLayout>
-              <FormField label="Use Cases">
-                <Multiselect selectedOptions={useCases} onChange={({ detail }) => setUseCases([...detail.selectedOptions])} options={USE_CASES} placeholder="Select use cases" />
-              </FormField>
-            </SpaceBetween>
-          </Form>
+        <Container header={<Header variant="h2" actions={<Button variant="primary" onClick={() => navigate("/demo-request")}>Request a New Demo</Button>}>Need a custom demo?</Header>}>
+          <Box color="text-body-secondary">Describe what you need in plain English — the AI agent will ask clarifying questions, generate a spec, and build a complete package for any AWS database.</Box>
         </Container>
 
         {catalogRepos.length > 0 && (
