@@ -1,7 +1,7 @@
-# Cloud Demo Generator v3 — Project Context Transfer
+# DemoForge — Project Context Transfer
 
 ## What This Is
-You are continuing maintenance of **Cloud Demo Generator v3**, an AI-powered web application that generates complete, deployable PostgreSQL demo repositories (pgvector, PostGIS, pgRouting) for customer engagements. The entire application was built by Kiro AI over 6 days.
+You are continuing maintenance of **DemoForge**, an AI-powered web application that generates complete, deployable PostgreSQL demo repositories (pgvector, PostGIS, pgRouting) for customer engagements. The entire application was built by Kiro AI over 6 days.
 
 ---
 
@@ -9,8 +9,8 @@ You are continuing maintenance of **Cloud Demo Generator v3**, an AI-powered web
 
 | Repo | URL | Purpose |
 |------|-----|---------|
-| **Main app (GitLab)** | `git@ssh.gitlab.aws.dev:raghasun/cloud-demo-generator-v2.git` | Primary source |
-| **Main app (GitHub)** | `https://github.com/nrsundar/cloud-demo-generator-v2` | Public mirror / aws-samples candidate |
+| **Main app (GitLab)** | `git@ssh.gitlab.aws.dev:raghasun/demoforge.git` | Primary source |
+| **Main app (GitHub)** | `https://github.com/nrsundar/demoforge` | Public mirror / aws-samples candidate |
 | **cdg-pgvector** | GitLab: `raghasun/cdg-pgvector-demo` / GitHub: `nrsundar/cdg-pgvector-hybrid-search-demo` | Generated demo |
 | **cdg-postgis** | GitLab: `raghasun/cdg-postgis-demo` / GitHub: `nrsundar/cdg-postgis-property-search-demo` | Generated demo |
 | **cdg-pgroute** | GitLab: `raghasun/cdg-pgroute-demo` / GitHub: `nrsundar/cdg-pgroute-transportation-demo` | Generated demo |
@@ -21,8 +21,8 @@ You are continuing maintenance of **Cloud Demo Generator v3**, an AI-powered web
 ln -sf /shared/.ssh/id_ecdsa ~/.ssh/id_ecdsa
 ln -sf /shared/.ssh/id_ecdsa.pub ~/.ssh/id_ecdsa.pub
 chmod 600 ~/.ssh/id_ecdsa
-git clone git@ssh.gitlab.aws.dev:raghasun/cloud-demo-generator-v2.git
-cd cloud-demo-generator-v2
+git clone git@ssh.gitlab.aws.dev:raghasun/demoforge.git
+cd demoforge
 ```
 
 ---
@@ -34,7 +34,7 @@ cd cloud-demo-generator-v2
 | **Account** | `<ACCOUNT_ID>` (sundaar4, personal Isengard) |
 | **Region** | `us-east-2` |
 | **Federate** | `https://isengard.amazon.com/federate?account=<ACCOUNT_ID>&role=<ROLE_NAME>` |
-| **CloudFormation Stack** | `cloud-demo-generator-v3` |
+| **CloudFormation Stack** | `demoforge` |
 | **Cognito User Pool** | `<COGNITO_POOL_ID>` |
 | **Cognito Client ID** | `<COGNITO_CLIENT_ID>` |
 | **Cognito Domain** | `cloud-demo-gen-v3.auth.us-east-2.amazoncognito.com` |
@@ -45,7 +45,7 @@ cd cloud-demo-generator-v2
 | **Amplify App** | `<AMPLIFY_APP_ID>` |
 | **Amplify URL** | `https://main.<AMPLIFY_APP_ID>.amplifyapp.com` |
 | **CloudFront** | `<CLOUDFRONT_ID>.cloudfront.net` (HTTPS proxy to ALB for API) |
-| **ECR** | `<ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3` |
+| **ECR** | `<ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/demoforge` |
 | **KMS CMK** | `alias/demo-gen-cmk` (key rotation enabled) |
 | **CloudWatch Logs** | `/ecs/demo-gen` (14-day retention) |
 | **Lambda** | `cognito-presignup-email-filter` (validates @amazon.com, currently not active since self-reg is disabled) |
@@ -100,12 +100,12 @@ aws cognito-idp admin-add-user-to-group --user-pool-id <COGNITO_POOL_ID> \
 
 ### Backend (ECS)
 ```bash
-cd cloud-demo-generator-v2
+cd demoforge
 npm run build
-docker build --no-cache -t cloud-demo-generator-v3 .
-docker tag cloud-demo-generator-v3:latest <ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
+docker build --no-cache -t demoforge .
+docker tag demoforge:latest <ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/demoforge:latest
 aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com
-docker push <ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
+docker push <ACCOUNT_ID>.dkr.ecr.us-east-2.amazonaws.com/demoforge:latest
 aws ecs update-service --cluster demo-gen-cluster --service demo-gen-service --force-new-deployment --region us-east-2
 ```
 
@@ -122,7 +122,7 @@ cd dist/public && zip -r /tmp/frontend.zip .
 
 ### CloudFormation updates
 ```bash
-aws cloudformation update-stack --stack-name cloud-demo-generator-v3 \
+aws cloudformation update-stack --stack-name demoforge \
   --template-body file://cloudformation.yaml --capabilities CAPABILITY_NAMED_IAM \
   --parameters ParameterKey=DBUsername,UsePreviousValue=true ParameterKey=DBPassword,UsePreviousValue=true \
     ParameterKey=CognitoUserPoolId,UsePreviousValue=true ParameterKey=CognitoClientId,UsePreviousValue=true \
@@ -185,7 +185,7 @@ Global rules saved at `/shared/.kiro/steering/epoxy-compliance.md`. Key rules:
 ## Files Structure
 
 ```
-cloud-demo-generator-v3/
+demoforge/
 ├── client/src/
 │   ├── main.tsx, App.tsx
 │   ├── components/AppLayout.tsx     # Cloudscape shell

@@ -1,4 +1,4 @@
-# Cloud Demo Generator v3
+# DemoForge
 
 > **Built with [Kiro](https://kiro.dev) (powered by [Anthropic Claude](https://www.anthropic.com/claude))** — AI-driven development from code conversion through cloud deployment.
 
@@ -16,7 +16,7 @@ Meanwhile, customers expect polished, deployable examples — not slides. They w
 
 ## The Solution
 
-**Cloud Demo Generator** is a web application that automates the creation of complete, deployable database demo repositories. Select a use case, pick your configuration, and download a ready-to-run ZIP package — complete with infrastructure templates, application code, seed data, and documentation.
+**DemoForge** is a web application that automates the creation of complete, deployable database demo repositories. Select a use case, pick your configuration, and download a ready-to-run ZIP package — complete with infrastructure templates, application code, seed data, and documentation.
 
 Instead of spending a day building a pgvector demo, you spend two minutes configuring one.
 
@@ -191,7 +191,7 @@ Have an idea for a new database engine, extension, or feature? Submit a demo req
 ## Project Structure
 
 ```
-cloud-demo-generator-v3/
+demoforge/
 ├── client/                         # Frontend (React + Cloudscape)
 │   └── src/
 │       ├── components/AppLayout.tsx # AWS Console shell (TopNav + SideNav)
@@ -242,7 +242,7 @@ cloud-demo-generator-v3/
 
 ```bash
 git clone <repository-url>
-cd cloud-demo-generator-v3
+cd demoforge
 npm install
 
 export DATABASE_URL="postgresql://user:pass@localhost:5432/demogen"
@@ -256,7 +256,7 @@ The included `cloudformation.yaml` provisions the entire stack — VPC, RDS, ECS
 
 ```bash
 aws cloudformation create-stack \
-  --stack-name cloud-demo-generator \
+  --stack-name demoforge \
   --template-body file://cloudformation.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameters \

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Cloud Demo Generator v3 - Epoxy/Orthanc compliant.
+  DemoForge - Epoxy/Orthanc compliant.
   VPC + RDS PostgreSQL (private) + ECS Fargate + ALB.
   Cognito User Pool created separately.
 
@@ -142,7 +142,7 @@ Resources:
   EncryptionKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: CMK for Cloud Demo Generator data encryption
+      Description: CMK for DemoForge data encryption
       EnableKeyRotation: true
       KeyPolicy:
         Version: '2012-10-17'
@@ -247,7 +247,7 @@ Resources:
       TaskRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
         - Name: demo-gen
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/cloud-demo-generator-v3:latest
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/demoforge:latest
           Essential: true
           PortMappings: [{ ContainerPort: 5000, Protocol: tcp }]
           Environment:

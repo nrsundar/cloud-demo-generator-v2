@@ -10,7 +10,7 @@
 
 ```bash
 aws cognito-idp create-user-pool \
-  --pool-name cloud-demo-generator \
+  --pool-name demoforge \
   --auto-verified-attributes email \
   --username-attributes email \
   --admin-create-user-config AllowAdminCreateUserOnly=false \
@@ -19,7 +19,7 @@ aws cognito-idp create-user-pool \
 # Note the UserPoolId, then create a client:
 aws cognito-idp create-user-pool-client \
   --user-pool-id <pool-id> \
-  --client-name cloud-demo-generator-spa \
+  --client-name demoforge-spa \
   --no-generate-secret \
   --explicit-auth-flows ALLOW_USER_SRP_AUTH ALLOW_REFRESH_TOKEN_AUTH \
   --region <your-region>
@@ -35,7 +35,7 @@ aws cognito-idp create-group \
 
 ```bash
 aws ecr create-repository \
-  --repository-name cloud-demo-generator-v3 \
+  --repository-name demoforge \
   --image-scanning-configuration scanOnPush=true \
   --region <your-region>
 ```
@@ -44,7 +44,7 @@ aws ecr create-repository \
 
 ```bash
 aws cloudformation create-stack \
-  --stack-name cloud-demo-generator \
+  --stack-name demoforge \
   --template-body file://cloudformation.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameters \
@@ -56,7 +56,7 @@ aws cloudformation create-stack \
 
 # Wait for completion (~10-15 min):
 aws cloudformation wait stack-create-complete \
-  --stack-name cloud-demo-generator --region <your-region>
+  --stack-name demoforge --region <your-region>
 ```
 
 ## Step 4: Build and Push Docker Image
@@ -65,16 +65,16 @@ aws cloudformation wait stack-create-complete \
 aws ecr get-login-password --region <your-region> | \
   docker login --username AWS --password-stdin <account-id>.dkr.ecr.<your-region>.amazonaws.com
 
-docker build -t cloud-demo-generator-v3 .
-docker tag cloud-demo-generator-v3:latest \
-  <account-id>.dkr.ecr.<your-region>.amazonaws.com/cloud-demo-generator-v3:latest
-docker push <account-id>.dkr.ecr.<your-region>.amazonaws.com/cloud-demo-generator-v3:latest
+docker build -t demoforge .
+docker tag demoforge:latest \
+  <account-id>.dkr.ecr.<your-region>.amazonaws.com/demoforge:latest
+docker push <account-id>.dkr.ecr.<your-region>.amazonaws.com/demoforge:latest
 ```
 
 ## Step 5: Deploy Frontend to Amplify (optional, for HTTPS)
 
 ```bash
-aws amplify create-app --name cloud-demo-generator-v3 --platform WEB --region <your-region>
+aws amplify create-app --name demoforge --platform WEB --region <your-region>
 aws amplify create-branch --app-id <app-id> --branch-name main --region <your-region>
 
 # Build frontend with API URL:
@@ -128,8 +128,8 @@ aws cognito-idp admin-add-user-to-group \
 ## Cleanup
 
 ```bash
-aws cloudformation delete-stack --stack-name cloud-demo-generator --region <your-region>
+aws cloudformation delete-stack --stack-name demoforge --region <your-region>
 aws cognito-idp delete-user-pool --user-pool-id <pool-id> --region <your-region>
-aws ecr delete-repository --repository-name cloud-demo-generator-v3 --force --region <your-region>
+aws ecr delete-repository --repository-name demoforge --force --region <your-region>
 aws amplify delete-app --app-id <app-id> --region <your-region>
 ```
