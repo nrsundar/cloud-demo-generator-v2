@@ -147,8 +147,9 @@ export default function AdminPage() {
   });
 
   const statusBadge = (status: string) => {
-    const colors: Record<string, string> = { pending: "grey", clarifying: "blue", spec_ready: "blue", approved: "green", rejected: "red", complete: "green" };
-    return <Badge color={(colors[status] || "grey") as any}>{status}</Badge>;
+    const colors: Record<string, string> = { pending: "grey", clarifying: "blue", generating_spec: "blue", spec_ready: "blue", generating: "blue", approved: "green", rejected: "red", complete: "green", proposed: "blue" };
+    const labels: Record<string, string> = { proposed: "Pending Review", approved: "Fixed ✓", complete: "Complete" };
+    return <Badge color={(colors[status] || "grey") as any}>{labels[status] || status}</Badge>;
   };
 
   return (
@@ -193,9 +194,11 @@ export default function AdminPage() {
                       {item.status === "spec_ready" && (
                         <>
                           <Button variant="primary" onClick={() => approveMutation.mutate(item.id)} loading={approveMutation.isPending}>Approve</Button>
-                          <Button onClick={() => regenerateMutation.mutate(item.id)} loading={regenerateMutation.isPending}>Regenerate</Button>
                           <Button onClick={() => setRejectModal(item)}>Reject</Button>
                         </>
+                      )}
+                      {(item.status === "spec_ready" || item.status === "approved" || item.status === "complete") && item.spec && (
+                        <Button onClick={() => regenerateMutation.mutate(item.id)} loading={regenerateMutation.isPending}>Regenerate</Button>
                       )}
                     </SpaceBetween>
                   )},
@@ -334,7 +337,8 @@ export default function AdminPage() {
                   { id: "actions", header: "Actions", cell: (item: any) => (
                     <SpaceBetween direction="horizontal" size="xs">
                       {item.proposedPlan && <Button variant="link" onClick={() => setSpecModal({ title: "Bug Details", spec: item.proposedPlan })}>View Fix</Button>}
-                      {item.status === "proposed" && <Button variant="primary" onClick={() => approveActionMutation.mutate(item.id)}>Mark Fixed</Button>}
+                      {item.status === "proposed" && <Button variant="primary" onClick={() => approveActionMutation.mutate(item.id)}>Mark as Fixed</Button>}
+                      {item.status === "approved" && <Badge color="green">Fixed ✓</Badge>}
                     </SpaceBetween>
                   )},
                 ]}
