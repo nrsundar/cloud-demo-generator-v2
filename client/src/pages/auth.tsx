@@ -35,7 +35,7 @@ export default function AuthPage() {
   };
 
   return (
-    <ContentLayout header={<Header variant="h1" description="Sign in to generate and download cloud infrastructure demos.">Welcome to Cloud Demo Generator</Header>}>
+    <ContentLayout header={<Header variant="h1" description="Sign in to generate and download cloud infrastructure demos.">Welcome to DemoForge</Header>}>
       <SpaceBetween size="l">
         <Flashbar items={flash} />
         <ColumnLayout columns={2}>

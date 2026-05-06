@@ -32,7 +32,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <TopNavigation
           identity={{
             href: "/",
-            title: "Cloud Demo Generator v3",
+            title: "DemoForge",
           }}
           utilities={[
             ...(user
@@ -68,7 +68,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         navigation={
           <SideNavigation
             activeHref={location}
-            header={{ text: "Cloud Demo Generator v3", href: "/" }}
+            header={{ text: "DemoForge", href: "/" }}
             items={NAV_ITEMS}
             onFollow={(e) => {
               e.preventDefault();

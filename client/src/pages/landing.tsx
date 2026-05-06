@@ -53,7 +53,7 @@ export default function LandingPage() {
             </SpaceBetween>
           }
         >
-          Cloud Demo Generator
+          DemoForge
         </Header>
       }
     >
