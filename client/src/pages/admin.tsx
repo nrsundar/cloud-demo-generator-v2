@@ -114,7 +114,15 @@ export default function AdminPage() {
       setFlash([{ type: "success", content: `${ids.length} request(s) approved.`, dismissible: true, onDismiss: () => setFlash([]) }]);
       setSelectedRequestIds([]);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] });
+    },
+  });
+
+  const bulkRegenerateMutation = useMutation({
+    mutationFn: async (ids: number[]) => { for (const id of ids) { await apiRequest("POST", `/api/admin/demo-requests/${id}/regenerate`, {}); } },
+    onSuccess: (_, ids) => {
+      setFlash([{ type: "success", content: `${ids.length} demo(s) queued for regeneration.`, dismissible: true, onDismiss: () => setFlash([]) }]);
+      setSelectedRequestIds([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
     },
   });
 
@@ -175,10 +183,16 @@ export default function AdminPage() {
                 onSelectionChange={({ detail }) => setSelectedRequestIds(detail.selectedItems.map((i: any) => i.id))}
                 header={
                   <Header actions={
-                    <Button disabled={selectedRequestIds.length === 0} loading={bulkApproveMutation.isPending}
-                      onClick={() => bulkApproveMutation.mutate(selectedRequestIds)}>
-                      Bulk Approve ({selectedRequestIds.length})
-                    </Button>
+                    <SpaceBetween direction="horizontal" size="xs">
+                      <Button disabled={selectedRequestIds.length === 0} loading={bulkApproveMutation.isPending}
+                        onClick={() => bulkApproveMutation.mutate(selectedRequestIds)}>
+                        Bulk Approve ({selectedRequestIds.length})
+                      </Button>
+                      <Button disabled={selectedRequestIds.length === 0} loading={bulkRegenerateMutation.isPending}
+                        onClick={() => bulkRegenerateMutation.mutate(selectedRequestIds)}>
+                        Bulk Regenerate ({selectedRequestIds.length})
+                      </Button>
+                    </SpaceBetween>
                   }>Demo Requests</Header>
                 }
                 columnDefinitions={[
