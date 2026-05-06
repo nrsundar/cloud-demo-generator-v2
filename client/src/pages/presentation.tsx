@@ -27,7 +27,7 @@ const SLIDES = [
       "SA describes what they need: \"pgvector fraud detection for a fintech CTO\"",
       "AI asks 5 clarifying questions to understand audience and scope",
       "AI generates a complete, deployable demo — code, infra, data, exercises",
-      "SA downloads, imports to Git, deploys to customer account in 1 command",
+      "SA downloads and shares with the customer as a learning package",
     ],
     note: "From 2-3 days → 10 minutes. Same quality. Consistent. Reusable.",
     accent: "#2ecc71",
