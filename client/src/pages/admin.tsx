@@ -182,11 +182,11 @@ export default function AdminPage() {
                   }>Demo Requests</Header>
                 }
                 columnDefinitions={[
-                  { id: "title", header: "Title", cell: (item: any) => item.title },
-                  { id: "requester", header: "Requester", cell: (item: any) => item.requesterEmail },
-                  { id: "extension", header: "Extension", cell: (item: any) => item.targetExtension || "—" },
-                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status) },
-                  { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
+                  { id: "title", header: "Title", cell: (item: any) => item.title, width: 250 },
+                  { id: "requester", header: "Requester", cell: (item: any) => item.requesterEmail, width: 180 },
+                  { id: "extension", header: "Extension", cell: (item: any) => item.targetExtension || "—", width: 120 },
+                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status), width: 120 },
+                  { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString(), width: 100 },
                   { id: "actions", header: "Actions", cell: (item: any) => (
                     <SpaceBetween direction="horizontal" size="xs">
                       {item.status === "clarifying" && <Button onClick={() => { setQuestionsModal(item); setAdminAnswers({}); }}>Answer Questions</Button>}
@@ -203,6 +203,7 @@ export default function AdminPage() {
                     </SpaceBetween>
                   )},
                 ]}
+                wrapLines={true}
                 items={demoRequests ?? []}
                 loading={isLoading}
                 empty={<Box textAlign="center" padding="l">No demo requests yet.</Box>}
@@ -229,8 +230,8 @@ export default function AdminPage() {
                   }>Agent Actions</Header>
                 }
                 columnDefinitions={[
-                  { id: "type", header: "Agent", cell: (item: any) => <Badge>{item.agentType}</Badge> },
-                  { id: "trigger", header: "Trigger", cell: (item: any) => item.triggerSource || "—" },
+                  { id: "type", header: "Agent", cell: (item: any) => <Badge>{item.agentType}</Badge>, width: 100 },
+                  { id: "trigger", header: "Trigger", cell: (item: any) => item.triggerSource || "—", width: 100 },
                   { id: "detail", header: "Details", cell: (item: any) => {
                     const plan = item.proposedPlan || {};
                     if (item.agentType === "new_demo") return plan.name || plan.displayName || plan.title || "Demo spec";
@@ -241,14 +242,14 @@ export default function AdminPage() {
                     const m = item.executionResult?.metrics;
                     if (!m) return "—";
                     return `${((m.totalInputTokens + m.totalOutputTokens) / 1000).toFixed(1)}K`;
-                  }},
+                  }, width: 80 },
                   { id: "time", header: "Time", cell: (item: any) => {
                     const m = item.executionResult?.metrics;
                     if (!m) return "—";
                     return `${(m.totalDurationMs / 1000).toFixed(0)}s`;
-                  }},
-                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status) },
-                  { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
+                  }, width: 70 },
+                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status), width: 120 },
+                  { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString(), width: 100 },
                   { id: "actions", header: "Actions", cell: (item: any) => (
                     <SpaceBetween direction="horizontal" size="xs">
                       {item.proposedPlan && <Button variant="link" onClick={() => setSpecModal({ title: `Action #${item.id}`, spec: item.proposedPlan })}>View Plan</Button>}
@@ -256,6 +257,7 @@ export default function AdminPage() {
                     </SpaceBetween>
                   )},
                 ]}
+                wrapLines={true}
                 items={agentActions ?? []}
                 loading={isLoading}
                 empty={<Box textAlign="center" padding="l">No agent actions yet.</Box>}

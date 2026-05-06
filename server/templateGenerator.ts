@@ -294,6 +294,8 @@ Keep it to 1 page. Use markdown. Be specific and factual — no filler.`,
       const p = join(tmpDir, f);
       if (!existsSync(p)) auditErrors.push(`Missing: ${f}`);
       else if (statSync(p).size === 0) auditErrors.push(`Empty: ${f}`);
+      else if (f.endsWith(".md") && statSync(p).size < 200) auditErrors.push(`Stub: ${f} (${statSync(p).size} bytes — header only, no content)`);
+      else if (f.endsWith(".py") && statSync(p).size < 100) auditErrors.push(`Stub: ${f} (${statSync(p).size} bytes — likely placeholder)`);
     }
 
     // Validate Python syntax
