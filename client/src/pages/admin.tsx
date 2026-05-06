@@ -244,14 +244,14 @@ export default function AdminPage() {
                   }>Agent Actions</Header>
                 }
                 columnDefinitions={[
-                  { id: "type", header: "Agent", cell: (item: any) => <Badge>{item.agentType}</Badge>, width: 100 },
-                  { id: "trigger", header: "Trigger", cell: (item: any) => item.triggerSource || "—", width: 100 },
+                  { id: "type", header: "Agent", cell: (item: any) => <Badge>{item.agentType}</Badge>, width: 110 },
+                  { id: "trigger", header: "Trigger", cell: (item: any) => item.triggerSource || "—", width: 110 },
                   { id: "detail", header: "Details", cell: (item: any) => {
                     const plan = item.proposedPlan || {};
                     if (item.agentType === "new_demo") return plan.name || plan.displayName || plan.title || "Demo spec";
                     if (item.agentType === "bug_fix") return plan.title || plan.rootCause || "Fix proposal";
                     return "—";
-                  }},
+                  }, width: 280 },
                   { id: "tokens", header: "Tokens", cell: (item: any) => {
                     const m = item.executionResult?.metrics;
                     if (!m) return "—";
@@ -262,7 +262,7 @@ export default function AdminPage() {
                     if (!m) return "—";
                     return `${(m.totalDurationMs / 1000).toFixed(0)}s`;
                   }, width: 70 },
-                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status), width: 120 },
+                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status), width: 130 },
                   { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString(), width: 100 },
                   { id: "actions", header: "Actions", cell: (item: any) => (
                     <SpaceBetween direction="horizontal" size="xs">
