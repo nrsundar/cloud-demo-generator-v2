@@ -189,12 +189,21 @@ export function registerAgentRoutes(app: Express) {
 
         // Create repository entry so it appears on the dashboard
         const specData = request.spec as any;
+        const ext = (specData.extension || request.targetExtension || "").toLowerCase();
+        const dbInfo = ext.includes("dynamo") ? { type: "DynamoDB", ver: "On-Demand" }
+          : ext.includes("neptune") ? { type: "Neptune", ver: "1.3" }
+          : ext.includes("elasticache") || ext.includes("redis") ? { type: "ElastiCache", ver: "7.x" }
+          : ext.includes("documentdb") ? { type: "DocumentDB", ver: "6.0" }
+          : ext.includes("mysql") ? { type: "Aurora MySQL", ver: "8.0" }
+          : ext.includes("oracle") ? { type: "RDS Oracle", ver: "19c" }
+          : ext.includes("sqlserver") || ext.includes("sql-server") ? { type: "RDS SQL Server", ver: "2022" }
+          : { type: "Aurora PostgreSQL", ver: "17" };
         await db.insert(repositories).values({
           name: specData.name || request.title,
-          language: "python",
-          databaseVersion: "16",
-          databaseType: "Aurora",
-          instanceType: "db.t4g.medium",
+          language: ext.includes("dynamo") ? "typescript" : ext.includes("neptune") ? "python" : "python",
+          databaseVersion: dbInfo.ver,
+          databaseType: dbInfo.type,
+          instanceType: ext.includes("dynamo") ? "On-Demand" : ext.includes("elasticache") ? "cache.r7g.large" : "db.t4g.medium",
           awsRegion: "us-east-2",
           useCases: [specData.extension || request.targetExtension || "custom"],
           complexityLevel: request.complexity || "intermediate",
@@ -245,6 +254,29 @@ export function registerAgentRoutes(app: Express) {
       .where(eq(agentActions.requestId, id));
 
     res.json({ success: true });
+  });
+
+  // Fix existing repo metadata (one-time migration)
+  app.post("/api/admin/fix-repo-metadata", requireAuth, requireAdmin, async (_req, res) => {
+    const allRepos = await db.select().from(repositories);
+    let fixed = 0;
+    for (const repo of allRepos) {
+      const ext = (repo.useCases as string[])?.[0]?.toLowerCase() || "";
+      const name = (repo.name || "").toLowerCase();
+      const hint = ext + " " + name;
+      const dbInfo = hint.includes("dynamo") ? { type: "DynamoDB", ver: "On-Demand" }
+        : hint.includes("neptune") ? { type: "Neptune", ver: "1.3" }
+        : hint.includes("elasticache") || hint.includes("redis") ? { type: "ElastiCache", ver: "7.x" }
+        : hint.includes("documentdb") ? { type: "DocumentDB", ver: "6.0" }
+        : hint.includes("mysql") || hint.includes("aurora-mysql") ? { type: "Aurora MySQL", ver: "8.0" }
+        : hint.includes("oracle") ? { type: "RDS Oracle", ver: "19c" }
+        : { type: "Aurora PostgreSQL", ver: "17" };
+      if (repo.databaseType !== dbInfo.type || repo.databaseVersion !== dbInfo.ver) {
+        await db.update(repositories).set({ databaseType: dbInfo.type, databaseVersion: dbInfo.ver }).where(eq(repositories.id, repo.id));
+        fixed++;
+      }
+    }
+    res.json({ success: true, fixed, total: allRepos.length });
   });
 
   app.post("/api/admin/bulk-approve", requireAuth, requireAdmin, async (req, res) => {
