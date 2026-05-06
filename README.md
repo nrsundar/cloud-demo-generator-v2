@@ -101,19 +101,21 @@ Two self-evolving AI agents powered by **Claude Opus 4.6 on Amazon Bedrock**:
 
 **Duplicate detection:** If a matching demo already exists in the catalog, users are redirected to download it instead of regenerating.
 
-### AWS Services
+### AWS Services & Component Roles
 
-| Service | Purpose |
+| Service | Role in DemoForge |
 |---------|---------|
-| **Amazon Bedrock** | AI agent backbone (Claude Opus 4.6 for spec + template generation) |
-| **Amazon Cognito** | User authentication (email/password with SRP) |
-| **Amazon ECS Fargate** | Containerized app hosting (no EC2 instances) |
-| **Amazon RDS PostgreSQL 16** | Application database (private subnet, encrypted) |
-| **Application Load Balancer** | Internet-facing entry point |
-| **Amazon ECR** | Container image registry with scan-on-push |
-| **Amazon VPC** | Isolated networking with public/private subnets |
-| **AWS CloudFormation** | Infrastructure as Code — one-command deploy |
-| **Amazon CloudWatch** | Centralized logging and monitoring |
+| **Amazon Bedrock** | AI engine — Claude Opus 4 generates specs, templates, modules, and bug fix proposals. 17 API calls per demo. |
+| **Amazon Cognito** | User authentication — manages SA/TAM sign-in and admin group membership for approval workflows. |
+| **Amazon ECS Fargate** | Runs the Node.js API server and both AI agents (Demo Generation + Bug Fix). Serverless — no EC2 to manage. |
+| **Amazon RDS PostgreSQL 17** | Application database — stores demo requests, specs, generated repos, agent actions, user data, and bug tracker entries. |
+| **Application Load Balancer** | Internet-facing entry point — routes HTTPS traffic to ECS tasks. Health checks ensure availability. |
+| **Amazon ECR** | Container image registry — stores the Docker image with scan-on-push for vulnerability detection. |
+| **Amazon VPC** | Network isolation — ECS and RDS in private subnets, ALB in public subnets, NAT for outbound. |
+| **AWS CloudFormation** | Infrastructure as Code — the entire DemoForge stack deploys with one command. Generated demos also use CFN. |
+| **Amazon CloudWatch** | Logging + monitoring — the Bug Fix Agent scans these logs hourly to detect and propose fixes autonomously. |
+| **AWS Amplify** | Hosts the React frontend (Cloudscape UI). Deploys via ZIP upload — no build pipeline needed. |
+| **Amazon CloudFront** | CDN — caches static assets and proxies API requests to the ALB for low-latency global access. |
 
 ### Security
 
@@ -153,34 +155,21 @@ Two self-evolving AI agents powered by **Claude Opus 4.6 on Amazon Bedrock**:
 
 ---
 
-## Extend It — Add Your Own Demos
+## Suggest Improvements
 
-The generator is designed to be forked and extended. Any team can add demos for their database or use case:
-
-1. **Fork** this repository
-2. **Add a use case** to the configuration options in `client/src/pages/home.tsx`
-3. **Add generation logic** in `server/storage.ts` — define the files, templates, and CloudFormation for your demo
-4. **Add templates** — schemas, seed data, and application code for the new database
-5. **Deploy** your customized version to your own AWS account
-
-**Example:** to add a DynamoDB single-table design demo:
-- Add `"DynamoDB"` as a database type option
-- Create a template that generates `template.yaml` (SAM/CloudFormation with DynamoDB table)
-- Generate application code with boto3/AWS SDK
-- Include sample data and query patterns
-
-> The goal: any SA or developer forks this and adds demos for their specialty — PostgreSQL, MySQL, DynamoDB, or any AWS database.
+Have an idea for a new database engine, extension, or feature? Submit a demo request through the app — the AI agent will build it. For platform improvements, open an issue in this repository.
 
 ---
 
 ## How It Works
 
 ```
-1. Sign in          →  Amazon Cognito (email/password)
-2. Configure        →  Select language, DB type, region, use cases, complexity
-3. Generate         →  Server assembles infrastructure + code + data + docs
-4. Download         →  ZIP package streamed to browser
-5. Deploy & Demo    →  Run CloudFormation in any AWS account → present to customer
+1. Request Demo     →  Describe what you need in plain English
+2. Clarify          →  AI asks 5 questions about audience, scale, industry
+3. Generate Spec    →  AI produces full technical specification
+4. Admin Approves   →  Human-in-the-loop reviews the spec
+5. AI Generates     →  Complete package built in ~10 minutes
+6. Download         →  ZIP with infra, code, modules, docs, demo scripts
 ```
 
 ---
@@ -302,6 +291,27 @@ This project has evolved through three generations, each deepening the AI-toolin
 | **React / TypeScript** | Frontend framework |
 | **Express / Drizzle ORM** | Backend API + database |
 | **AWS (ECS, RDS, Cognito, ALB, CloudFormation)** | Cloud infrastructure |
+
+---
+
+## Presentation Speaker Notes
+
+The in-app presentation (`/presentation`) has 12 slides. Below are speaker notes for each:
+
+| Slide | Speaker Notes |
+|-------|--------------|
+| **1. DemoForge** | "DemoForge is an internal platform that uses AI agents to generate complete customer demo packages. It's live today and supports 6+ AWS database engines." |
+| **2. Architecture** | "The system runs on ECS Fargate with two AI agents powered by Bedrock Claude Opus 4. RDS PostgreSQL stores all state. The Bug Fix Agent scans CloudWatch hourly — that red loop is the self-healing path." |
+| **3. The Challenge** | "Our field teams spend 2-3 days per demo. Multiply that by 1000+ SAs doing 4 demos/month — that's 48,000 engineering days/year. This doesn't scale." |
+| **4. What DemoForge Does** | "An SA describes what they need in English. The AI asks clarifying questions, generates a full spec, and after admin approval, produces the complete package in ~10 minutes." |
+| **5. What SAs Get** | "Not just sample code — a full enablement package. CloudFormation, working app, industry-specific data, 10 hands-on modules, demo scripts. Ready to share with the customer." |
+| **6. Two AI Agents** | "The Demo Agent builds new demos. The Bug Fix Agent monitors the platform itself. Both are supervised — a human approves every action before execution." |
+| **7. How Requests Flow** | "Requests queue and process in parallel. Duplicate detection prevents regenerating existing demos. The eval system validates every output before it reaches the catalog." |
+| **8. Quality & Trust** | "12+ automated checks: Python AST compile, CFN YAML parse, security scan, hallucination detection via extension skill files. If anything fails, it's auto-reported to the Bug Tracker." |
+| **9. Self-Healing** | "Why hourly? Because SAs are global — all time zones. If something breaks at 2am, the agent catches it before the next user hits it. No on-call needed." |
+| **10. Impact for Leadership** | "The ROI: near-zero marginal cost per demo, same-day delivery, consistent quality regardless of SA tenure, and institutional memory via the shared catalog." |
+| **11. What's Next** | "Next steps: production rollout to all field SAs, additional database engines, customer self-serve mode, and Workshop Studio integration." |
+| **12. Try It Now** | "The app is live. Sign in, request a demo, and see it generate in real time." |
 
 ---
 
