@@ -116,24 +116,13 @@ const SLIDES = [
     image: "/screenshots/09-ai-catalog.png",
   },
   {
-    title: "Architecture Diagram",
+    title: "Architecture",
     subtitle: "",
-    bullets: [
-      "┌─────────────┐     ┌──────────────┐     ┌─────────────────┐",
-      "│  Amplify     │────▶│  CloudFront  │────▶│  ECS Fargate    │",
-      "│  (React UI)  │     │  (CDN/API)   │     │  (Node.js API)  │",
-      "└─────────────┘     └──────────────┘     └────────┬────────┘",
-      "                                                   │",
-      "              ┌────────────────┬──────────────────┬┘",
-      "              ▼                ▼                  ▼",
-      "    ┌──────────────┐  ┌──────────────┐  ┌──────────────┐",
-      "    │  RDS Postgres │  │   Bedrock    │  │   Cognito    │",
-      "    │  (App DB)     │  │  (Opus 4.6)  │  │  (Auth)      │",
-      "    └──────────────┘  └──────────────┘  └──────────────┘",
-    ],
-    note: "All in us-east-2 • CloudFormation deployed • Fully serverless",
+    bullets: [],
+    note: "All services in us-east-2 • Deployed via CloudFormation • Fully serverless",
     accent: "#8e44ad",
     image: "",
+    isSvg: true,
   },
   {
     title: "Metrics & Observability",
@@ -167,6 +156,101 @@ const SLIDES = [
     image: "/screenshots/04-demo-request.png",
   },
 ];
+
+function ArchDiagram({ accent }: { accent: string }) {
+  return (
+    <svg viewBox="0 0 900 480" style={{ width: "100%", maxWidth: "900px", animation: "fadeInUp 0.8s ease-out" }}>
+      <defs>
+        <linearGradient id="grad-user" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#4a90d9" /><stop offset="100%" stopColor="#357abd" /></linearGradient>
+        <linearGradient id="grad-amplify" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ff9900" /><stop offset="100%" stopColor="#e88600" /></linearGradient>
+        <linearGradient id="grad-cf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#8b5cf6" /><stop offset="100%" stopColor="#7c3aed" /></linearGradient>
+        <linearGradient id="grad-ecs" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f97316" /><stop offset="100%" stopColor="#ea580c" /></linearGradient>
+        <linearGradient id="grad-rds" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#3b82f6" /><stop offset="100%" stopColor="#2563eb" /></linearGradient>
+        <linearGradient id="grad-bedrock" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#059669" /></linearGradient>
+        <linearGradient id="grad-cognito" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ec4899" /><stop offset="100%" stopColor="#db2777" /></linearGradient>
+        <linearGradient id="grad-cw" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#06b6d4" /><stop offset="100%" stopColor="#0891b2" /></linearGradient>
+        <filter id="shadow"><feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3" /></filter>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#64748b" /></marker>
+      </defs>
+
+      {/* Flow arrows */}
+      <path d="M130,90 L220,90" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrow)" strokeDasharray="4,3" />
+      <path d="M380,90 L470,90" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrow)" strokeDasharray="4,3" />
+      <path d="M630,90 L720,90" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrow)" strokeDasharray="4,3" />
+      {/* Down arrows from ECS */}
+      <path d="M560,130 L560,200 L200,200 L200,250" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#arrow)" strokeDasharray="4,3" />
+      <path d="M560,130 L560,250" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#arrow)" strokeDasharray="4,3" />
+      <path d="M560,130 L560,200 L780,200 L780,250" stroke="#64748b" strokeWidth="1.5" markerEnd="url(#arrow)" strokeDasharray="4,3" />
+      {/* Bug fix agent arrow */}
+      <path d="M560,340 L560,380 L380,380 L380,410" stroke="#ef4444" strokeWidth="1.5" markerEnd="url(#arrow)" strokeDasharray="4,3" />
+
+      {/* Row 1: User → Amplify → CloudFront → ECS */}
+      <g filter="url(#shadow)">
+        <rect x="40" y="60" width="90" height="60" rx="8" fill="url(#grad-user)" />
+        <text x="85" y="87" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">👤 SA / TAM</text>
+        <text x="85" y="104" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Browser</text>
+      </g>
+      <g filter="url(#shadow)">
+        <rect x="220" y="60" width="160" height="60" rx="8" fill="url(#grad-amplify)" />
+        <text x="300" y="85" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">AWS Amplify</text>
+        <text x="300" y="102" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">React + Cloudscape UI</text>
+      </g>
+      <g filter="url(#shadow)">
+        <rect x="470" y="60" width="160" height="60" rx="8" fill="url(#grad-cf)" />
+        <text x="550" y="85" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">CloudFront + ALB</text>
+        <text x="550" y="102" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">CDN + API Gateway</text>
+      </g>
+      <g filter="url(#shadow)">
+        <rect x="720" y="60" width="160" height="60" rx="8" fill="url(#grad-ecs)" />
+        <text x="800" y="85" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">ECS Fargate</text>
+        <text x="800" y="102" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Node.js + Express API</text>
+      </g>
+
+      {/* Row 2: RDS, Bedrock, Cognito */}
+      <g filter="url(#shadow)">
+        <rect x="120" y="250" width="160" height="80" rx="8" fill="url(#grad-rds)" />
+        <text x="200" y="280" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">Amazon RDS</text>
+        <text x="200" y="297" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">PostgreSQL 16</text>
+        <text x="200" y="314" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="8">App DB • Encrypted</text>
+      </g>
+      <g filter="url(#shadow)">
+        <rect x="400" y="250" width="200" height="80" rx="8" fill="url(#grad-bedrock)" />
+        <text x="500" y="275" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">Amazon Bedrock</text>
+        <text x="500" y="295" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Claude Opus 4.6</text>
+        <text x="500" y="312" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="8">New Demo Agent • Bug Fix Agent</text>
+        <text x="500" y="325" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="7">Spec Gen • Template Gen • Eval</text>
+      </g>
+      <g filter="url(#shadow)">
+        <rect x="700" y="250" width="160" height="80" rx="8" fill="url(#grad-cognito)" />
+        <text x="780" y="280" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">Amazon Cognito</text>
+        <text x="780" y="297" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">User Auth (SRP)</text>
+        <text x="780" y="314" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="8">Admin Groups</text>
+      </g>
+
+      {/* Row 3: CloudWatch */}
+      <g filter="url(#shadow)">
+        <rect x="300" y="400" width="160" height="60" rx="8" fill="url(#grad-cw)" />
+        <text x="380" y="425" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">CloudWatch Logs</text>
+        <text x="380" y="442" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="9">Bug Fix Agent scans hourly</text>
+      </g>
+
+      {/* Labels */}
+      <text x="175" y="50" textAnchor="middle" fill="#94a3b8" fontSize="9" fontStyle="italic">HTTPS</text>
+      <text x="425" y="50" textAnchor="middle" fill="#94a3b8" fontSize="9" fontStyle="italic">TLS</text>
+      <text x="675" y="50" textAnchor="middle" fill="#94a3b8" fontSize="9" fontStyle="italic">Private VPC</text>
+      <text x="200" y="240" textAnchor="middle" fill="#94a3b8" fontSize="9">Drizzle ORM</text>
+      <text x="500" y="240" textAnchor="middle" fill="#94a3b8" fontSize="9">17 API calls/demo</text>
+      <text x="780" y="240" textAnchor="middle" fill="#94a3b8" fontSize="9">JWT Tokens</text>
+      <text x="470" y="395" textAnchor="middle" fill="#ef4444" fontSize="9">Self-healing loop</text>
+
+      {/* Legend */}
+      <rect x="40" y="420" width="8" height="8" rx="2" fill="#64748b" />
+      <text x="55" y="428" fill="#64748b" fontSize="9">Data flow</text>
+      <rect x="120" y="420" width="8" height="8" rx="2" fill="#ef4444" />
+      <text x="135" y="428" fill="#64748b" fontSize="9">Self-healing</text>
+    </svg>
+  );
+}
 
 export default function PresentationPage() {
   const [current, setCurrent] = useState(0);
@@ -239,12 +323,14 @@ export default function PresentationPage() {
         {slide.bullets.length > 0 && (
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {slide.bullets.map((b, i) => (
-              <li key={i} className={slide.title === "Architecture Diagram" ? "arch-line" : "slide-bullet"} style={slide.title === "Architecture Diagram" ? {} : { color: "#e2e8f0", fontSize: "22px", lineHeight: 1.5, padding: "5px 0", paddingLeft: "16px", borderLeft: `3px solid ${slide.accent}44`, marginBottom: "6px", animationDelay: `${0.2 + i * 0.08}s` }}>
+              <li key={i} className="slide-bullet" style={{ color: "#e2e8f0", fontSize: "22px", lineHeight: 1.5, padding: "5px 0", paddingLeft: "16px", borderLeft: `3px solid ${slide.accent}44`, marginBottom: "6px", animationDelay: `${0.2 + i * 0.08}s` }}>
                 {b}
               </li>
             ))}
           </ul>
         )}
+
+        {(slide as any).isSvg && <ArchDiagram accent={slide.accent} />}
 
         {slide.note && (
           <p className="slide-note" style={{ color: "rgba(255,255,255,0.4)", fontSize: "16px", marginTop: "32px", fontStyle: "italic" }}>
