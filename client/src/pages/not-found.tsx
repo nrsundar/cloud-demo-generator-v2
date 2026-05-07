@@ -1,14 +1,13 @@
 import React from "react";
-import ContentLayout from "@cloudscape-design/components/content-layout";
-import Header from "@cloudscape-design/components/header";
-import Box from "@cloudscape-design/components/box";
+import { useLocation } from "wouter";
 
 export default function NotFound() {
+  const [, navigate] = useLocation();
   return (
-    <ContentLayout header={<Header variant="h1">404 — Page Not Found</Header>}>
-      <Box variant="p" color="text-body-secondary">
-        The page you requested does not exist. Use the navigation to return to a valid page.
-      </Box>
-    </ContentLayout>
+    <div style={{ textAlign: "center", padding: 80 }}>
+      <h1 style={{ fontSize: 48, fontWeight: 800, margin: "0 0 12px", letterSpacing: "-0.02em" }}>404</h1>
+      <p style={{ color: "var(--text-muted)", fontSize: 15, margin: "0 0 24px" }}>Page not found.</p>
+      <button className="btn btn-primary" onClick={() => navigate("/home")}>← Back to Dashboard</button>
+    </div>
   );
 }

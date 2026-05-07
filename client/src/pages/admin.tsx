@@ -1,420 +1,353 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import ContentLayout from "@cloudscape-design/components/content-layout";
-import Header from "@cloudscape-design/components/header";
-import Container from "@cloudscape-design/components/container";
-import SpaceBetween from "@cloudscape-design/components/space-between";
-import Box from "@cloudscape-design/components/box";
-import ColumnLayout from "@cloudscape-design/components/column-layout";
-import Table from "@cloudscape-design/components/table";
-import Tabs from "@cloudscape-design/components/tabs";
-import StatusIndicator from "@cloudscape-design/components/status-indicator";
-import Badge from "@cloudscape-design/components/badge";
-import Alert from "@cloudscape-design/components/alert";
-import Button from "@cloudscape-design/components/button";
-import Modal from "@cloudscape-design/components/modal";
-import Textarea from "@cloudscape-design/components/textarea";
-import FormField from "@cloudscape-design/components/form-field";
-import Flashbar, { FlashbarProps } from "@cloudscape-design/components/flashbar";
+import { useLocation } from "wouter";
 import { apiRequest } from "../lib/queryClient";
 import { useAuth } from "../hooks/useAuth";
-import { useLocation } from "wouter";
+
+const STATUS_MAP: Record<string, { cls: string; label: string }> = {
+  pending: { cls: "pending", label: "PENDING" },
+  clarifying: { cls: "review", label: "CLARIFYING" },
+  generating_spec: { cls: "building", label: "BUILDING SPEC" },
+  spec_ready: { cls: "review", label: "SPEC READY" },
+  approved: { cls: "building", label: "APPROVED" },
+  generating: { cls: "building", label: "GENERATING" },
+  complete: { cls: "ready", label: "COMPLETE" },
+  rejected: { cls: "failed", label: "REJECTED" },
+  proposed: { cls: "review", label: "PROPOSED" },
+};
+
+const chipColor = (ext: string) => {
+  if (!ext) return "b";
+  if (/pgvector|vector/i.test(ext)) return "b";
+  if (/postgis|pgrouting/i.test(ext)) return "g";
+  if (/dynamo|single-table/i.test(ext)) return "p";
+  if (/neptune|graph|gremlin/i.test(ext)) return "c";
+  if (/timescale|cron/i.test(ext)) return "o";
+  if (/redis/i.test(ext)) return "r";
+  return "b";
+};
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
-  const [flash, setFlash] = useState<FlashbarProps.MessageDefinition[]>([]);
-  const [specModal, setSpecModal] = useState<any>(null);
-  const [rejectModal, setRejectModal] = useState<any>(null);
-  const [questionsModal, setQuestionsModal] = useState<any>(null);
-  const [adminAnswers, setAdminAnswers] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [actionIds, setActionIds] = useState<number[]>([]);
+  const [viewSpec, setViewSpec] = useState<any>(null);
+  const [rejectFor, setRejectFor] = useState<any>(null);
   const [rejectNotes, setRejectNotes] = useState("");
-  const [selectedRequestIds, setSelectedRequestIds] = useState<number[]>([]);
-  const [selectedActionIds, setSelectedActionIds] = useState<number[]>([]);
+  const [answerFor, setAnswerFor] = useState<any>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  if (loading) {
-    return (
-      <ContentLayout header={<Header variant="h1">Admin Dashboard</Header>}>
-        <Box textAlign="center" padding="xxl"><StatusIndicator type="loading">Loading...</StatusIndicator></Box>
-      </ContentLayout>
-    );
-  }
+  const { data: stats } = useQuery<any>({ queryKey: ["/api/analytics/stats"], retry: false, enabled: !!user?.isAdmin });
+  const { data: repos } = useQuery<any[]>({ queryKey: ["/api/repositories"], retry: false, enabled: !!user?.isAdmin });
+  const { data: feedback } = useQuery<any[]>({ queryKey: ["/api/feedback"], retry: false, enabled: !!user?.isAdmin });
+  const { data: requests } = useQuery<any[]>({ queryKey: ["/api/admin/demo-requests"], retry: false, enabled: !!user?.isAdmin });
+  const { data: actions } = useQuery<any[]>({ queryKey: ["/api/admin/agent-actions"], retry: false, enabled: !!user?.isAdmin });
 
-  if (!user) {
-    return (
-      <ContentLayout header={<Header variant="h1">Admin Dashboard</Header>}>
-        <Alert type="warning" action={<Button onClick={() => navigate("/auth")}>Sign In</Button>}>
-          You must be signed in to access the admin dashboard.
-        </Alert>
-      </ContentLayout>
-    );
-  }
-
-  if (!user.isAdmin) {
-    return (
-      <ContentLayout header={<Header variant="h1">Admin Dashboard</Header>}>
-        <Alert type="error">Access denied. Your account ({user.email}) is not in the admin group.</Alert>
-      </ContentLayout>
-    );
-  }
-
-  const { data: analytics, isLoading } = useQuery<any>({ queryKey: ["/api/analytics/stats"], retry: false });
-  const { data: repositories } = useQuery<any[]>({ queryKey: ["/api/repositories"], retry: false });
-  const { data: feedback } = useQuery<any[]>({ queryKey: ["/api/feedback"], retry: false });
-  const { data: demoRequests } = useQuery<any[]>({ queryKey: ["/api/admin/demo-requests"], retry: false });
-  const { data: agentActions } = useQuery<any[]>({ queryKey: ["/api/admin/agent-actions"], retry: false });
-
-  const approveMutation = useMutation({
+  const approveRequest = useMutation({
     mutationFn: async (id: number) => { await apiRequest("POST", `/api/admin/demo-requests/${id}/approve`, {}); },
-    onSuccess: () => {
-      setFlash([{ type: "success", content: "Request approved.", dismissible: true, onDismiss: () => setFlash([]) }]);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] }),
   });
-
-  const regenerateMutation = useMutation({
+  const regenerateRequest = useMutation({
     mutationFn: async (id: number) => { await apiRequest("POST", `/api/admin/demo-requests/${id}/regenerate`, {}); },
-    onSuccess: () => {
-      setFlash([{ type: "success", content: "Regenerating with latest template (includes CHEAT_SHEET.md)...", dismissible: true, onDismiss: () => setFlash([]) }]);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] }),
   });
-
-  const adminAnswerMutation = useMutation({
+  const rejectRequest = useMutation({
+    mutationFn: async ({ id, notes }: { id: number; notes: string }) => { await apiRequest("POST", `/api/admin/demo-requests/${id}/reject`, { notes }); },
+    onSuccess: () => { setRejectFor(null); setRejectNotes(""); queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] }); },
+  });
+  const bulkApprove = useMutation({
+    mutationFn: async (ids: number[]) => { await apiRequest("POST", "/api/admin/bulk-approve", { ids }); },
+    onSuccess: () => { setSelectedIds([]); queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] }); },
+  });
+  const bulkRegenerate = useMutation({
+    mutationFn: async (ids: number[]) => { for (const id of ids) await apiRequest("POST", `/api/admin/demo-requests/${id}/regenerate`, {}); },
+    onSuccess: () => { setSelectedIds([]); queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] }); },
+  });
+  const approveAction = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("POST", `/api/admin/agent-actions/${id}/approve`, {}); },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] }),
+  });
+  const submitAnswers = useMutation({
     mutationFn: async ({ id, answers }: { id: number; answers: Record<string, string> }) => {
       const res = await apiRequest("POST", `/api/demo-requests/${id}/answers`, { answers });
       return res.json();
     },
-    onSuccess: () => {
-      setFlash([{ type: "success", content: "✅ Answers submitted. AI is generating the demo spec in the background — check back in ~1 minute. You'll receive an email when it's ready for approval.", dismissible: true, onDismiss: () => setFlash([]) }]);
-      setQuestionsModal(null); setAdminAnswers({});
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
-    },
-    onError: (err: any) => {
-      setFlash([{ type: "error", content: `Failed: ${err.message}`, dismissible: true, onDismiss: () => setFlash([]) }]);
-    },
+    onSuccess: () => { setAnswerFor(null); setAnswers({}); queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] }); },
+  });
+  const runBugFixAgent = useMutation({
+    mutationFn: async () => (await apiRequest("POST", "/api/admin/run-bug-fix-agent", {})).json(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] }),
   });
 
-  const rejectMutation = useMutation({
-    mutationFn: async ({ id, notes }: { id: number; notes: string }) => {
-      await apiRequest("POST", `/api/admin/demo-requests/${id}/reject`, { notes });
-    },
-    onSuccess: () => {
-      setFlash([{ type: "info", content: "Request rejected.", dismissible: true, onDismiss: () => setFlash([]) }]);
-      setRejectModal(null); setRejectNotes("");
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
-    },
-  });
+  if (loading) return <div style={{ padding: 40, textAlign: "center", color: "var(--text-soft)" }}>Loading...</div>;
+  if (!user) return <div style={{ padding: 40, textAlign: "center" }}><button className="btn btn-primary" onClick={() => navigate("/auth")}>Sign in</button></div>;
+  if (!user.isAdmin) return <div style={{ padding: 40, textAlign: "center", color: "var(--danger)" }}>Access denied. {user.email} is not in the admin group.</div>;
 
-  const bulkApproveMutation = useMutation({
-    mutationFn: async (ids: number[]) => { await apiRequest("POST", "/api/admin/bulk-approve", { ids }); },
-    onSuccess: (_, ids) => {
-      setFlash([{ type: "success", content: `${ids.length} request(s) approved.`, dismissible: true, onDismiss: () => setFlash([]) }]);
-      setSelectedRequestIds([]);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
-    },
-  });
+  const reqItems = requests || [];
+  const actionItems = actions || [];
+  const repoItems = repos || [];
+  const feedbackItems = feedback || [];
+  const bugItems = actionItems.filter(a => a.agentType === "bug_fix");
+  const pendingCount = reqItems.filter(r => r.status === "spec_ready").length;
 
-  const bulkRegenerateMutation = useMutation({
-    mutationFn: async (ids: number[]) => { for (const id of ids) { await apiRequest("POST", `/api/admin/demo-requests/${id}/regenerate`, {}); } },
-    onSuccess: (_, ids) => {
-      setFlash([{ type: "success", content: `${ids.length} demo(s) queued for regeneration.`, dismissible: true, onDismiss: () => setFlash([]) }]);
-      setSelectedRequestIds([]);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/demo-requests"] });
-    },
-  });
-
-  const approveActionMutation = useMutation({
-    mutationFn: async (id: number) => { await apiRequest("POST", `/api/admin/agent-actions/${id}/approve`, {}); },
-    onSuccess: () => {
-      setFlash([{ type: "success", content: "Action approved.", dismissible: true, onDismiss: () => setFlash([]) }]);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] });
-    },
-  });
-
-  const bulkApproveActionsMutation = useMutation({
-    mutationFn: async (ids: number[]) => { await apiRequest("POST", "/api/admin/agent-actions/bulk-approve", { ids }); },
-    onSuccess: (_, ids) => {
-      setFlash([{ type: "success", content: `${ids.length} action(s) approved.`, dismissible: true, onDismiss: () => setFlash([]) }]);
-      setSelectedActionIds([]);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] });
-    },
-  });
-
-  const runBugFixMutation = useMutation({
-    mutationFn: async () => { const res = await apiRequest("POST", "/api/admin/run-bug-fix-agent", {}); return res.json(); },
-    onSuccess: (data: any) => {
-      setFlash([{ type: "success", content: `Bug Fix Agent completed: ${data.proposalCount} fix(es) proposed.`, dismissible: true, onDismiss: () => setFlash([]) }]);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] });
-    },
-    onError: (err: any) => {
-      setFlash([{ type: "error", content: `Bug Fix Agent failed: ${err.message}`, dismissible: true, onDismiss: () => setFlash([]) }]);
-    },
-  });
-
-  const statusBadge = (status: string) => {
-    const colors: Record<string, string> = { pending: "grey", clarifying: "blue", generating_spec: "blue", spec_ready: "blue", generating: "blue", approved: "green", rejected: "red", complete: "green", proposed: "blue" };
-    const labels: Record<string, string> = { proposed: "Pending Review", approved: "Fixed ✓", complete: "Complete" };
-    return <Badge color={(colors[status] || "grey") as any}>{labels[status] || status}</Badge>;
-  };
+  const toggleSel = (id: number) => setSelectedIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleActionSel = (id: number) => setActionIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
   return (
-    <ContentLayout header={<Header variant="h1" description="Monitor usage, manage demo requests, and review agent proposals. v3.1.0">Admin Dashboard</Header>}>
-      <SpaceBetween size="l">
-        <Flashbar items={flash} />
+    <>
+      <div className="page-head">
+        <div><h1>Admin Dashboard</h1><p>Monitor demo generation — review requests, agent actions, repos, feedback, bugs.</p></div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn btn-outline" onClick={() => runBugFixAgent.mutate()} disabled={runBugFixAgent.isPending}>
+            {runBugFixAgent.isPending ? "Running..." : "🐛 Run Bug Fix Agent"}
+          </button>
+        </div>
+      </div>
 
-        <ColumnLayout columns={4} variant="text-grid">
-          <StatCard label="Total Downloads" value={analytics?.totalDownloads ?? 0} />
-          <StatCard label="Unique Users" value={analytics?.uniqueUsers ?? 0} />
-          <StatCard label="Generated Repos" value={repositories?.length ?? 0} />
-          <StatCard label="Pending Requests" value={demoRequests?.filter((r: any) => r.status === "spec_ready").length ?? 0} />
-        </ColumnLayout>
+      {/* Ops summary tiles */}
+      <div className="tiles" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+        <div className="tile"><div className="tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div className="v">{reqItems.length}</div><div className="lbl">Total Requests</div></div></div>
+        <div className="tile t2"><div className="tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div className="v">{pendingCount}</div><div className="lbl">Pending Review</div></div></div>
+        <div className="tile t3"><div className="tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><div><div className="v">{repoItems.length}</div><div className="lbl">Repositories</div></div></div>
+        <div className="tile t4"><div className="tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div><div><div className="v">{feedbackItems.length}</div><div className="lbl">Feedback</div></div></div>
+        <div className="tile t4"><div className="tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div className="v">{bugItems.length}</div><div className="lbl">Open Bugs</div></div></div>
+      </div>
 
-        <Tabs tabs={[
-          {
-            label: "Demo Requests",
-            id: "demo-requests",
-            content: (
-              <Table
-                selectionType="multi"
-                selectedItems={(demoRequests ?? []).filter((r: any) => selectedRequestIds.includes(r.id))}
-                onSelectionChange={({ detail }) => setSelectedRequestIds(detail.selectedItems.map((i: any) => i.id))}
-                header={
-                  <Header actions={
-                    <SpaceBetween direction="horizontal" size="xs">
-                      <Button disabled={selectedRequestIds.length === 0} loading={bulkApproveMutation.isPending}
-                        onClick={() => bulkApproveMutation.mutate(selectedRequestIds)}>
-                        Bulk Approve ({selectedRequestIds.length})
-                      </Button>
-                      <Button disabled={selectedRequestIds.length === 0} loading={bulkRegenerateMutation.isPending}
-                        onClick={() => bulkRegenerateMutation.mutate(selectedRequestIds)}>
-                        Bulk Regenerate ({selectedRequestIds.length})
-                      </Button>
-                    </SpaceBetween>
-                  }>Demo Requests</Header>
-                }
-                columnDefinitions={[
-                  { id: "title", header: "Title", cell: (item: any) => item.title, width: 250 },
-                  { id: "requester", header: "Requester", cell: (item: any) => item.requesterEmail, width: 180 },
-                  { id: "extension", header: "Extension", cell: (item: any) => item.targetExtension || "—", width: 120 },
-                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status), width: 120 },
-                  { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString(), width: 100 },
-                  { id: "actions", header: "Actions", cell: (item: any) => (
-                    <SpaceBetween direction="horizontal" size="xs">
-                      {item.status === "clarifying" && <Button onClick={() => { setQuestionsModal(item); setAdminAnswers({}); }}>Answer Questions</Button>}
-                      {item.spec && <Button variant="link" onClick={() => setSpecModal(item)}>View Spec</Button>}
-                      {item.status === "spec_ready" && (
-                        <>
-                          <Button variant="primary" onClick={() => approveMutation.mutate(item.id)} loading={approveMutation.isPending}>Approve</Button>
-                          <Button onClick={() => setRejectModal(item)}>Reject</Button>
-                        </>
+      {/* Tabs */}
+      <div className="tabs">
+        {[["Demo Requests", reqItems.length], ["Agent Actions", actionItems.length], ["Repositories", repoItems.length], ["Feedback", feedbackItems.length], ["Bug Tracker", bugItems.length]].map(([label, count], i) => (
+          <div key={i} className={`tab ${activeTab === i ? "active" : ""}`} onClick={() => setActiveTab(i as number)}>
+            {label} <span className="count">{count}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Bulk bar (when items selected) */}
+      {activeTab === 0 && selectedIds.length > 0 && (
+        <div style={{ background: "linear-gradient(135deg,#eff6ff,#f5f3ff)", border: "1px solid #c7d2fe", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 13, color: "#4338ca" }}><strong>{selectedIds.length}</strong> of {reqItems.length} selected</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn-success" onClick={() => bulkApprove.mutate(selectedIds)} disabled={bulkApprove.isPending}>✓ Approve</button>
+            <button className="btn-ghost" onClick={() => bulkRegenerate.mutate(selectedIds)} disabled={bulkRegenerate.isPending}>⟳ Regenerate</button>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 0: Demo Requests */}
+      {activeTab === 0 && (
+        <div className="table-card">
+          <table className="tbl">
+            <thead><tr><th style={{ width: 30 }}></th><th>Request</th><th>Requester</th><th>Extension</th><th>Database</th><th>Status</th><th>Created</th><th style={{ textAlign: "right" }}>Actions</th></tr></thead>
+            <tbody>
+              {reqItems.length === 0 && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--text-soft)" }}>No demo requests yet.</td></tr>}
+              {reqItems.map((r: any) => {
+                const st = STATUS_MAP[r.status] || { cls: "draft", label: r.status };
+                const db = r.description?.match(/Aurora|DynamoDB|Neptune|ElastiCache|DocumentDB|PostgreSQL|MySQL/i)?.[0] || "—";
+                return (
+                  <tr key={r.id}>
+                    <td><input type="checkbox" checked={selectedIds.includes(r.id)} onChange={() => toggleSel(r.id)} /></td>
+                    <td><div className="ttl">{r.title}</div><div className="sub">{r.customerIndustry || ""}{r.complexity ? ` · ${r.complexity}` : ""}</div></td>
+                    <td style={{ fontSize: 12, color: "var(--text-muted)" }}>{r.requesterEmail}</td>
+                    <td><span className={`ext-chip ${chipColor(r.targetExtension)}`}>{r.targetExtension || "—"}</span></td>
+                    <td><span className="mono">{db}</span></td>
+                    <td><span className={`badge-status ${st.cls}`}><span className="led"></span>{st.label}</span></td>
+                    <td><span className="mono">{new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}</span></td>
+                    <td className="actions">
+                      {r.status === "clarifying" && <button className="btn-ghost" onClick={() => { setAnswerFor(r); setAnswers({}); }}>Answer</button>}
+                      {r.spec && <button className="btn-ghost" onClick={() => setViewSpec(r)}>View Spec</button>}
+                      {r.status === "spec_ready" && (<>
+                        <button className="btn-success" onClick={() => approveRequest.mutate(r.id)}>Approve</button>
+                        <button className="btn-danger" onClick={() => setRejectFor(r)}>Reject</button>
+                      </>)}
+                      {(r.status === "spec_ready" || r.status === "approved" || r.status === "complete") && r.spec && (
+                        <button className="btn-ghost" onClick={() => regenerateRequest.mutate(r.id)} disabled={regenerateRequest.isPending}>Regenerate</button>
                       )}
-                      {(item.status === "spec_ready" || item.status === "approved" || item.status === "complete") && item.spec && (
-                        <Button onClick={() => regenerateMutation.mutate(item.id)} loading={regenerateMutation.isPending}>Regenerate</Button>
-                      )}
-                    </SpaceBetween>
-                  )},
-                ]}
-                wrapLines={true}
-                items={demoRequests ?? []}
-                loading={isLoading}
-                empty={<Box textAlign="center" padding="l">No demo requests yet.</Box>}
-              />
-            ),
-          },
-          {
-            label: "Agent Actions",
-            id: "agent-actions",
-            content: (
-              <Table
-                selectionType="multi"
-                selectedItems={(agentActions ?? []).filter((a: any) => selectedActionIds.includes(a.id))}
-                onSelectionChange={({ detail }) => setSelectedActionIds(detail.selectedItems.map((i: any) => i.id))}
-                header={
-                  <Header actions={
-                    <SpaceBetween direction="horizontal" size="xs">
-                      <Button onClick={() => runBugFixMutation.mutate()} loading={runBugFixMutation.isPending}>Run Bug Fix Agent</Button>
-                      <Button disabled={selectedActionIds.length === 0} loading={bulkApproveActionsMutation.isPending}
-                        onClick={() => bulkApproveActionsMutation.mutate(selectedActionIds)}>
-                        Bulk Approve ({selectedActionIds.length})
-                      </Button>
-                    </SpaceBetween>
-                  }>Agent Actions</Header>
-                }
-                columnDefinitions={[
-                  { id: "type", header: "Agent", cell: (item: any) => <Badge>{item.agentType}</Badge>, width: 110 },
-                  { id: "trigger", header: "Trigger", cell: (item: any) => item.triggerSource || "—", width: 110 },
-                  { id: "detail", header: "Details", cell: (item: any) => {
-                    const plan = item.proposedPlan || {};
-                    if (item.agentType === "new_demo") return plan.name || plan.displayName || plan.title || "Demo spec";
-                    if (item.agentType === "bug_fix") return plan.title || plan.rootCause || "Fix proposal";
-                    return "—";
-                  }, width: 280 },
-                  { id: "tokens", header: "Tokens", cell: (item: any) => {
-                    const m = item.executionResult?.metrics;
-                    if (!m) return "—";
-                    return `${((m.totalInputTokens + m.totalOutputTokens) / 1000).toFixed(1)}K`;
-                  }, width: 80 },
-                  { id: "time", header: "Time", cell: (item: any) => {
-                    const m = item.executionResult?.metrics;
-                    if (!m) return "—";
-                    return `${(m.totalDurationMs / 1000).toFixed(0)}s`;
-                  }, width: 70 },
-                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status), width: 130 },
-                  { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString(), width: 100 },
-                  { id: "actions", header: "Actions", cell: (item: any) => (
-                    <SpaceBetween direction="horizontal" size="xs">
-                      {item.proposedPlan && <Button variant="link" onClick={() => setSpecModal({ title: `Action #${item.id}`, spec: item.proposedPlan })}>View Plan</Button>}
-                      {item.status === "proposed" && <Button variant="primary" onClick={() => approveActionMutation.mutate(item.id)}>Approve</Button>}
-                    </SpaceBetween>
-                  )},
-                ]}
-                wrapLines={true}
-                items={agentActions ?? []}
-                loading={isLoading}
-                empty={<Box textAlign="center" padding="l">No agent actions yet.</Box>}
-              />
-            ),
-          },
-          {
-            label: "Repositories",
-            id: "repos",
-            content: (
-              <Table
-                columnDefinitions={[
-                  { id: "name", header: "Name", cell: (item: any) => (
-                    <SpaceBetween direction="horizontal" size="xs">
-                      {item.name}
-                      {item.databaseType === "Aurora" && <Badge color="blue">🤖 AI Generated</Badge>}
-                    </SpaceBetween>
-                  )},
-                  { id: "language", header: "Language", cell: (item: any) => item.language },
-                  { id: "dbType", header: "Database", cell: (item: any) => `${item.databaseType} ${item.databaseVersion}` },
-                  { id: "region", header: "Region", cell: (item: any) => item.awsRegion },
-                  { id: "status", header: "Status", cell: (item: any) => (
-                    <StatusIndicator type={item.status === "complete" ? "success" : item.status === "error" ? "error" : "in-progress"}>
-                      {item.status}
-                    </StatusIndicator>
-                  )},
-                  { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
-                ]}
-                items={repositories ?? []}
-                loading={isLoading}
-                empty={<Box textAlign="center" padding="l">No repositories yet.</Box>}
-              />
-            ),
-          },
-          {
-            label: "Feedback",
-            id: "feedback",
-            content: (
-              <Table
-                columnDefinitions={[
-                  { id: "email", header: "Email", cell: (item: any) => item.email },
-                  { id: "demoType", header: "Demo Type", cell: (item: any) => item.demoType },
-                  { id: "priority", header: "Priority", cell: (item: any) => <Badge color={item.priority === "urgent" ? "red" : item.priority === "high" ? "blue" : "grey"}>{item.priority}</Badge> },
-                  { id: "message", header: "Message", cell: (item: any) => item.message?.slice(0, 80) + (item.message?.length > 80 ? "..." : "") },
-                  { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
-                ]}
-                items={feedback ?? []}
-                loading={isLoading}
-                empty={<Box textAlign="center" padding="l">No feedback yet.</Box>}
-              />
-            ),
-          },
-          {
-            label: "Bug Tracker",
-            id: "bugs",
-            content: (
-              <Table
-                header={<Header variant="h2" description="Bugs detected by the AI agent (scans hourly). Version: 3.1.0">Bugs & Fixes</Header>}
-                columnDefinitions={[
-                  { id: "id", header: "ID", cell: (item: any) => {
-                    const plan = item.proposedPlan || {};
-                    const fixes = Array.isArray(plan) ? plan : plan.fixes || [];
-                    return fixes.map((f: any) => f.id || "—").join(", ") || `BUG-${item.id}`;
-                  }},
-                  { id: "title", header: "Issue", cell: (item: any) => {
-                    const plan = item.proposedPlan || {};
-                    const fixes = Array.isArray(plan) ? plan : plan.fixes || [];
-                    return fixes[0]?.title || plan.title || "Error detected";
-                  }},
-                  { id: "severity", header: "Severity", cell: (item: any) => {
-                    const plan = item.proposedPlan || {};
-                    const fixes = Array.isArray(plan) ? plan : plan.fixes || [];
-                    const sev = fixes[0]?.severity || "medium";
-                    return <Badge color={sev === "critical" ? "red" : sev === "high" ? "red" : sev === "medium" ? "blue" : "grey"}>{sev}</Badge>;
-                  }},
-                  { id: "status", header: "Status", cell: (item: any) => statusBadge(item.status) },
-                  { id: "version", header: "Version", cell: () => "3.1.0" },
-                  { id: "detected", header: "Detected", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
-                  { id: "actions", header: "Actions", cell: (item: any) => (
-                    <SpaceBetween direction="horizontal" size="xs">
-                      {item.proposedPlan && <Button variant="link" onClick={() => setSpecModal({ title: "Bug Details", spec: item.proposedPlan })}>View Fix</Button>}
-                      {item.status === "proposed" && <Button variant="primary" onClick={() => approveActionMutation.mutate(item.id)}>Mark as Fixed</Button>}
-                      {item.status === "approved" && <Badge color="green">Fixed ✓</Badge>}
-                    </SpaceBetween>
-                  )},
-                ]}
-                items={(agentActions ?? []).filter((a: any) => a.agentType === "bug_fix")}
-                loading={isLoading}
-                empty={<Box textAlign="center" padding="l">✅ No bugs detected. Agent scans hourly.</Box>}
-              />
-            ),
-          },
-        ]} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        {/* Spec Preview Modal */}
-        {specModal && (
-          <Modal visible={true} onDismiss={() => setSpecModal(null)} header={`Spec: ${specModal.title}`} size="large">
-            <Box variant="code"><pre style={{ whiteSpace: "pre-wrap", maxHeight: "60vh", overflow: "auto" }}>{JSON.stringify(specModal.spec, null, 2)}</pre></Box>
-          </Modal>
-        )}
+      {/* TAB 1: Agent Actions */}
+      {activeTab === 1 && (
+        <div className="table-card">
+          <table className="tbl">
+            <thead><tr><th>Agent</th><th>Trigger</th><th>Details</th><th>Tokens</th><th>Time</th><th>Status</th><th>Created</th><th style={{ textAlign: "right" }}>Actions</th></tr></thead>
+            <tbody>
+              {actionItems.length === 0 && <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--text-soft)" }}>No actions yet.</td></tr>}
+              {actionItems.map((a: any) => {
+                const st = STATUS_MAP[a.status] || { cls: "draft", label: a.status };
+                const plan = a.proposedPlan || {};
+                const detail = a.agentType === "new_demo" ? (plan.name || plan.displayName || plan.title || "Demo spec")
+                  : a.agentType === "bug_fix" ? (plan.title || plan.rootCause || "Fix proposal") : "—";
+                const m = a.executionResult?.metrics;
+                return (
+                  <tr key={a.id}>
+                    <td><span className="ext-chip b">{a.agentType}</span></td>
+                    <td style={{ fontSize: 12, color: "var(--text-muted)" }}>{a.triggerSource || "—"}</td>
+                    <td style={{ fontSize: 13 }}>{detail}</td>
+                    <td><span className="mono">{m ? `${((m.totalInputTokens + m.totalOutputTokens) / 1000).toFixed(1)}K` : "—"}</span></td>
+                    <td><span className="mono">{m ? `${(m.totalDurationMs / 1000).toFixed(0)}s` : "—"}</span></td>
+                    <td><span className={`badge-status ${st.cls}`}><span className="led"></span>{st.label}</span></td>
+                    <td><span className="mono">{new Date(a.createdAt).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}</span></td>
+                    <td className="actions">
+                      {a.proposedPlan && <button className="btn-ghost" onClick={() => setViewSpec({ title: `Action #${a.id}`, spec: a.proposedPlan })}>View Plan</button>}
+                      {a.status === "proposed" && <button className="btn-success" onClick={() => approveAction.mutate(a.id)}>Approve</button>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        {/* Questions Modal — admin answers on behalf of requester */}
-        {questionsModal && (
-          <Modal visible={true} onDismiss={() => setQuestionsModal(null)}
-            header={`Clarifying Questions — ${questionsModal.title}`}
-            footer={<Box float="right"><SpaceBetween direction="horizontal" size="xs">
-              <Button variant="link" onClick={() => setQuestionsModal(null)}>Cancel</Button>
-              <Button variant="primary" loading={adminAnswerMutation.isPending}
-                onClick={() => adminAnswerMutation.mutate({ id: questionsModal.id, answers: adminAnswers })}>
-                Submit Answers
-              </Button>
-            </SpaceBetween></Box>}>
-            <SpaceBetween size="l">
-              <Alert type="info">Answering on behalf of {questionsModal.requesterEmail}</Alert>
-              {questionsModal.clarifyingQuestions?.map((q: string, i: number) => (
-                <FormField key={i} label={q}>
-                  <Textarea value={adminAnswers[q] || ""} onChange={({ detail }) => setAdminAnswers(prev => ({ ...prev, [q]: detail.value }))} rows={2} />
-                </FormField>
+      {/* TAB 2: Repositories */}
+      {activeTab === 2 && (
+        <div className="table-card">
+          <table className="tbl">
+            <thead><tr><th>Name</th><th>Language</th><th>Database</th><th>Region</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody>
+              {repoItems.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--text-soft)" }}>No repositories yet.</td></tr>}
+              {repoItems.map((r: any) => {
+                const st = STATUS_MAP[r.status] || { cls: "draft", label: r.status };
+                return (
+                  <tr key={r.id}>
+                    <td><div className="ttl">{r.name}</div>{r.databaseType === "Aurora" && <div className="sub">🤖 AI Generated</div>}</td>
+                    <td><span className="mono">{r.language}</span></td>
+                    <td><span className="mono">{r.databaseType} {r.databaseVersion}</span></td>
+                    <td><span className="mono">{r.awsRegion}</span></td>
+                    <td><span className={`badge-status ${st.cls}`}><span className="led"></span>{st.label}</span></td>
+                    <td><span className="mono">{new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* TAB 3: Feedback */}
+      {activeTab === 3 && (
+        <div className="table-card">
+          <table className="tbl">
+            <thead><tr><th>Email</th><th>Demo Type</th><th>Priority</th><th>Message</th><th>Created</th></tr></thead>
+            <tbody>
+              {feedbackItems.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", padding: 40, color: "var(--text-soft)" }}>No feedback yet.</td></tr>}
+              {feedbackItems.map((f: any) => (
+                <tr key={f.id}>
+                  <td style={{ fontSize: 12 }}>{f.email}</td>
+                  <td><span className="mono">{f.demoType}</span></td>
+                  <td><span className={`ext-chip ${f.priority === "urgent" ? "r" : f.priority === "high" ? "p" : "b"}`}>{f.priority}</span></td>
+                  <td style={{ fontSize: 13, maxWidth: 400 }}>{f.message?.slice(0, 100)}{f.message?.length > 100 ? "..." : ""}</td>
+                  <td><span className="mono">{new Date(f.createdAt).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}</span></td>
+                </tr>
               ))}
-            </SpaceBetween>
-          </Modal>
-        )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        {/* Reject Modal */}
-        {rejectModal && (
-          <Modal visible={true} onDismiss={() => setRejectModal(null)} header={`Reject: ${rejectModal.title}`}
-            footer={<Box float="right"><SpaceBetween direction="horizontal" size="xs">
-              <Button variant="link" onClick={() => setRejectModal(null)}>Cancel</Button>
-              <Button variant="primary" onClick={() => rejectMutation.mutate({ id: rejectModal.id, notes: rejectNotes })}>Reject</Button>
-            </SpaceBetween></Box>}>
-            <Textarea value={rejectNotes} onChange={({ detail }) => setRejectNotes(detail.value)} placeholder="Reason for rejection (optional)" rows={3} />
-          </Modal>
-        )}
-      </SpaceBetween>
-    </ContentLayout>
-  );
-}
+      {/* TAB 4: Bug Tracker */}
+      {activeTab === 4 && (
+        <div className="table-card">
+          <table className="tbl">
+            <thead><tr><th>Issue</th><th>Severity</th><th>Status</th><th>Detected</th><th style={{ textAlign: "right" }}>Actions</th></tr></thead>
+            <tbody>
+              {bugItems.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", padding: 40, color: "var(--success)" }}>✅ No bugs detected. Agent scans hourly.</td></tr>}
+              {bugItems.map((b: any) => {
+                const plan = b.proposedPlan || {};
+                const fix = (Array.isArray(plan) ? plan : plan.fixes || [])[0] || {};
+                const severity = fix.severity || "medium";
+                const st = STATUS_MAP[b.status] || { cls: "draft", label: b.status };
+                return (
+                  <tr key={b.id}>
+                    <td><div className="ttl">{fix.title || plan.title || "Error detected"}</div></td>
+                    <td><span className={`ext-chip ${severity === "critical" || severity === "high" ? "r" : severity === "medium" ? "p" : "o"}`}>{severity}</span></td>
+                    <td><span className={`badge-status ${st.cls}`}><span className="led"></span>{st.label}</span></td>
+                    <td><span className="mono">{new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}</span></td>
+                    <td className="actions">
+                      {b.proposedPlan && <button className="btn-ghost" onClick={() => setViewSpec({ title: "Bug Details", spec: b.proposedPlan })}>View Fix</button>}
+                      {b.status === "proposed" && <button className="btn-success" onClick={() => approveAction.mutate(b.id)}>Mark Fixed</button>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
-  return (
-    <Container>
-      <Box variant="awsui-key-label">{label}</Box>
-      <Box variant="h1">{value}</Box>
-    </Container>
+      {/* View Spec modal */}
+      {viewSpec && (
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setViewSpec(null); }}>
+          <div className="modal" style={{ maxWidth: 860 }}>
+            <div className="modal-head">
+              <div><h3>Spec: {viewSpec.title}</h3></div>
+              <button className="modal-close" onClick={() => setViewSpec(null)}>×</button>
+            </div>
+            <div className="modal-body">
+              <pre style={{ background: "#0f172a", color: "#e2e8f0", padding: 16, borderRadius: 8, fontSize: 12, maxHeight: "60vh", overflow: "auto" }}>{JSON.stringify(viewSpec.spec, null, 2)}</pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject modal */}
+      {rejectFor && (
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setRejectFor(null); }}>
+          <div className="modal">
+            <div className="modal-head">
+              <div><h3>Reject: {rejectFor.title}</h3></div>
+              <button className="modal-close" onClick={() => setRejectFor(null)}>×</button>
+            </div>
+            <div className="modal-body">
+              <textarea className="textarea" value={rejectNotes} onChange={e => setRejectNotes(e.target.value)} placeholder="Reason for rejection (optional)" rows={4} />
+            </div>
+            <div className="modal-foot">
+              <div></div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn btn-outline" style={{ padding: "8px 14px", fontSize: 13 }} onClick={() => setRejectFor(null)}>Cancel</button>
+                <button className="btn-danger" style={{ padding: "9px 18px", fontSize: 13 }} onClick={() => rejectRequest.mutate({ id: rejectFor.id, notes: rejectNotes })}>Reject</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Answer Questions modal */}
+      {answerFor && (
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setAnswerFor(null); }}>
+          <div className="modal">
+            <div className="modal-head">
+              <div><h3>Clarifying Questions — {answerFor.title}</h3><div className="sub">Answering on behalf of {answerFor.requesterEmail}</div></div>
+              <button className="modal-close" onClick={() => setAnswerFor(null)}>×</button>
+            </div>
+            <div className="modal-body">
+              {answerFor.clarifyingQuestions?.map((q: string, i: number) => (
+                <div key={i} className="q-block">
+                  <span className="q-num">QUESTION {String(i + 1).padStart(2, "0")}</span>
+                  <p className="q-text">{q}</p>
+                  <textarea className="textarea" value={answers[q] || ""} onChange={e => setAnswers(p => ({ ...p, [q]: e.target.value }))} />
+                </div>
+              ))}
+            </div>
+            <div className="modal-foot">
+              <div></div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn btn-outline" style={{ padding: "8px 14px", fontSize: 13 }} onClick={() => setAnswerFor(null)}>Cancel</button>
+                <button className="btn btn-primary" style={{ padding: "9px 18px", fontSize: 13 }} disabled={submitAnswers.isPending} onClick={() => submitAnswers.mutate({ id: answerFor.id, answers })}>Submit Answers →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
