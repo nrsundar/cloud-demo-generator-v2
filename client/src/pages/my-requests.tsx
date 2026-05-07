@@ -71,21 +71,22 @@ export default function MyRequestsPage() {
       <SpaceBetween size="l">
         <Flashbar items={flash} />
         <Table
+          wrapLines={true}
           columnDefinitions={[
-            { id: "title", header: "Title", cell: (item: any) => item.title },
-            { id: "extension", header: "Extension", cell: (item: any) => item.targetExtension || "—" },
+            { id: "title", header: "Title", cell: (item: any) => item.title, width: 300 },
+            { id: "extension", header: "Extension", cell: (item: any) => item.targetExtension || "—", width: 120 },
             { id: "status", header: "Status", cell: (item: any) => {
               const s = STATUS_MAP[item.status] || { type: "pending", label: item.status };
               return <StatusIndicator type={s.type}>{s.label}</StatusIndicator>;
-            }},
-            { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString() },
+            }, width: 160 },
+            { id: "created", header: "Created", cell: (item: any) => new Date(item.createdAt).toLocaleDateString(), width: 100 },
             { id: "action", header: "Action", cell: (item: any) => (
               item.status === "clarifying" && item.clarifyingQuestions?.length
                 ? <Button variant="primary" onClick={() => { setSelectedRequest(item); setAnswers({}); }}>Answer Questions</Button>
                 : item.status === "complete"
                 ? <Button variant="primary" iconName="download" href={`${API_BASE}/api/demo-requests/${item.id}/download`}>Download</Button>
                 : null
-            )},
+            ), width: 160 },
           ]}
           items={requests ?? []}
           loading={isLoading}
