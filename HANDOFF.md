@@ -164,27 +164,120 @@ When `phase === "generating"`, the frontend calls `submitDemoRequest()` which cr
 
 ## Deployment
 
-### Frontend (Amplify)
+### Prerequisites
+- AWS credentials for account `633384844157` (us-east-2) with admin access
+- Docker installed locally
+- Node.js 18+
+
+### Environment Variables (set before deploying)
 ```bash
+export AWS_REGION=us-east-2
+export AWS_ACCOUNT_ID=633384844157
+export ECR_REPO=633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3
+export AMPLIFY_APP_ID=d1s77hhl4y34ji
+export AMPLIFY_BRANCH=main
+export ECS_CLUSTER=demo-gen-cluster
+export ECS_SERVICE=demo-gen-service
+export VITE_API_URL=https://d2g4zib7n3kevf.cloudfront.net
+export VITE_COGNITO_USER_POOL_ID=us-east-2_sndKJLxLR
+export VITE_COGNITO_CLIENT_ID=4bm8gt0i2of69v9g0vm5nnh2k0
+```
+
+### Deploy Frontend (Amplify)
+```bash
+# 1. Build the frontend
 VITE_API_URL="https://d2g4zib7n3kevf.cloudfront.net" \
 VITE_COGNITO_USER_POOL_ID="us-east-2_sndKJLxLR" \
 VITE_COGNITO_CLIENT_ID="4bm8gt0i2of69v9g0vm5nnh2k0" \
 npx vite build
 
-cd dist/public && zip -r /tmp/frontend.zip .
-# Then use Amplify createDeployment API
+# 2. Package
+cd dist/public && rm -f /tmp/frontend.zip && zip -r /tmp/frontend.zip .
+
+# 3. Create deployment
+DEPLOY=$(aws amplify create-deployment \
+  --app-id d1s77hhl4y34ji \
+  --branch-name main \
+  --region us-east-2 \
+  --output json)
+
+# 4. Extract job ID and upload URL
+JOB_ID=$(echo "$DEPLOY" | python3 -c "import sys,json; print(json.load(sys.stdin)['jobId'])")
+UPLOAD_URL=$(echo "$DEPLOY" | python3 -c "import sys,json; print(json.load(sys.stdin)['zipUploadUrl'])")
+
+# 5. Upload ZIP
+curl -X PUT -T /tmp/frontend.zip -H "Content-Type: application/zip" "$UPLOAD_URL"
+
+# 6. Start deployment
+aws amplify start-deployment \
+  --app-id d1s77hhl4y34ji \
+  --branch-name main \
+  --job-id "$JOB_ID" \
+  --region us-east-2
 ```
 
-### Backend (ECS)
+### Deploy Backend (ECS via ECR)
 ```bash
+# 1. IMPORTANT: Bump version in package.json before each deploy
+#    (same content = same Docker digest = ECS won't pull new image)
+sed -i 's/"version": "3.3.0"/"version": "3.3.1"/' package.json
+
+# 2. Build the full project (server + client)
+npm run build
+
+# 3. Build Docker image
 docker build --no-cache -t cloud-demo-generator-v3 .
-aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 633384844157.dkr.ecr.us-east-2.amazonaws.com
-docker tag cloud-demo-generator-v3:latest 633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
+
+# 4. Authenticate with ECR
+aws ecr get-login-password --region us-east-2 | \
+  docker login --username AWS --password-stdin 633384844157.dkr.ecr.us-east-2.amazonaws.com
+
+# 5. Tag and push
+docker tag cloud-demo-generator-v3:latest \
+  633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
 docker push 633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest
+
+# 6. Force ECS to pull new image
+aws ecs update-service \
+  --cluster demo-gen-cluster \
+  --service demo-gen-service \
+  --force-new-deployment \
+  --region us-east-2
+
+# 7. Wait ~2-3 minutes for ECS to roll out the new task
+```
+
+### Deploy Both (one-liner)
+```bash
+# Frontend + Backend in one shot:
+cd /workspace/cloud-demo-generator-v2 && \
+npm run build && \
+VITE_API_URL="https://d2g4zib7n3kevf.cloudfront.net" VITE_COGNITO_USER_POOL_ID="us-east-2_sndKJLxLR" VITE_COGNITO_CLIENT_ID="4bm8gt0i2of69v9g0vm5nnh2k0" npx vite build && \
+cd dist/public && zip -r /tmp/frontend.zip . && cd /workspace/cloud-demo-generator-v2 && \
+DEPLOY=$(aws amplify create-deployment --app-id d1s77hhl4y34ji --branch-name main --region us-east-2 --output json) && \
+JOB_ID=$(echo "$DEPLOY" | python3 -c "import sys,json; print(json.load(sys.stdin)['jobId'])") && \
+UPLOAD_URL=$(echo "$DEPLOY" | python3 -c "import sys,json; print(json.load(sys.stdin)['zipUploadUrl'])") && \
+curl -s -X PUT -T /tmp/frontend.zip -H "Content-Type: application/zip" "$UPLOAD_URL" && \
+aws amplify start-deployment --app-id d1s77hhl4y34ji --branch-name main --job-id "$JOB_ID" --region us-east-2 && \
+docker build --no-cache -t cloud-demo-generator-v3 . && \
+aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 633384844157.dkr.ecr.us-east-2.amazonaws.com && \
+docker tag cloud-demo-generator-v3:latest 633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest && \
+docker push 633384844157.dkr.ecr.us-east-2.amazonaws.com/cloud-demo-generator-v3:latest && \
 aws ecs update-service --cluster demo-gen-cluster --service demo-gen-service --force-new-deployment --region us-east-2
 ```
 
-**Important:** Bump `package.json` version before each push to ensure a new Docker image digest. Same content = same digest = ECS won't pull.
+### Verify Deployment
+```bash
+# Check frontend
+curl -s -o /dev/null -w "%{http_code}" https://main.d1s77hhl4y34ji.amplifyapp.com/
+
+# Check backend health
+curl -s https://d2g4zib7n3kevf.cloudfront.net/api/health
+
+# Check ECS service status
+aws ecs describe-services --cluster demo-gen-cluster --services demo-gen-service --region us-east-2 \
+  --query "services[0].{desired:desiredCount,running:runningCount,status:status}"
+```
 
 ---
 
