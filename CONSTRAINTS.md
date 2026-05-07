@@ -57,3 +57,14 @@ All contributors (human and AI) must maintain these invariants.
 31. **Snapshot tag exists:** `snapshot-pre-redesign-20260507-161154` — Reverts to the last Cloudscape version (fully working).
 32. **Push to GitLab (`origin`)** — Source of truth. GitHub is secondary.
 33. **Don't force-push main** — Append only.
+
+---
+
+## Decisions and architecture
+
+This file lists invariants. Decisions about *how* to comply with them — and decisions still open — live as ADRs:
+
+- [`docs/decisions/`](docs/decisions/) — full index, including open ADRs (multi-model routing, etc.).
+- [`docs/architecture/`](docs/architecture/) — three-phase plan and per-item designs.
+
+If a change touches one of the constraints above, update this file. If it changes a recorded decision, supersede the ADR.
