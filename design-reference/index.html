@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DemoForge — AI-powered AWS database demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f4f6fb;--panel:#fff;--panel-2:#f7f9fc;--border:#e5e9f0;--border-strong:#d3d9e3;--text:#0f172a;--text-muted:#5b6678;--text-soft:#8a94a6;--primary:#2563eb;--primary-700:#1d4ed8;--primary-50:#eff6ff;--accent-from:#3b82f6;--accent-to:#7c3aed;--shadow-sm:0 1px 2px rgba(15,23,42,.04);--shadow-md:0 4px 12px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.04);--shadow-lg:0 16px 40px rgba(15,23,42,.08);--sidebar-w:260px;--topbar-h:64px}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100vh}
+  .sidebar{background:linear-gradient(180deg,#0b1020 0%,#0f1735 100%);color:#cbd5e1;padding:22px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;padding:4px 8px}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent-from),var(--accent-to));display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 4px 14px rgba(124,58,237,.4)}
+  .brand-name{color:#fff;font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .brand-sub{color:#8a94a6;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .nav-section{margin-top:18px}.nav-label{color:#6b7896;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:0 10px;margin-bottom:6px}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;color:#cbd5e1;font-size:14px;font-weight:500;transition:all .15s ease;margin-bottom:2px;cursor:pointer}
+  .nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+  .nav-item.active{background:linear-gradient(90deg,rgba(59,130,246,.18),rgba(124,58,237,.10));color:#fff;box-shadow:inset 2px 0 0 #3b82f6}
+  .nav-item svg{width:18px;height:18px;opacity:.85;flex-shrink:0}
+  .nav-item .count{margin-left:auto;background:#3b82f6;color:#fff;font-size:11px;padding:1px 7px;border-radius:999px;font-weight:600}
+  .sidebar-footer{margin-top:24px;padding:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px}
+  .sidebar-footer h4{color:#fff;font-size:13px;margin:0 0 4px;font-weight:600}
+  .sidebar-footer p{color:#8a94a6;font-size:12px;margin:0 0 10px;line-height:1.45}
+  .sidebar-footer .btn-mini{background:linear-gradient(135deg,var(--accent-from),var(--accent-to));color:#fff;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:600;display:inline-block}
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+  .breadcrumbs{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:13px}
+  .breadcrumbs strong{color:var(--text);font-weight:600}.breadcrumbs .sep{color:var(--text-soft)}
+  .top-actions{display:flex;align-items:center;gap:12px}
+  .search-pill{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--border);border-radius:999px;padding:7px 14px;color:var(--text-muted);font-size:13px;min-width:280px}
+  .search-pill svg{width:14px;height:14px}
+  .search-pill kbd{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;background:#fff;border:1px solid var(--border);padding:1px 6px;border-radius:4px;color:var(--text-soft)}
+  .icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--panel-2);border:1px solid var(--border);color:var(--text-muted);position:relative}
+  .icon-btn:hover{background:#eef2f7;color:var(--text)}.icon-btn .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid #fff}
+  .avatar{display:flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border)}
+  .avatar-img{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;font-weight:700;font-size:12px;display:grid;place-items:center}
+  .avatar-name{font-size:13px;font-weight:600}
+
+  .content{padding:32px 36px 56px;max-width:1440px;width:100%;margin:0 auto}
+
+  /* Hero */
+  .hero{position:relative;border-radius:16px;padding:36px 40px;background:radial-gradient(800px 240px at 90% -20%,rgba(124,58,237,.30),transparent 60%),radial-gradient(700px 300px at 0% 110%,rgba(6,182,212,.20),transparent 60%),linear-gradient(135deg,#0b1020 0%,#1a1f3a 50%,#0f1735 100%);color:#fff;overflow:hidden;margin-bottom:28px;box-shadow:var(--shadow-lg)}
+  .hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 80%);pointer-events:none}
+  .hero-inner{position:relative;display:grid;grid-template-columns:1.4fr 1fr;gap:40px;align-items:center}
+  .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);font-size:12px;font-weight:600;letter-spacing:.04em;margin-bottom:16px}
+  .hero-eyebrow .pulse{width:7px;height:7px;background:#34d399;border-radius:50%;box-shadow:0 0 0 3px rgba(52,211,153,.25)}
+  .hero h1{font-size:38px;line-height:1.15;font-weight:800;margin:0 0 14px;letter-spacing:-.02em}
+  .hero h1 .grad{background:linear-gradient(120deg,#93c5fd,#c4b5fd 60%,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{font-size:15px;line-height:1.6;color:#cbd5e1;margin:0 0 24px;max-width:580px}
+  .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;transition:all .15s ease;cursor:pointer}
+  .btn-primary{background:linear-gradient(135deg,var(--accent-from),var(--accent-to));color:#fff;box-shadow:0 8px 22px rgba(59,130,246,.35)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(59,130,246,.45)}
+  .btn-ghost-light{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.16)}
+  .btn-ghost-light:hover{background:rgba(255,255,255,.14)}
+  .btn-outline{background:#fff;color:var(--text);border:1px solid var(--border-strong)}
+  .btn-outline:hover{background:var(--panel-2)}
+  .hero-stats{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:22px;backdrop-filter:blur(10px)}
+  .hero-stats h4{font-size:11px;color:#93a3bd;letter-spacing:.1em;text-transform:uppercase;margin:0 0 16px;font-weight:600}
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px}
+  .stat-value{font-size:22px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(120deg,#fff,#c7d2fe);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat-label{font-size:12px;color:#9ca8c4;margin-top:2px}
+
+  .section{margin-top:36px}
+  .section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:18px;gap:16px}
+  .section-head h2{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:0 0 4px}
+  .section-head p{color:var(--text-muted);margin:0;font-size:14px}
+  .section-link{color:var(--primary);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+
+  .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .feature{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px;transition:all .2s ease;position:relative;overflow:hidden}
+  .feature::after{content:"";position:absolute;left:0;top:0;height:3px;width:100%;background:linear-gradient(90deg,var(--feat-c1,#3b82f6),var(--feat-c2,#7c3aed));opacity:0;transition:opacity .2s ease}
+  .feature:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:#cdd6e3}
+  .feature:hover::after{opacity:1}
+  .feature-icon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;margin-bottom:14px;background:linear-gradient(135deg,var(--feat-bg1,#eff6ff),var(--feat-bg2,#f5f3ff));color:var(--feat-c1,#3b82f6)}
+  .feature-icon svg{width:20px;height:20px}
+  .feature h3{font-size:15px;font-weight:700;margin:0 0 6px}
+  .feature p{font-size:13px;color:var(--text-muted);margin:0;line-height:1.55}
+  .feature.f1{--feat-c1:#2563eb;--feat-c2:#0ea5e9;--feat-bg1:#eff6ff;--feat-bg2:#ecfeff}
+  .feature.f2{--feat-c1:#7c3aed;--feat-c2:#a855f7;--feat-bg1:#f5f3ff;--feat-bg2:#fdf4ff}
+  .feature.f3{--feat-c1:#dc2626;--feat-c2:#f97316;--feat-bg1:#fef2f2;--feat-bg2:#fff7ed}
+  .feature.f4{--feat-c1:#16a34a;--feat-c2:#0891b2;--feat-bg1:#f0fdf4;--feat-bg2:#ecfeff}
+  .feature.f5{--feat-c1:#9333ea;--feat-c2:#db2777;--feat-bg1:#faf5ff;--feat-bg2:#fdf2f8}
+  .feature.f6{--feat-c1:#ea580c;--feat-c2:#facc15;--feat-bg1:#fff7ed;--feat-bg2:#fefce8}
+
+  .how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .step{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px;position:relative}
+  .step-num{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--primary);background:var(--primary-50);padding:3px 10px;border-radius:999px;display:inline-block;margin-bottom:12px}
+  .step h3{font-size:15px;font-weight:700;margin:0 0 6px}.step p{font-size:13px;color:var(--text-muted);margin:0;line-height:1.5}
+  .step-icon{position:absolute;top:20px;right:20px;color:#cbd5e1}
+
+  .catalog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .ex-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .2s ease;display:flex;flex-direction:column;gap:10px}
+  .ex-card:hover{border-color:#c5d0e1;box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  .ex-head{display:flex;align-items:center;justify-content:space-between}
+  .ex-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;background:#0f172a;color:#fff}
+  .ex-card.c1 .ex-badge{background:linear-gradient(135deg,#2563eb,#06b6d4)}
+  .ex-card.c2 .ex-badge{background:linear-gradient(135deg,#16a34a,#65a30d)}
+  .ex-card.c3 .ex-badge{background:linear-gradient(135deg,#7c3aed,#ec4899)}
+  .ex-card.c4 .ex-badge{background:linear-gradient(135deg,#f97316,#facc15)}
+  .ex-card.c5 .ex-badge{background:linear-gradient(135deg,#0891b2,#6366f1)}
+  .ex-card.c6 .ex-badge{background:linear-gradient(135deg,#db2777,#f43f5e)}
+  .ex-arrow{color:var(--text-soft);transition:transform .2s}.ex-card:hover .ex-arrow{transform:translateX(3px);color:var(--primary)}
+  .ex-title{font-size:16px;font-weight:700;margin:0}
+  .ex-desc{font-size:13px;color:var(--text-muted);margin:0;line-height:1.5}
+  .ex-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px}
+  .tag{font-size:11px;font-weight:500;padding:3px 9px;border-radius:6px;background:var(--panel-2);color:var(--text-muted);border:1px solid var(--border)}
+
+  .db-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .db-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;display:flex;gap:14px;align-items:flex-start;transition:all .15s ease}
+  .db-card:hover{border-color:#c5d0e1;box-shadow:var(--shadow-sm)}
+  .db-logo{width:42px;height:42px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#fff7ed,#ffedd5);display:grid;place-items:center;font-weight:800;font-size:14px;color:#ea580c;border:1px solid #fed7aa}
+  .db-card.aurora .db-logo{background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#2563eb;border-color:#bfdbfe}
+  .db-card.dynamo .db-logo{background:linear-gradient(135deg,#f5f3ff,#ede9fe);color:#7c3aed;border-color:#ddd6fe}
+  .db-card.neptune .db-logo{background:linear-gradient(135deg,#ecfeff,#cffafe);color:#0891b2;border-color:#a5f3fc}
+  .db-card.rds .db-logo{background:linear-gradient(135deg,#f0fdf4,#dcfce7);color:#16a34a;border-color:#bbf7d0}
+  .db-card.cache .db-logo{background:linear-gradient(135deg,#fef2f2,#fee2e2);color:#dc2626;border-color:#fecaca}
+  .db-info h4{font-size:14px;font-weight:700;margin:0 0 4px}
+  .db-info p{font-size:12.5px;color:var(--text-muted);margin:0;line-height:1.5}
+
+  .cta-strip{margin-top:36px;border-radius:16px;padding:32px 40px;background:radial-gradient(500px 200px at 100% 50%,rgba(124,58,237,.25),transparent 60%),linear-gradient(135deg,#1e293b 0%,#0f172a 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;box-shadow:var(--shadow-lg)}
+  .cta-strip h2{font-size:22px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em}
+  .cta-strip p{color:#cbd5e1;margin:0;font-size:14px}
+  .row{display:flex;align-items:center;gap:8px}
+
+  @media (max-width:1100px){.feature-grid,.catalog-grid,.db-grid{grid-template-columns:repeat(2,1fr)}.how-grid{grid-template-columns:repeat(2,1fr)}.hero-inner{grid-template-columns:1fr}}
+  @media (max-width:720px){:root{--sidebar-w:0}.sidebar{display:none}.app{grid-template-columns:1fr}.feature-grid,.catalog-grid,.db-grid,.how-grid{grid-template-columns:1fr}.hero{padding:26px 22px}.hero h1{font-size:28px}.content{padding:22px 18px 40px}.search-pill{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">DF</div>
+      <div><div class="brand-name">DemoForge</div><div class="brand-sub">AI Demo Builder</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>Welcome</a>
+      <a href="home.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="generator.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Generator</a>
+      <a href="my-requests.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>My Requests<span class="count">3</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Resources</div>
+      <a href="#" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>User Guide</a>
+      <a href="presentation.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Presentation</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Management</div>
+      <a href="admin.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin Dashboard</a>
+    </div>
+    <div class="sidebar-footer">
+      <h4>✨ Pro Tier</h4><p>Unlimited demo generations and priority AI processing.</p>
+      <a href="#" class="btn-mini">Upgrade Now</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>Workspace</span><span class="sep">/</span><strong>Welcome</strong></div>
+      <div class="top-actions">
+        <div class="search-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search demos, modules, docs…<kbd>⌘K</kbd></div>
+        <button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></button>
+        <button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="dot"></span></button>
+        <div class="avatar"><div class="avatar-img">RS</div><span class="avatar-name">r sundar19</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="hero">
+        <div class="hero-inner">
+          <div>
+            <div class="hero-eyebrow"><span class="pulse"></span>AI Agent · v2.4 · Online</div>
+            <h1>Build any AWS database demo<br/><span class="grad">in minutes, not weeks.</span></h1>
+            <p>Describe your customer demo in plain English. The AI agent ships a complete enablement package — infrastructure, code, exercises, and documentation. Built for SAs, TAMs, and field teams.</p>
+            <div class="hero-cta">
+              <a href="generator.html" class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3z"/></svg>Open Generator</a>
+              <a href="home.html" class="btn btn-ghost-light"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Browse Catalog</a>
+            </div>
+          </div>
+          <div class="hero-stats">
+            <h4>At a glance</h4>
+            <div class="stat-row">
+              <div class="stat"><div class="stat-value">6+</div><div class="stat-label">AWS Databases</div></div>
+              <div class="stat"><div class="stat-value">AI</div><div class="stat-label">Powered Agent</div></div>
+              <div class="stat"><div class="stat-value">10+</div><div class="stat-label">Modules / Demo</div></div>
+              <div class="stat"><div class="stat-value">1-Click</div><div class="stat-label">AWS Deploy</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><h2>What the AI agent builds</h2><p>Everything you need to walk a customer through a working solution — generated end to end.</p></div><a class="section-link" href="#">View all components →</a></div>
+        <div class="feature-grid">
+          <div class="feature f1"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></div><h3>AWS Infrastructure</h3><p>CloudFormation templates for VPC, Aurora, RDS, DynamoDB, Neptune — deploy to any account with one command.</p></div>
+          <div class="feature f2"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><h3>Learning Modules</h3><p>10+ structured modules with READMEs, working examples, and exercises. Teach customers to build, not just watch.</p></div>
+          <div class="feature f3"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><h3>Demo Materials</h3><p>Customer talking points, step-by-step demo scripts, and presentation guides tailored to your audience.</p></div>
+          <div class="feature f4"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><h3>Application Code</h3><p>Flask API with health checks, use-case endpoints, database connectivity, and error handling — runnable out of the box.</p></div>
+          <div class="feature f5"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></div><h3>Database Schema</h3><p>Extension setup, table creation, seed data, and migrations — pre-tested for Aurora PostgreSQL and friends.</p></div>
+          <div class="feature f6"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h20v14H2z"/><path d="M2 7h20"/><path d="M6 21h12"/></svg></div><h3>Documentation</h3><p>README, Getting Started guide, GitHub/GitLab import instructions, cleanup commands, and architecture notes.</p></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><h2>How it works</h2><p>Four steps from idea to a deployable, presentation-ready demo.</p></div></div>
+        <div class="how-grid">
+          <div class="step"><span class="step-num">STEP 01</span><h3>Describe</h3><p>Tell the AI what you need — an extension, an industry, a customer scenario. Plain English works.</p><div class="step-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div></div>
+          <div class="step"><span class="step-num">STEP 02</span><h3>Refine</h3><p>The agent asks clarifying questions to understand audience, scale, and demo goals before generating.</p><div class="step-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div></div>
+          <div class="step"><span class="step-num">STEP 03</span><h3>Generate</h3><p>AI builds a complete enablement package — infrastructure, code, modules, exercises, and demo scripts.</p><div class="step-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></div></div>
+          <div class="step"><span class="step-num">STEP 04</span><h3>Deploy &amp; Teach</h3><p>Download the ZIP, import to GitHub/GitLab, deploy with one command, and walk the customer through it.</p><div class="step-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><h2>Examples of what's been built</h2><p>Just examples — request any AWS managed database, any extension, any use case.</p></div><a class="section-link" href="home.html">See full catalog →</a></div>
+        <div class="catalog-grid">
+          <div class="ex-card c1"><div class="ex-head"><span class="ex-badge">pgvector</span><svg class="ex-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div><h3 class="ex-title">Hybrid Search</h3><p class="ex-desc">Semantic + lexical retrieval for RAG applications on Aurora PostgreSQL.</p><div class="ex-tags"><span class="tag">AI/ML</span><span class="tag">Embeddings</span><span class="tag">LangChain</span></div></div>
+          <div class="ex-card c2"><div class="ex-head"><span class="ex-badge">PostGIS</span><svg class="ex-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div><h3 class="ex-title">Fleet Tracking</h3><p class="ex-desc">Real-time geofencing, proximity queries, and delivery zone optimization.</p><div class="ex-tags"><span class="tag">Geospatial</span><span class="tag">Logistics</span><span class="tag">Maps</span></div></div>
+          <div class="ex-card c3"><div class="ex-head"><span class="ex-badge">pgRouting</span><svg class="ex-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div><h3 class="ex-title">Network Analysis</h3><p class="ex-desc">Shortest path, TSP, and failure-impact analysis for telecom and utilities.</p><div class="ex-tags"><span class="tag">Graph</span><span class="tag">Routing</span><span class="tag">Infrastructure</span></div></div>
+          <div class="ex-card c4"><div class="ex-head"><span class="ex-badge">pg_trgm</span><svg class="ex-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div><h3 class="ex-title">Fuzzy Search</h3><p class="ex-desc">Trigram-based product search with typo tolerance for e-commerce platforms.</p><div class="ex-tags"><span class="tag">Search</span><span class="tag">Retail</span><span class="tag">GIN Index</span></div></div>
+          <div class="ex-card c5"><div class="ex-head"><span class="ex-badge">pg_cron</span><svg class="ex-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div><h3 class="ex-title">IoT Analytics</h3><p class="ex-desc">Scheduled aggregations and data lifecycle management for manufacturing sensors.</p><div class="ex-tags"><span class="tag">Time-Series</span><span class="tag">IoT</span><span class="tag">Scheduling</span></div></div>
+          <div class="ex-card c6"><div class="ex-head"><span class="ex-badge">auto_explain</span><svg class="ex-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div><h3 class="ex-title">Query Tuning</h3><p class="ex-desc">Automatic query plan logging and performance optimization patterns for DBAs.</p><div class="ex-tags"><span class="tag">DBA</span><span class="tag">Performance</span><span class="tag">Observability</span></div></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><h2>Supported AWS databases</h2><p>Build demos across the full AWS managed-database portfolio.</p></div></div>
+        <div class="db-grid">
+          <div class="db-card aurora"><div class="db-logo">PG</div><div class="db-info"><h4>Aurora PostgreSQL</h4><p>pgvector, PostGIS, pgRouting, pg_trgm, pg_cron, auto_explain, and any extension.</p></div></div>
+          <div class="db-card"><div class="db-logo">My</div><div class="db-info"><h4>Aurora MySQL</h4><p>JSON, full-text search, spatial indexes, read replicas, multi-tenant patterns.</p></div></div>
+          <div class="db-card dynamo"><div class="db-logo">Dy</div><div class="db-info"><h4>Amazon DynamoDB</h4><p>Single-table design, GSIs, streams, event sourcing, TTL patterns.</p></div></div>
+          <div class="db-card neptune"><div class="db-logo">Np</div><div class="db-info"><h4>Amazon Neptune</h4><p>Knowledge graphs, fraud detection, social networks, Gremlin & SPARQL.</p></div></div>
+          <div class="db-card rds"><div class="db-logo">RDS</div><div class="db-info"><h4>Amazon RDS</h4><p>PostgreSQL, MySQL, Oracle, SQL Server, Db2 — fully managed instances.</p></div></div>
+          <div class="db-card cache"><div class="db-logo">EC</div><div class="db-info"><h4>ElastiCache / MemoryDB</h4><p>Caching patterns, pub/sub, session management, real-time leaderboards.</p></div></div>
+        </div>
+      </section>
+
+      <section class="cta-strip">
+        <div><h2>What demo does your customer need?</h2><p>Describe it in plain English. The AI agent handles the rest — questions, spec, code, infrastructure, documentation.</p></div>
+        <div class="row"><a href="home.html" class="btn btn-outline">Browse Catalog</a><a href="generator.html" class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3z"/></svg>Open Generator</a></div>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DemoForge — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f4f6fb;--panel:#fff;--panel-2:#f7f9fc;--border:#e5e9f0;--border-strong:#d3d9e3;--text:#0f172a;--text-muted:#5b6678;--text-soft:#8a94a6;--primary:#2563eb;--primary-700:#1d4ed8;--primary-50:#eff6ff;--accent-from:#3b82f6;--accent-to:#7c3aed;--shadow-sm:0 1px 2px rgba(15,23,42,.04);--shadow-md:0 4px 12px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.04);--shadow-lg:0 16px 40px rgba(15,23,42,.08);--sidebar-w:260px;--topbar-h:64px}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100vh}
+  .sidebar{background:linear-gradient(180deg,#0b1020 0%,#0f1735 100%);color:#cbd5e1;padding:22px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;padding:4px 8px}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent-from),var(--accent-to));display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 4px 14px rgba(124,58,237,.4)}
+  .brand-name{color:#fff;font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .brand-sub{color:#8a94a6;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .nav-section{margin-top:18px}.nav-label{color:#6b7896;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:0 10px;margin-bottom:6px}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;color:#cbd5e1;font-size:14px;font-weight:500;transition:all .15s ease;margin-bottom:2px;cursor:pointer}
+  .nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+  .nav-item.active{background:linear-gradient(90deg,rgba(59,130,246,.18),rgba(124,58,237,.10));color:#fff;box-shadow:inset 2px 0 0 #3b82f6}
+  .nav-item svg{width:18px;height:18px;opacity:.85;flex-shrink:0}
+  .nav-item .count{margin-left:auto;background:#3b82f6;color:#fff;font-size:11px;padding:1px 7px;border-radius:999px;font-weight:600}
+  .sidebar-footer{margin-top:24px;padding:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px}
+  .sidebar-footer h4{color:#fff;font-size:13px;margin:0 0 4px;font-weight:600}.sidebar-footer p{color:#8a94a6;font-size:12px;margin:0 0 10px;line-height:1.45}
+  .sidebar-footer .btn-mini{background:linear-gradient(135deg,var(--accent-from),var(--accent-to));color:#fff;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:600;display:inline-block}
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+  .breadcrumbs{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:13px}
+  .breadcrumbs strong{color:var(--text);font-weight:600}.breadcrumbs .sep{color:var(--text-soft)}
+  .top-actions{display:flex;align-items:center;gap:12px}
+  .search-pill{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--border);border-radius:999px;padding:7px 14px;color:var(--text-muted);font-size:13px;min-width:280px}
+  .search-pill svg{width:14px;height:14px}.search-pill kbd{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;background:#fff;border:1px solid var(--border);padding:1px 6px;border-radius:4px;color:var(--text-soft)}
+  .icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--panel-2);border:1px solid var(--border);color:var(--text-muted);position:relative}
+  .icon-btn:hover{background:#eef2f7;color:var(--text)}.icon-btn .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid #fff}
+  .avatar{display:flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border)}
+  .avatar-img{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;font-weight:700;font-size:12px;display:grid;place-items:center}
+  .avatar-name{font-size:13px;font-weight:600}
+
+  .content{padding:32px 36px 56px;max-width:1440px;width:100%;margin:0 auto}
+
+  /* Greeting */
+  .greet{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:26px}
+  .greet h1{margin:0 0 4px;font-size:30px;font-weight:800;letter-spacing:-.02em}
+  .greet h1 .grad{background:linear-gradient(120deg,var(--accent-from),var(--accent-to));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .greet p{margin:0;color:var(--text-muted);font-size:14px}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;font-size:13.5px;font-weight:600;transition:all .15s ease;cursor:pointer}
+  .btn-primary{background:linear-gradient(135deg,var(--accent-from),var(--accent-to));color:#fff;box-shadow:0 6px 18px rgba(59,130,246,.30)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(59,130,246,.40)}
+  .btn-outline{background:#fff;color:var(--text);border:1px solid var(--border-strong)}
+  .btn-outline:hover{background:var(--panel-2)}
+  .btn-ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--border);padding:6px 11px;font-size:12.5px;border-radius:8px}
+  .btn-ghost:hover{background:#eef2f7}
+  .btn-danger{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;padding:6px 11px;font-size:12.5px;border-radius:8px}
+  .btn-success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:6px 11px;font-size:12.5px;border-radius:8px}
+
+  /* Stats row */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}
+  .stat-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
+  .stat-card::before{content:"";position:absolute;left:0;top:0;width:3px;height:100%;background:linear-gradient(180deg,var(--c1,#3b82f6),var(--c2,#7c3aed))}
+  .stat-card .label{font-size:11.5px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .stat-card .label .ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:var(--ic-bg,#eff6ff);color:var(--ic-fg,#2563eb)}
+  .stat-card .label .ico svg{width:13px;height:13px}
+  .stat-card .v{font-size:28px;font-weight:800;letter-spacing:-.02em;font-family:'JetBrains Mono',monospace}
+  .stat-card .delta{font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:4px;margin-top:4px}
+  .delta.up{color:#047857}.delta.down{color:#b91c1c}
+  .stat-card.s2{--c1:#16a34a;--c2:#0891b2;--ic-bg:#ecfdf5;--ic-fg:#047857}
+  .stat-card.s3{--c1:#f59e0b;--c2:#ef4444;--ic-bg:#fffbeb;--ic-fg:#b45309}
+  .stat-card.s4{--c1:#7c3aed;--c2:#db2777;--ic-bg:#f5f3ff;--ic-fg:#6d28d9}
+
+  /* Section header */
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin:36px 0 16px;gap:16px}
+  .section-head h2{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .section-head p{margin:3px 0 0;font-size:13px;color:var(--text-muted)}
+
+  /* Catalog table */
+  .table-card{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);overflow:hidden}
+  .tbl-tools{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--panel-2)}
+  .tbl-tools .left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .tbl-tools .right{display:flex;gap:8px;align-items:center}
+  .filter-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:12.5px;color:var(--text-muted);cursor:pointer}
+  .filter-pill.active{background:var(--primary-50);color:var(--primary);border-color:#bfdbfe;font-weight:600}
+  .search-mini{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12.5px;color:var(--text-muted);min-width:220px}
+  .search-mini svg{width:13px;height:13px}
+  .tbl{width:100%;border-collapse:collapse}
+  .tbl th,.tbl td{padding:12px 18px;text-align:left;vertical-align:middle;font-size:13.5px}
+  .tbl th{font-size:11px;color:var(--text-soft);font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:#fff;border-bottom:1px solid var(--border)}
+  .tbl td{border-bottom:1px solid var(--border)}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl tr:hover td{background:#fafbfd}
+  .tbl .ttl{font-weight:600;color:var(--text);display:flex;align-items:center;gap:10px}
+  .tbl .sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .ttl .glyph{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;flex-shrink:0}
+  .glyph.gv{background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#2563eb;border:1px solid #bfdbfe}
+  .glyph.gd{background:linear-gradient(135deg,#f5f3ff,#ede9fe);color:#7c3aed;border:1px solid #ddd6fe}
+  .glyph.gn{background:linear-gradient(135deg,#ecfeff,#cffafe);color:#0891b2;border:1px solid #a5f3fc}
+  .glyph.gr{background:linear-gradient(135deg,#f0fdf4,#dcfce7);color:#16a34a;border:1px solid #bbf7d0}
+  .glyph.gc{background:linear-gradient(135deg,#fef2f2,#fee2e2);color:#dc2626;border:1px solid #fecaca}
+  .glyph.go{background:linear-gradient(135deg,#fff7ed,#ffedd5);color:#ea580c;border:1px solid #fed7aa}
+  .ext-chip{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;background:#0f172a;color:#fff}
+  .ext-chip.b{background:linear-gradient(135deg,#2563eb,#06b6d4)}
+  .ext-chip.g{background:linear-gradient(135deg,#16a34a,#65a30d)}
+  .ext-chip.p{background:linear-gradient(135deg,#7c3aed,#ec4899)}
+  .ext-chip.o{background:linear-gradient(135deg,#f97316,#facc15)}
+  .ext-chip.c{background:linear-gradient(135deg,#0891b2,#6366f1)}
+  .ext-chip.r{background:linear-gradient(135deg,#db2777,#f43f5e)}
+  .badge-status{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
+  .badge-status .led{width:6px;height:6px;border-radius:50%}
+  .badge-status.ready{background:#ecfdf5;color:#047857}.badge-status.ready .led{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+  .badge-status.pending{background:#fffbeb;color:#b45309}.badge-status.pending .led{background:#f59e0b}
+  .badge-status.failed{background:#fef2f2;color:#b91c1c}.badge-status.failed .led{background:#ef4444}
+  .badge-status.draft{background:var(--panel-2);color:var(--text-muted)}.badge-status.draft .led{background:#94a3b8}
+  .actions{display:flex;gap:6px;justify-content:flex-end}
+  .mono{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted)}
+
+  /* Custom CTA */
+  .custom-cta{margin-top:36px;border-radius:16px;padding:28px 36px;background:radial-gradient(500px 200px at 100% 50%,rgba(124,58,237,.30),transparent 60%),linear-gradient(135deg,#0b1020 0%,#1a1f3a 60%,#0f1735 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+  .custom-cta::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:36px 36px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 80%);pointer-events:none}
+  .custom-cta>*{position:relative}
+  .custom-cta h2{font-size:20px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em}
+  .custom-cta p{color:#cbd5e1;margin:0;font-size:13.5px;max-width:600px}
+  .btn-ghost-light{background:rgba(255,255,255,.10);color:#fff;border:1px solid rgba(255,255,255,.18);padding:10px 18px;border-radius:10px;font-size:13.5px;font-weight:600}
+
+  @media (max-width:1100px){.stats-row{grid-template-columns:repeat(2,1fr)}.tbl-tools{flex-direction:column;align-items:stretch;gap:10px}}
+  @media (max-width:720px){:root{--sidebar-w:0}.sidebar{display:none}.app{grid-template-columns:1fr}.search-pill{display:none}.content{padding:22px 18px 40px}.tbl thead{display:none}.tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}.tbl tr{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;padding:8px 0;background:#fff}.tbl td{border:none;padding:6px 14px;display:flex;justify-content:space-between;font-size:13px}.tbl td::before{content:attr(data-label);font-size:11px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em;font-weight:600}.actions{justify-content:flex-end!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">DF</div><div><div class="brand-name">DemoForge</div><div class="brand-sub">AI Demo Builder</div></div></div>
+    <div class="nav-section"><div class="nav-label">Workspace</div>
+      <a href="index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>Welcome</a>
+      <a href="home.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="generator.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Generator</a>
+      <a href="my-requests.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>My Requests<span class="count">3</span></a>
+    </div>
+    <div class="nav-section"><div class="nav-label">Resources</div>
+      <a href="#" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>User Guide</a>
+      <a href="presentation.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Presentation</a>
+    </div>
+    <div class="nav-section"><div class="nav-label">Management</div>
+      <a href="admin.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin Dashboard</a>
+    </div>
+    <div class="sidebar-footer"><h4>✨ Pro Tier</h4><p>Unlimited demo generations and priority AI processing.</p><a href="#" class="btn-mini" style="background:linear-gradient(135deg,var(--accent-from),var(--accent-to));color:#fff;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:600;display:inline-block">Upgrade Now</a></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>Workspace</span><span class="sep">/</span><strong>Dashboard</strong></div>
+      <div class="top-actions">
+        <div class="search-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search demos, modules, docs…<kbd>⌘K</kbd></div>
+        <button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></button>
+        <button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="dot"></span></button>
+        <div class="avatar"><div class="avatar-img">RS</div><span class="avatar-name">r sundar19</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <div class="greet">
+        <div>
+          <h1>Good afternoon, <span class="grad">Sundar</span></h1>
+          <p>Here's a snapshot of your demo catalog — 24 ready demos, 3 in review.</p>
+        </div>
+        <a href="generator.html" class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3z"/></svg>New demo</a>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card s1">
+          <div class="label"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></span>Repos generated</div>
+          <div class="v">142</div>
+          <div class="delta up">▲ 18 this week</div>
+        </div>
+        <div class="stat-card s2">
+          <div class="label"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Active users</div>
+          <div class="v">38</div>
+          <div class="delta up">▲ 6 this week</div>
+        </div>
+        <div class="stat-card s3">
+          <div class="label"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>Hours saved</div>
+          <div class="v">1,284</div>
+          <div class="delta up">▲ 9% MoM</div>
+        </div>
+        <div class="stat-card s4">
+          <div class="label"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>Active deploys</div>
+          <div class="v">7</div>
+          <div class="delta down">▼ 2 since yesterday</div>
+        </div>
+      </div>
+
+      <!-- Catalog -->
+      <div class="section-head">
+        <div><h2>AI Demo Catalog</h2><p>Ready-to-deploy demos generated for your team.</p></div>
+        <a href="my-requests.html" class="btn btn-outline">View all requests</a>
+      </div>
+
+      <div class="table-card">
+        <div class="tbl-tools">
+          <div class="left">
+            <span class="filter-pill active">All <span class="mono" style="font-size:11px;color:inherit">24</span></span>
+            <span class="filter-pill">Aurora PG <span class="mono" style="font-size:11px;color:inherit">12</span></span>
+            <span class="filter-pill">DynamoDB <span class="mono" style="font-size:11px;color:inherit">5</span></span>
+            <span class="filter-pill">Neptune <span class="mono" style="font-size:11px;color:inherit">3</span></span>
+            <span class="filter-pill">RDS <span class="mono" style="font-size:11px;color:inherit">2</span></span>
+            <span class="filter-pill">Cache <span class="mono" style="font-size:11px;color:inherit">2</span></span>
+          </div>
+          <div class="right">
+            <div class="search-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search catalog…</div>
+            <button class="btn-ghost"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg> Filter</button>
+          </div>
+        </div>
+
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:32%">Demo</th>
+              <th>Extension</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="Demo"><div class="ttl"><div class="glyph gv">PG</div><div><div>Hybrid Search RAG · Healthcare</div><div class="sub">Aurora PostgreSQL · 8 modules · 60 min</div></div></div></td>
+              <td data-label="Extension"><span class="ext-chip b">pgvector</span></td>
+              <td data-label="Status"><span class="badge-status ready"><span class="led"></span>READY</span></td>
+              <td data-label="Created"><span class="mono">May 04, 2026</span></td>
+              <td data-label="" class="actions"><button class="btn-ghost"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download</button><button class="btn-success"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 4 12 14.01 9 11.01"/></svg> Deploy</button><button class="btn-danger"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg> Cleanup</button></td>
+            </tr>
+            <tr>
+              <td data-label="Demo"><div class="ttl"><div class="glyph gv">PG</div><div><div>Fleet Tracking · Logistics</div><div class="sub">Aurora PostgreSQL · 6 modules · 45 min</div></div></div></td>
+              <td data-label="Extension"><span class="ext-chip g">PostGIS</span></td>
+              <td data-label="Status"><span class="badge-status ready"><span class="led"></span>READY</span></td>
+              <td data-label="Created"><span class="mono">May 02, 2026</span></td>
+              <td data-label="" class="actions"><button class="btn-ghost">Download</button><button class="btn-success">Deploy</button><button class="btn-danger">Cleanup</button></td>
+            </tr>
+            <tr>
+              <td data-label="Demo"><div class="ttl"><div class="glyph gd">Dy</div><div><div>Single-Table Leaderboard · Gaming</div><div class="sub">DynamoDB · 5 modules · 30 min</div></div></div></td>
+              <td data-label="Extension"><span class="ext-chip p">single-table</span></td>
+              <td data-label="Status"><span class="badge-status pending"><span class="led"></span>BUILDING</span></td>
+              <td data-label="Created"><span class="mono">May 06, 2026</span></td>
+              <td data-label="" class="actions"><button class="btn-ghost">View</button></td>
+            </tr>
+            <tr>
+              <td data-label="Demo"><div class="ttl"><div class="glyph gv">PG</div><div><div>Network Analysis · Telecom</div><div class="sub">Aurora PostgreSQL · 7 modules · 50 min</div></div></div></td>
+              <td data-label="Extension"><span class="ext-chip o">pgRouting</span></td>
+              <td data-label="Status"><span class="badge-status ready"><span class="led"></span>READY</span></td>
+              <td data-label="Created"><span class="mono">Apr 28, 2026</span></td>
+              <td data-label="" class="actions"><button class="btn-ghost">Download</button><button class="btn-success">Deploy</button><button class="btn-danger">Cleanup</button></td>
+            </tr>
+            <tr>
+              <td data-label="Demo"><div class="ttl"><div class="glyph gn">Np</div><div><div>Fraud Graph · Financial Services</div><div class="sub">Neptune · 8 modules · 60 min</div></div></div></td>
+              <td data-label="Extension"><span class="ext-chip c">Gremlin</span></td>
+              <td data-label="Status"><span class="badge-status ready"><span class="led"></span>READY</span></td>
+              <td data-label="Created"><span class="mono">Apr 24, 2026</span></td>
+              <td data-label="" class="actions"><button class="btn-ghost">Download</button><button class="btn-success">Deploy</button><button class="btn-danger">Cleanup</button></td>
+            </tr>
+            <tr>
+              <td data-label="Demo"><div class="ttl"><div class="glyph gv">PG</div><div><div>Fuzzy Product Search · Retail</div><div class="sub">Aurora PostgreSQL · 5 modules · 30 min</div></div></div></td>
+              <td data-label="Extension"><span class="ext-chip o">pg_trgm</span></td>
+              <td data-label="Status"><span class="badge-status failed"><span class="led"></span>FAILED</span></td>
+              <td data-label="Created"><span class="mono">Apr 22, 2026</span></td>
+              <td data-label="" class="actions"><button class="btn-ghost">Retry</button><button class="btn-ghost">Logs</button></td>
+            </tr>
+            <tr>
+              <td data-label="Demo"><div class="ttl"><div class="glyph gc">EC</div><div><div>Realtime Leaderboards · Gaming</div><div class="sub">ElastiCache · 4 modules · 25 min</div></div></div></td>
+              <td data-label="Extension"><span class="ext-chip r">Redis</span></td>
+              <td data-label="Status"><span class="badge-status ready"><span class="led"></span>READY</span></td>
+              <td data-label="Created"><span class="mono">Apr 19, 2026</span></td>
+              <td data-label="" class="actions"><button class="btn-ghost">Download</button><button class="btn-success">Deploy</button><button class="btn-danger">Cleanup</button></td>
+            </tr>
+            <tr>
+              <td data-label="Demo"><div class="ttl"><div class="glyph gv">PG</div><div><div>IoT Sensor Aggregation · Manufacturing</div><div class="sub">Aurora PostgreSQL · 6 modules · 40 min</div></div></div></td>
+              <td data-label="Extension"><span class="ext-chip c">pg_cron</span></td>
+              <td data-label="Status"><span class="badge-status draft"><span class="led"></span>DRAFT</span></td>
+              <td data-label="Created"><span class="mono">Apr 16, 2026</span></td>
+              <td data-label="" class="actions"><button class="btn-ghost">Resume</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Custom CTA -->
+      <section class="custom-cta">
+        <div>
+          <h2>Need a custom demo?</h2>
+          <p>Describe what you want to build for your customer — the AI agent will ask clarifying questions, then ship the full enablement package.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><a href="my-requests.html" class="btn-ghost-light">View past requests</a><a href="generator.html" class="btn btn-primary">Open Generator</a></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>

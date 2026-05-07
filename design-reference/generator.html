@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DemoForge — Generator (Generative UI)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f4f6fb;--panel:#fff;--panel-2:#f7f9fc;--border:#e5e9f0;--border-strong:#d3d9e3;--text:#0f172a;--text-muted:#5b6678;--text-soft:#8a94a6;--primary:#2563eb;--primary-700:#1d4ed8;--primary-50:#eff6ff;--shadow-sm:0 1px 2px rgba(15,23,42,.04);--shadow-md:0 4px 12px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.04);--shadow-lg:0 16px 40px rgba(15,23,42,.08);--sidebar-w:260px;--topbar-h:64px;--spec-w:340px}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100vh}
+  .sidebar{background:linear-gradient(180deg,#0b1020 0%,#0f1735 100%);color:#cbd5e1;padding:22px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;padding:4px 8px}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#3b82f6 0%,#7c3aed 100%);display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 4px 14px rgba(124,58,237,.4)}
+  .brand-name{color:#fff;font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .brand-sub{color:#8a94a6;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .nav-section{margin-top:18px}.nav-label{color:#6b7896;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:0 10px;margin-bottom:6px}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;color:#cbd5e1;font-size:14px;font-weight:500;transition:all .15s ease;margin-bottom:2px;cursor:pointer}
+  .nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+  .nav-item.active{background:linear-gradient(90deg,rgba(59,130,246,.18),rgba(124,58,237,.10));color:#fff;box-shadow:inset 2px 0 0 #3b82f6}
+  .nav-item svg{width:18px;height:18px;opacity:.85;flex-shrink:0}
+  .nav-item .count{margin-left:auto;background:#3b82f6;color:#fff;font-size:11px;padding:1px 7px;border-radius:999px;font-weight:600}
+  .sidebar-footer{margin-top:24px;padding:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px}
+  .sidebar-footer h4{color:#fff;font-size:13px;margin:0 0 4px;font-weight:600}.sidebar-footer p{color:#8a94a6;font-size:12px;margin:0 0 10px;line-height:1.45}
+  .sidebar-footer .btn-mini{background:linear-gradient(135deg,#3b82f6,#7c3aed);color:#fff;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:600;display:inline-block}
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+  .breadcrumbs{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:13px}
+  .breadcrumbs strong{color:var(--text);font-weight:600}.breadcrumbs .sep{color:var(--text-soft)}
+  .breadcrumbs .pill{margin-left:10px;background:linear-gradient(135deg,#ede9fe,#dbeafe);color:#5b21b6;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;letter-spacing:.04em}
+  .top-actions{display:flex;align-items:center;gap:12px}
+  .icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--panel-2);border:1px solid var(--border);color:var(--text-muted)}
+  .icon-btn:hover{background:#eef2f7;color:var(--text)}
+  .avatar{display:flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border)}
+  .avatar-img{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;font-weight:700;font-size:12px;display:grid;place-items:center}
+  .avatar-name{font-size:13px;font-weight:600}
+
+  .gen-shell{display:grid;grid-template-columns:1fr var(--spec-w);gap:28px;padding:28px 36px 80px;max-width:1440px;width:100%;margin:0 auto}
+  .canvas{display:flex;flex-direction:column;gap:18px;min-width:0}
+  .turn{display:flex;gap:14px}
+  .turn .avatar-bubble{width:36px;height:36px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-weight:700;font-size:12px}
+  .turn.ai .avatar-bubble{background:linear-gradient(135deg,#3b82f6,#7c3aed);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.25)}
+  .turn.user .avatar-bubble{background:linear-gradient(135deg,#f97316,#ec4899);color:#fff}
+  .turn-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+  .turn-meta{font-size:12px;color:var(--text-soft);display:flex;align-items:center;gap:8px}
+  .turn-meta strong{color:var(--text);font-weight:600;font-size:13px}
+  .turn-meta .dot{width:3px;height:3px;background:var(--text-soft);border-radius:50%}
+  .user-msg{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-size:14.5px;color:var(--text);box-shadow:var(--shadow-sm)}
+  .ai-prose{font-size:14.5px;color:var(--text);line-height:1.6}.ai-prose strong{font-weight:600}
+
+  /* Empty state */
+  .empty{background:#fff;border:1px solid var(--border);border-radius:14px;padding:36px;text-align:center;box-shadow:var(--shadow-sm)}
+  .empty .badge{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:999px;background:linear-gradient(135deg,#ede9fe,#dbeafe);color:#5b21b6;font-size:12px;font-weight:600;margin-bottom:14px}
+  .empty h2{margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-.02em}
+  .empty h2 .grad{background:linear-gradient(120deg,#3b82f6,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .empty p{margin:0 0 22px;color:var(--text-muted);font-size:14px;max-width:560px;margin-left:auto;margin-right:auto;line-height:1.55}
+  .ex-prompts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:680px;margin:0 auto;text-align:left}
+  .ex-prompt{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:13px 14px;cursor:pointer;transition:all .15s ease;font-size:13px;color:var(--text);display:flex;align-items:flex-start;gap:10px}
+  .ex-prompt:hover{border-color:#bfdbfe;background:var(--primary-50);transform:translateY(-1px)}
+  .ex-prompt .ico{font-size:16px;flex-shrink:0;margin-top:1px}
+  .ex-prompt em{font-style:normal;color:var(--text-muted);font-size:11.5px;display:block;margin-top:3px}
+
+  /* Question card */
+  .q-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow-sm)}
+  .q-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .q-label{font-size:14px;font-weight:600;color:var(--text)}
+  .q-helper{font-size:12px;color:var(--text-muted);margin-top:3px}
+  .q-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;background:var(--primary-50);color:var(--primary);padding:3px 8px;border-radius:6px;letter-spacing:.04em}
+  .opt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .opt{border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;background:#fff;transition:all .15s ease;position:relative}
+  .opt:hover{border-color:#b6c2d6;transform:translateY(-1px)}
+  .opt.selected{border-color:var(--primary);background:linear-gradient(135deg,#eff6ff,#f5f3ff);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
+  .opt.selected::after{content:"✓";position:absolute;top:8px;right:10px;color:var(--primary);font-weight:700;font-size:13px}
+  .opt-icon{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;margin-bottom:8px;font-size:14px}
+  .opt-title{font-size:13.5px;font-weight:600;margin-bottom:2px}
+  .opt-desc{font-size:12px;color:var(--text-muted);line-height:1.4}
+
+  /* Slider */
+  .slider{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow-sm)}
+  .slider-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+  .slider-value{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;background:linear-gradient(135deg,#3b82f6,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.02em}
+  .slider-track{position:relative;height:6px;border-radius:999px;background:var(--border);margin:14px 0 8px}
+  .slider-fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#3b82f6,#7c3aed);border-radius:999px}
+  .slider-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;background:#fff;border:3px solid var(--primary);border-radius:50%;box-shadow:0 4px 10px rgba(37,99,235,.30)}
+  .slider-marks{display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+  /* Preview cards */
+  .preview-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm)}
+  .preview-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--panel-2)}
+  .preview-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+  .preview-title .badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:5px;font-weight:600;letter-spacing:.04em}
+  .badge.infra{background:linear-gradient(135deg,#2563eb,#06b6d4);color:#fff}
+  .badge.schema{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff}
+  .badge.code{background:linear-gradient(135deg,#16a34a,#0891b2);color:#fff}
+  .badge.modules{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff}
+  .badge.cost{background:linear-gradient(135deg,#0891b2,#16a34a);color:#fff}
+  .preview-action{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer}
+  .preview-action:hover{color:var(--primary)}
+  .preview-body{padding:16px}
+
+  .arch{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:center;padding:12px}
+  .arch-node{background:linear-gradient(135deg,#f8fafc,#fff);border:1.5px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;font-size:11.5px;font-weight:600}
+  .arch-node .ico{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;margin:0 auto 6px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px}
+  .arch-node.aurora .ico{background:#dbeafe;color:#2563eb}
+  .arch-node.lambda .ico{background:#fef3c7;color:#d97706}
+  .arch-node.api .ico{background:#ede9fe;color:#7c3aed}
+  .arch-node.s3 .ico{background:#dcfce7;color:#16a34a}
+  .arch-arrow{color:var(--text-soft);font-size:14px;text-align:center}
+
+  .schema-tables{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tbl{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .tbl-head{background:var(--panel-2);padding:8px 12px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+  .tbl-rows{font-family:'JetBrains Mono',monospace;font-size:11.5px}
+  .tbl-rows .row{display:grid;grid-template-columns:1fr auto;padding:6px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+  .tbl-rows .row:last-child{border-bottom:none}
+  .tbl-rows .col-type{color:var(--text-soft)}
+  .tbl-rows .pk{color:#f59e0b}.tbl-rows .fk{color:#8b5cf6}
+
+  .code{background:#0f172a;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;padding:14px 18px;line-height:1.65;border-radius:0 0 12px 12px;overflow-x:auto;white-space:pre}
+  .code .k{color:#c4b5fd}.code .s{color:#86efac}.code .c{color:#64748b;font-style:italic}.code .f{color:#93c5fd}.code .n{color:#fbbf24}
+
+  .mods{display:flex;flex-direction:column}
+  .mod{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--border)}
+  .mod:last-child{border-bottom:none}
+  .mod-num{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--primary-50);color:var(--primary);padding:4px 0;border-radius:6px;text-align:center;font-weight:600}
+  .mod-title{font-size:13.5px;font-weight:600;margin-bottom:1px}
+  .mod-desc{font-size:12px;color:var(--text-muted)}
+  .mod-meta{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+
+  .progress{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow-sm)}
+  .progress h4{font-size:13px;margin:0 0 14px;display:flex;align-items:center;gap:8px;font-weight:600}
+  .progress h4 .spinner{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--primary);animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .step-row{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;padding:7px 0;font-size:13px}
+  .step-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:#fff;position:relative}
+  .step-dot.done{background:var(--primary);border-color:var(--primary)}
+  .step-dot.done::after{content:"";position:absolute;top:2px;left:4px;width:4px;height:7px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg)}
+  .step-dot.running{border-color:var(--primary);background:radial-gradient(var(--primary) 30%,transparent 35%);animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.4)}50%{box-shadow:0 0 0 6px rgba(37,99,235,0)}}
+  .step-row.pending{color:var(--text-soft)}
+  .step-row .t{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-soft)}
+
+  .confirm{border-radius:12px;padding:22px;background:linear-gradient(135deg,#0b1020 0%,#1a1f3a 60%,#0f1735 100%);color:#fff;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+  .confirm::before{content:"";position:absolute;inset:0;background:radial-gradient(400px 200px at 100% 0%,rgba(124,58,237,.30),transparent 60%);pointer-events:none}
+  .confirm-inner{position:relative}
+  .confirm h3{margin:0 0 4px;font-size:18px;font-weight:700}
+  .confirm p{margin:0 0 16px;font-size:13px;color:#cbd5e1}
+  .confirm-meta{display:flex;gap:18px;margin-bottom:18px;font-family:'JetBrains Mono',monospace;font-size:11px;flex-wrap:wrap}
+  .confirm-meta span{color:#93a3bd}.confirm-meta strong{color:#fff;font-weight:600}
+  .confirm-cta{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;transition:all .15s ease;cursor:pointer}
+  .btn-primary{background:linear-gradient(135deg,#3b82f6 0%,#7c3aed 100%);color:#fff;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+  .btn-primary:hover{transform:translateY(-1px)}
+  .btn-ghost-light{background:rgba(255,255,255,.10);color:#fff;border:1px solid rgba(255,255,255,.18)}
+  .btn-ghost-light:hover{background:rgba(255,255,255,.18)}
+
+  .composer{position:sticky;bottom:18px;margin-top:12px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow-md);display:flex;align-items:flex-end;gap:12px}
+  .composer textarea{flex:1;border:none;outline:none;resize:none;font-family:inherit;font-size:14px;color:var(--text);min-height:22px;max-height:120px;line-height:1.5;background:transparent}
+  .composer-actions{display:flex;gap:8px;align-items:center}
+  .composer .hint{font-size:11px;color:var(--text-soft);font-family:'JetBrains Mono',monospace}
+  .composer .send{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#3b82f6,#7c3aed);color:#fff;display:grid;place-items:center;box-shadow:0 4px 14px rgba(59,130,246,.35)}
+
+  .rail{position:sticky;top:calc(var(--topbar-h) + 28px);align-self:start;max-height:calc(100vh - var(--topbar-h) - 56px);overflow-y:auto}
+  .spec{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);overflow:hidden}
+  .spec-head{padding:14px 16px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#fff,#f7f9fc)}
+  .spec-head .label{font-size:11px;font-weight:600;color:var(--text-soft);letter-spacing:.08em;text-transform:uppercase}
+  .spec-head h3{margin:4px 0 0;font-size:15px;font-weight:700}
+  .spec-body{padding:8px 16px 14px}
+  .spec-row{display:grid;grid-template-columns:95px 1fr;align-items:start;padding:10px 0;border-bottom:1px dashed var(--border)}
+  .spec-row:last-child{border-bottom:none}
+  .spec-key{font-size:11px;color:var(--text-soft);font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding-top:1px}
+  .spec-val{font-size:13px;color:var(--text);display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:var(--panel-2);border:1px solid var(--border);padding:3px 8px;border-radius:6px;font-size:12px;font-weight:500}
+  .chip.mono{font-family:'JetBrains Mono',monospace;font-size:11px}
+  .chip.pri{background:var(--primary-50);color:var(--primary);border-color:#bfdbfe}
+  .spec-edit{margin-left:auto;color:var(--text-soft);font-size:11px;cursor:pointer}
+  .spec-edit:hover{color:var(--primary)}
+  .spec-foot{background:var(--panel-2);padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px}
+  .spec-foot .pulse{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.20)}
+
+  .legend{margin-top:14px;background:linear-gradient(135deg,#ede9fe,#dbeafe);border:1px solid #c7d2fe;border-radius:12px;padding:14px;font-size:12px;color:#4338ca;line-height:1.5}
+  .legend strong{color:#312e81}
+  .legend code{font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(255,255,255,.6);padding:1px 5px;border-radius:4px;color:#4338ca}
+
+  @media (max-width:1100px){.gen-shell{grid-template-columns:1fr}.rail{position:static;max-height:none}.ex-prompts{grid-template-columns:1fr}}
+  @media (max-width:720px){:root{--sidebar-w:0}.sidebar{display:none}.app{grid-template-columns:1fr}.gen-shell{padding:18px 16px 80px}.opt-grid{grid-template-columns:1fr}.arch{grid-template-columns:1fr}.arch-arrow{transform:rotate(90deg)}.schema-tables{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">DF</div><div><div class="brand-name">DemoForge</div><div class="brand-sub">AI Demo Builder</div></div></div>
+    <div class="nav-section"><div class="nav-label">Workspace</div>
+      <a href="index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>Welcome</a>
+      <a href="home.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="generator.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Generator</a>
+      <a href="my-requests.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>My Requests<span class="count">3</span></a>
+    </div>
+    <div class="nav-section"><div class="nav-label">Resources</div>
+      <a href="#" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>User Guide</a>
+      <a href="presentation.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Presentation</a>
+    </div>
+    <div class="nav-section"><div class="nav-label">Management</div>
+      <a href="admin.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin Dashboard</a>
+    </div>
+    <div class="sidebar-footer"><h4>✨ Pro Tier</h4><p>Unlimited demo generations and priority AI processing.</p><a href="#" class="btn-mini">Upgrade Now</a></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>Workspace</span><span class="sep">/</span><strong>Generator</strong><span class="pill">✦ Generative UI</span></div>
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="History"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 3"/></svg></button>
+        <button class="icon-btn" aria-label="New session"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="avatar"><div class="avatar-img">RS</div><span class="avatar-name">r sundar19</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+      </div>
+    </header>
+
+    <div class="gen-shell">
+      <div class="canvas">
+
+        <!-- Empty state with example prompts -->
+        <div class="empty">
+          <span class="badge">✦ Generative UI · live preview</span>
+          <h2>Describe the demo<br/><span class="grad">your customer needs.</span></h2>
+          <p>Plain English works. The AI infers what it can, asks only for what's missing, and builds the whole package — infrastructure, code, modules, and demo script.</p>
+          <div class="ex-prompts">
+            <div class="ex-prompt"><span class="ico">🏥</span><div><strong>pgvector RAG demo for a healthcare CTO, pretty technical</strong><em>Aurora PostgreSQL · pgvector · clinical notes</em></div></div>
+            <div class="ex-prompt"><span class="ico">🎮</span><div><strong>DynamoDB single-table for a gaming leaderboard, exec audience</strong><em>DynamoDB · single-table design · hot keys</em></div></div>
+            <div class="ex-prompt"><span class="ico">📍</span><div><strong>PostGIS fleet tracking for a logistics customer</strong><em>Aurora PostgreSQL · PostGIS · geofencing</em></div></div>
+            <div class="ex-prompt"><span class="ico">🕸️</span><div><strong>Neptune fraud graph for fintech, architect-pitched</strong><em>Neptune · Gremlin · entity resolution</em></div></div>
+          </div>
+        </div>
+
+        <!-- Turn 1: User -->
+        <div class="turn user">
+          <div class="avatar-bubble">RS</div>
+          <div class="turn-body">
+            <div class="turn-meta"><strong>You</strong><span class="dot"></span>2 min ago</div>
+            <div class="user-msg">I want a pgvector demo for a healthcare customer pitching RAG over clinical notes. They're pretty technical.</div>
+          </div>
+        </div>
+
+        <!-- Turn 2: AI gathering -->
+        <div class="turn ai">
+          <div class="avatar-bubble">✦</div>
+          <div class="turn-body">
+            <div class="turn-meta"><strong>DemoForge AI</strong><span class="dot"></span>Gathering requirements<span class="dot"></span>1m 48s ago</div>
+            <div class="ai-prose">Great — pgvector + clinical RAG is a strong fit on Aurora PostgreSQL. I've inferred the database, extension, and use case from your description. Two more things and I'll start building:</div>
+
+            <div class="q-card">
+              <div class="q-head"><div><div class="q-label">Who's the primary audience?</div><div class="q-helper">Pick the role you're presenting to — modules and depth will adapt.</div></div><span class="q-tag">AudienceProfile</span></div>
+              <div class="opt-grid">
+                <div class="opt selected"><div class="opt-icon" style="background:#dbeafe;color:#2563eb">🏗</div><div class="opt-title">Architect</div><div class="opt-desc">Design patterns, trade-offs, integration depth.</div></div>
+                <div class="opt"><div class="opt-icon" style="background:#ede9fe;color:#7c3aed">‹/›</div><div class="opt-title">Developer</div><div class="opt-desc">Hands-on code, APIs, exercises.</div></div>
+                <div class="opt"><div class="opt-icon" style="background:#fef3c7;color:#d97706">📊</div><div class="opt-title">Executive</div><div class="opt-desc">Outcomes, cost, ROI, business value.</div></div>
+              </div>
+            </div>
+
+            <div class="slider">
+              <div class="slider-head"><div><div class="q-label">How long is the session?</div><div class="q-helper">Determines module count and exercise depth.</div></div><div class="slider-value">60 min</div></div>
+              <div class="slider-track"><div class="slider-fill" style="width:60%"></div><div class="slider-thumb" style="left:60%"></div></div>
+              <div class="slider-marks"><span>15</span><span>30</span><span>45</span><span>60</span><span>75</span><span>90</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Turn 3: AI generating -->
+        <div class="turn ai">
+          <div class="avatar-bubble">✦</div>
+          <div class="turn-body">
+            <div class="turn-meta"><strong>DemoForge AI</strong><span class="dot"></span>Generating<span class="dot"></span>just now</div>
+            <div class="ai-prose">Got it. Building your enablement package — this usually takes about 40 seconds.</div>
+
+            <div class="progress">
+              <h4><span class="spinner"></span>Building <code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#eff6ff;color:#2563eb;padding:1px 6px;border-radius:4px;margin-left:4px;">pgvector-clinical-rag</code></h4>
+              <div class="step-row"><div class="step-dot done"></div><span>Generated CloudFormation (VPC + Aurora cluster + IAM)</span><span class="t">12s</span></div>
+              <div class="step-row"><div class="step-dot done"></div><span>Designed schema &amp; 50k rows of synthetic clinical notes</span><span class="t">8s</span></div>
+              <div class="step-row"><div class="step-dot running"></div><span>Writing Flask API + embeddings pipeline</span><span class="t">~9s</span></div>
+              <div class="step-row pending"><div class="step-dot"></div><span>Authoring 8 learning modules</span><span class="t">queued</span></div>
+              <div class="step-row pending"><div class="step-dot"></div><span>Compiling demo script + README</span><span class="t">queued</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Turn 4: AI complete -->
+        <div class="turn ai">
+          <div class="avatar-bubble">✦</div>
+          <div class="turn-body">
+            <div class="turn-meta"><strong>DemoForge AI</strong><span class="dot"></span>Complete<span class="dot"></span>just now</div>
+            <div class="ai-prose">Done. Here's what I built — every component below was chosen for <strong>this specific demo</strong>. A DynamoDB request would have rendered a different result page.</div>
+
+            <div class="preview-card">
+              <div class="preview-head"><div class="preview-title"><span class="badge infra">InfraPreview</span><span>Architecture · 4 resources · est. $0.42/hr</span></div><div class="preview-action">View CFN →</div></div>
+              <div class="preview-body">
+                <div class="arch">
+                  <div class="arch-node api"><div class="ico">API</div>Flask API<br/><span style="color:var(--text-soft);font-weight:500;font-size:10.5px">App Runner</span></div>
+                  <div class="arch-arrow">→</div>
+                  <div class="arch-node lambda"><div class="ico">λ</div>Embed Worker<br/><span style="color:var(--text-soft);font-weight:500;font-size:10.5px">Lambda</span></div>
+                  <div class="arch-arrow">→</div>
+                </div>
+                <div class="arch" style="margin-top:-8px"><div></div><div></div>
+                  <div class="arch-node aurora"><div class="ico">PG</div>Aurora pgvector<br/><span style="color:var(--text-soft);font-weight:500;font-size:10.5px">Serverless v2</span></div>
+                  <div class="arch-node s3"><div class="ico">S3</div>Notes Bucket<br/><span style="color:var(--text-soft);font-weight:500;font-size:10.5px">KMS-encrypted</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-card">
+              <div class="preview-head"><div class="preview-title"><span class="badge schema">SchemaPreview</span><span>2 tables · pgvector index · 50,000 seed rows</span></div><div class="preview-action">Open in editor →</div></div>
+              <div class="preview-body">
+                <div class="schema-tables">
+                  <div class="tbl"><div class="tbl-head">📋 clinical_notes</div><div class="tbl-rows">
+                    <div class="row"><span><span class="pk">PK</span> id</span><span class="col-type">uuid</span></div>
+                    <div class="row"><span>patient_ref</span><span class="col-type">text</span></div>
+                    <div class="row"><span>note_text</span><span class="col-type">text</span></div>
+                    <div class="row"><span>encounter_at</span><span class="col-type">timestamptz</span></div>
+                    <div class="row"><span>specialty</span><span class="col-type">text</span></div>
+                  </div></div>
+                  <div class="tbl"><div class="tbl-head">🧠 note_embeddings</div><div class="tbl-rows">
+                    <div class="row"><span><span class="pk">PK</span> id</span><span class="col-type">uuid</span></div>
+                    <div class="row"><span><span class="fk">FK</span> note_id</span><span class="col-type">uuid</span></div>
+                    <div class="row"><span>embedding</span><span class="col-type">vector(1536)</span></div>
+                    <div class="row"><span>model</span><span class="col-type">text</span></div>
+                    <div class="row"><span>created_at</span><span class="col-type">timestamptz</span></div>
+                  </div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-card">
+              <div class="preview-head"><div class="preview-title"><span class="badge code">CodePreview</span><span>app/embed.py · Python 3.11</span></div><div class="preview-action">View all 12 files →</div></div>
+              <div class="code"><span class="c"># Adapted for clinical text: switched embedding model</span>
+<span class="c"># to text-embedding-3-large for medical-term accuracy.</span>
+<span class="k">from</span> openai <span class="k">import</span> OpenAI
+<span class="k">from</span> sqlalchemy <span class="k">import</span> text
+
+<span class="k">def</span> <span class="f">embed_note</span>(note_id: <span class="n">str</span>, body: <span class="n">str</span>):
+    client = <span class="f">OpenAI</span>()
+    resp = client.embeddings.<span class="f">create</span>(
+        model=<span class="s">"text-embedding-3-large"</span>,
+        input=body,
+    )
+    vec = resp.data[<span class="n">0</span>].embedding
+    db.<span class="f">execute</span>(<span class="f">text</span>(
+        <span class="s">"INSERT INTO note_embeddings(note_id, embedding) VALUES (:n, :v)"</span>
+    ), {<span class="s">"n"</span>: note_id, <span class="s">"v"</span>: vec})</div>
+            </div>
+
+            <div class="preview-card">
+              <div class="preview-head"><div class="preview-title"><span class="badge modules">ModuleList</span><span>8 modules · pitched for architects · 60 min total</span></div><div class="preview-action">Reorder →</div></div>
+              <div class="preview-body"><div class="mods">
+                <div class="mod"><div class="mod-num">01</div><div><div class="mod-title">pgvector fundamentals on Aurora</div><div class="mod-desc">Extension setup, index types (IVFFlat vs HNSW), tuning lists/probes.</div></div><div class="mod-meta">8 min · 1 ex</div></div>
+                <div class="mod"><div class="mod-num">02</div><div><div class="mod-title">Modeling clinical notes for retrieval</div><div class="mod-desc">Chunking strategies, metadata filters, PHI considerations.</div></div><div class="mod-meta">7 min · 2 ex</div></div>
+                <div class="mod"><div class="mod-num">03</div><div><div class="mod-title">Embedding pipeline architecture</div><div class="mod-desc">Lambda + SQS pattern, backfill vs streaming, idempotency.</div></div><div class="mod-meta">9 min · 1 ex</div></div>
+                <div class="mod"><div class="mod-num">04</div><div><div class="mod-title">Hybrid search (BM25 + vector)</div><div class="mod-desc">Combining ts_vector with cosine similarity, score fusion.</div></div><div class="mod-meta">8 min · 1 ex</div></div>
+                <div class="mod"><div class="mod-num">05</div><div><div class="mod-title">Latency &amp; scale on Aurora Serverless v2</div><div class="mod-desc">Read replicas, ACU tuning, vector dimension trade-offs.</div></div><div class="mod-meta">7 min · 1 ex</div></div>
+                <div class="mod"><div class="mod-num">06</div><div><div class="mod-title">Security &amp; compliance for healthcare</div><div class="mod-desc">Encryption-at-rest, audit logging, IAM auth, HIPAA notes.</div></div><div class="mod-meta">8 min · 1 ex</div></div>
+              </div></div>
+            </div>
+
+            <div class="confirm">
+              <div class="confirm-inner">
+                <h3>✦ Your demo package is ready</h3>
+                <p><code style="font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,.1);padding:1px 6px;border-radius:4px;color:#c4b5fd">pgvector-clinical-rag</code> · 47 files · 1.8 MB</p>
+                <div class="confirm-meta"><span><strong>Infra</strong> CloudFormation</span><span><strong>Code</strong> Flask + Lambda</span><span><strong>Cost</strong> $0.42/hr est.</span><span><strong>Modules</strong> 8 (60 min)</span></div>
+                <div class="confirm-cta">
+                  <button class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download ZIP</button>
+                  <button class="btn btn-ghost-light"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>Push to GitHub</button>
+                  <button class="btn btn-ghost-light"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12A10 10 0 1 1 12 2"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Deploy to AWS</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer">
+          <textarea placeholder="Refine the demo, ask a follow-up, or paste another scenario…"></textarea>
+          <div class="composer-actions">
+            <span class="hint">⏎ to send</span>
+            <button class="send" aria-label="Send"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="rail">
+        <div class="spec">
+          <div class="spec-head"><div class="label">Live spec snapshot</div><h3>pgvector · clinical RAG</h3></div>
+          <div class="spec-body">
+            <div class="spec-row"><div class="spec-key">Database</div><div class="spec-val"><span class="chip pri">Aurora PostgreSQL</span><span class="spec-edit">edit</span></div></div>
+            <div class="spec-row"><div class="spec-key">Extensions</div><div class="spec-val"><span class="chip mono">pgvector</span><span class="chip mono">pg_trgm</span><span class="spec-edit">+ add</span></div></div>
+            <div class="spec-row"><div class="spec-key">Use case</div><div class="spec-val">RAG over clinical notes</div></div>
+            <div class="spec-row"><div class="spec-key">Industry</div><div class="spec-val"><span class="chip">🏥 Healthcare</span></div></div>
+            <div class="spec-row"><div class="spec-key">Audience</div><div class="spec-val"><span class="chip">🏗 Architect</span></div></div>
+            <div class="spec-row"><div class="spec-key">Duration</div><div class="spec-val"><span class="chip mono">60 min</span></div></div>
+            <div class="spec-row"><div class="spec-key">Modules</div><div class="spec-val"><span class="chip mono">8</span></div></div>
+            <div class="spec-row"><div class="spec-key">Est. cost</div><div class="spec-val"><span class="chip mono">$0.42/hr</span></div></div>
+          </div>
+          <div class="spec-foot"><span class="pulse"></span>Spec updates as you chat. Click any field to revise.</div>
+        </div>
+        <div class="legend"><strong>How to read this page</strong><br/>Each card under an AI turn is a <strong>generated component</strong> — its type is shown as a mono badge (<code>AudienceProfile</code>, <code>InfraPreview</code>, <code>SchemaPreview</code>…). The AI picks which components to render based on the conversation. A different prompt would compose a completely different page from the same library.</div>
+      </aside>
+    </div>
+  </div>
+</div>
+</body>
+</html>

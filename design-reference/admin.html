@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DemoForge — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f4f6fb;--panel:#fff;--panel-2:#f7f9fc;--border:#e5e9f0;--border-strong:#d3d9e3;--text:#0f172a;--text-muted:#5b6678;--text-soft:#8a94a6;--primary:#2563eb;--primary-700:#1d4ed8;--primary-50:#eff6ff;--accent-from:#3b82f6;--accent-to:#7c3aed;--shadow-sm:0 1px 2px rgba(15,23,42,.04);--shadow-md:0 4px 12px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.04);--shadow-lg:0 16px 40px rgba(15,23,42,.08);--sidebar-w:260px;--topbar-h:64px}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100vh}
+  .sidebar{background:linear-gradient(180deg,#0b1020 0%,#0f1735 100%);color:#cbd5e1;padding:22px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;padding:4px 8px}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent-from),var(--accent-to));display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:0 4px 14px rgba(124,58,237,.4)}
+  .brand-name{color:#fff;font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .brand-sub{color:#8a94a6;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .nav-section{margin-top:18px}.nav-label{color:#6b7896;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:0 10px;margin-bottom:6px}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;color:#cbd5e1;font-size:14px;font-weight:500;transition:all .15s ease;margin-bottom:2px;cursor:pointer}
+  .nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+  .nav-item.active{background:linear-gradient(90deg,rgba(59,130,246,.18),rgba(124,58,237,.10));color:#fff;box-shadow:inset 2px 0 0 #3b82f6}
+  .nav-item svg{width:18px;height:18px;opacity:.85;flex-shrink:0}
+  .nav-item .count{margin-left:auto;background:#3b82f6;color:#fff;font-size:11px;padding:1px 7px;border-radius:999px;font-weight:600}
+  .sidebar-footer{margin-top:24px;padding:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px}
+  .sidebar-footer h4{color:#fff;font-size:13px;margin:0 0 4px;font-weight:600}.sidebar-footer p{color:#8a94a6;font-size:12px;margin:0 0 10px;line-height:1.45}
+  .sidebar-footer .btn-mini{background:linear-gradient(135deg,var(--accent-from),var(--accent-to));color:#fff;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:600;display:inline-block}
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+  .breadcrumbs{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:13px}
+  .breadcrumbs strong{color:var(--text);font-weight:600}.breadcrumbs .sep{color:var(--text-soft)}
+  .breadcrumbs .role-pill{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;letter-spacing:.04em;margin-left:10px}
+  .top-actions{display:flex;align-items:center;gap:12px}
+  .search-pill{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--border);border-radius:999px;padding:7px 14px;color:var(--text-muted);font-size:13px;min-width:280px}
+  .search-pill svg{width:14px;height:14px}.search-pill kbd{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;background:#fff;border:1px solid var(--border);padding:1px 6px;border-radius:4px;color:var(--text-soft)}
+  .icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--panel-2);border:1px solid var(--border);color:var(--text-muted);position:relative}
+  .icon-btn:hover{background:#eef2f7;color:var(--text)}.icon-btn .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid #fff}
+  .avatar{display:flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border)}
+  .avatar-img{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ec4899);color:#fff;font-weight:700;font-size:12px;display:grid;place-items:center}
+  .avatar-name{font-size:13px;font-weight:600}
+
+  .content{padding:32px 36px 56px;max-width:1440px;width:100%;margin:0 auto}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:24px}
+  .page-head h1{margin:0 0 4px;font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .page-head p{margin:0;color:var(--text-muted);font-size:14px}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;transition:all .15s ease;cursor:pointer}
+  .btn-primary{background:linear-gradient(135deg,var(--accent-from),var(--accent-to));color:#fff;box-shadow:0 6px 18px rgba(59,130,246,.30)}
+  .btn-primary:hover{transform:translateY(-1px)}
+  .btn-outline{background:#fff;color:var(--text);border:1px solid var(--border-strong)}
+  .btn-outline:hover{background:var(--panel-2)}
+  .btn-ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--border);padding:6px 11px;font-size:12.5px;border-radius:8px}
+  .btn-ghost:hover{background:#eef2f7}
+  .btn-success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:6px 11px;font-size:12.5px;border-radius:8px}
+  .btn-success:hover{background:#d1fae5}
+  .btn-danger{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;padding:6px 11px;font-size:12.5px;border-radius:8px}
+  .btn-danger:hover{background:#fee2e2}
+
+  /* Stats */
+  .ops-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
+  .ops-tile{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow-sm)}
+  .ops-tile .lbl{font-size:11px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .ops-tile .lbl .led{width:6px;height:6px;border-radius:50%}
+  .ops-tile .v{font-size:22px;font-weight:800;letter-spacing:-.01em;font-family:'JetBrains Mono',monospace}
+  .ops-tile .delta{font-size:11.5px;color:var(--text-muted);margin-top:3px}
+  .ops-tile.t1 .led{background:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+  .ops-tile.t2 .led{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.18)}
+  .ops-tile.t3 .led{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+  .ops-tile.t4 .led{background:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+  .ops-tile.t5 .led{background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.18)}
+
+  /* Tabs */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto}
+  .tab{padding:10px 16px;font-size:13.5px;font-weight:500;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+  .tab .count{background:var(--panel-2);border:1px solid var(--border);font-size:11px;padding:1px 7px;border-radius:999px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-weight:500}
+  .tab.active{color:var(--text);font-weight:600;border-bottom-color:var(--primary)}
+  .tab.active .count{background:var(--primary-50);border-color:#bfdbfe;color:var(--primary)}
+  .tab:hover{color:var(--text)}
+
+  /* Bulk bar */
+  .bulk-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:1px solid #bfdbfe;border-radius:10px;margin-bottom:14px;font-size:13px}
+  .bulk-bar .lt{display:flex;gap:14px;align-items:center;color:var(--primary-700);font-weight:500}
+  .bulk-bar strong{font-family:'JetBrains Mono',monospace;color:var(--primary)}
+  .bulk-bar .rt{display:flex;gap:6px}
+
+  /* Table */
+  .table-card{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-sm);overflow:hidden}
+  .tbl-tools{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--panel-2);flex-wrap:wrap;gap:10px}
+  .tbl-tools .left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .tbl-tools .right{display:flex;gap:8px;align-items:center}
+  .filter-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:12.5px;color:var(--text-muted);cursor:pointer}
+  .filter-pill.active{background:var(--primary-50);color:var(--primary);border-color:#bfdbfe;font-weight:600}
+  .filter-pill .n{font-family:'JetBrains Mono',monospace;font-size:11px;color:inherit}
+  .search-mini{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12.5px;color:var(--text-muted);min-width:220px}
+  .search-mini svg{width:13px;height:13px}
+  .tbl{width:100%;border-collapse:collapse}
+  .tbl th,.tbl td{padding:11px 18px;text-align:left;vertical-align:middle;font-size:13px}
+  .tbl th{font-size:11px;color:var(--text-soft);font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:#fff;border-bottom:1px solid var(--border)}
+  .tbl td{border-bottom:1px solid var(--border)}.tbl tr:last-child td{border-bottom:none}
+  .tbl tr:hover td{background:#fafbfd}
+  .tbl tr.selected td{background:#f0f7ff}
+  .tbl .ttl{font-weight:600;color:var(--text)}.tbl .sub{font-size:11.5px;color:var(--text-muted);margin-top:1px}
+  .cb{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border-strong);background:#fff;cursor:pointer;display:inline-block;vertical-align:middle;position:relative}
+  .cb.checked{background:var(--primary);border-color:var(--primary)}
+  .cb.checked::after{content:"";position:absolute;top:1px;left:4px;width:4px;height:8px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg)}
+  .ext-chip{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:#0f172a;color:#fff}
+  .ext-chip.b{background:linear-gradient(135deg,#2563eb,#06b6d4)}
+  .ext-chip.g{background:linear-gradient(135deg,#16a34a,#65a30d)}
+  .ext-chip.p{background:linear-gradient(135deg,#7c3aed,#ec4899)}
+  .ext-chip.o{background:linear-gradient(135deg,#f97316,#facc15)}
+  .ext-chip.c{background:linear-gradient(135deg,#0891b2,#6366f1)}
+  .badge-status{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
+  .badge-status .led{width:6px;height:6px;border-radius:50%}
+  .badge-status.ready{background:#ecfdf5;color:#047857}.badge-status.ready .led{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+  .badge-status.pending{background:#fffbeb;color:#b45309}.badge-status.pending .led{background:#f59e0b}
+  .badge-status.failed{background:#fef2f2;color:#b91c1c}.badge-status.failed .led{background:#ef4444}
+  .badge-status.draft{background:var(--panel-2);color:var(--text-muted)}.badge-status.draft .led{background:#94a3b8}
+  .badge-status.review{background:#f5f3ff;color:#6d28d9}.badge-status.review .led{background:#8b5cf6}
+  .badge-status.approved{background:#eff6ff;color:#1d4ed8}.badge-status.approved .led{background:#3b82f6}
+  .actions{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
+  .mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-muted)}
+
+  .user-cell{display:flex;align-items:center;gap:8px}
+  .user-mini{width:24px;height:24px;border-radius:50%;font-weight:700;color:#fff;font-size:10px;display:grid;place-items:center;font-family:'JetBrains Mono',monospace}
+  .user-mini.u1{background:linear-gradient(135deg,#f97316,#ec4899)}
+  .user-mini.u2{background:linear-gradient(135deg,#3b82f6,#7c3aed)}
+  .user-mini.u3{background:linear-gradient(135deg,#16a34a,#0891b2)}
+  .user-mini.u4{background:linear-gradient(135deg,#db2777,#f43f5e)}
+  .user-mini.u5{background:linear-gradient(135deg,#0891b2,#6366f1)}
+
+  .severity{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;font-family:'JetBrains Mono',monospace}
+  .severity.s-high{background:#fef2f2;color:#b91c1c}
+  .severity.s-med{background:#fffbeb;color:#b45309}
+  .severity.s-low{background:var(--panel-2);color:var(--text-muted)}
+
+  .stars{display:inline-flex;gap:1px}
+  .stars span{color:#facc15;font-size:13px;letter-spacing:1px}
+  .stars span.empty{color:#d3d9e3}
+
+  /* Hidden tabs */
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  @media (max-width:1100px){.ops-row{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:720px){:root{--sidebar-w:0}.sidebar{display:none}.app{grid-template-columns:1fr}.search-pill{display:none}.content{padding:22px 18px 40px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">DF</div><div><div class="brand-name">DemoForge</div><div class="brand-sub">AI Demo Builder</div></div></div>
+    <div class="nav-section"><div class="nav-label">Workspace</div>
+      <a href="index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>Welcome</a>
+      <a href="home.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="generator.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Generator</a>
+      <a href="my-requests.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>My Requests<span class="count">3</span></a>
+    </div>
+    <div class="nav-section"><div class="nav-label">Resources</div>
+      <a href="#" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>User Guide</a>
+      <a href="presentation.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Presentation</a>
+    </div>
+    <div class="nav-section"><div class="nav-label">Management</div>
+      <a href="admin.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin Dashboard</a>
+    </div>
+    <div class="sidebar-footer"><h4>✨ Pro Tier</h4><p>Unlimited demo generations and priority AI processing.</p><a href="#" class="btn-mini">Upgrade Now</a></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>Workspace</span><span class="sep">/</span><strong>Admin Dashboard</strong><span class="role-pill">⚡ Admin</span></div>
+      <div class="top-actions">
+        <div class="search-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search anything…<kbd>⌘K</kbd></div>
+        <button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></button>
+        <button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="dot"></span></button>
+        <div class="avatar"><div class="avatar-img">RS</div><span class="avatar-name">r sundar19</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page-head">
+        <div><h1>Admin Dashboard</h1><p>Monitor demo generation across the field — review requests, agent actions, repos, feedback, and bugs.</p></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button><button class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Invite admin</button></div>
+      </div>
+
+      <!-- Ops summary -->
+      <div class="ops-row">
+        <div class="ops-tile t1"><div class="lbl"><span class="led"></span>Requests today</div><div class="v">28</div><div class="delta">▲ 6 vs. yesterday</div></div>
+        <div class="ops-tile t2"><div class="lbl"><span class="led"></span>Pending review</div><div class="v">7</div><div class="delta">2 over SLA</div></div>
+        <div class="ops-tile t3"><div class="lbl"><span class="led"></span>Generated repos</div><div class="v">142</div><div class="delta">▲ 18 this week</div></div>
+        <div class="ops-tile t4"><div class="lbl"><span class="led"></span>Feedback (avg)</div><div class="v">4.6 ★</div><div class="delta">86 ratings · 30d</div></div>
+        <div class="ops-tile t5"><div class="lbl"><span class="led"></span>Open bugs</div><div class="v">5</div><div class="delta">1 high severity</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" onclick="showTab(0,this)">Demo Requests <span class="count">7</span></div>
+        <div class="tab" onclick="showTab(1,this)">Agent Actions <span class="count">12</span></div>
+        <div class="tab" onclick="showTab(2,this)">Repositories <span class="count">142</span></div>
+        <div class="tab" onclick="showTab(3,this)">Feedback <span class="count">86</span></div>
+        <div class="tab" onclick="showTab(4,this)">Bug Tracker <span class="count">5</span></div>
+      </div>
+
+      <!-- Bulk bar -->
+      <div class="bulk-bar">
+        <div class="lt">
+          <span class="cb checked"></span>
+          <span><strong>2</strong> of 7 selected</span>
+        </div>
+        <div class="rt">
+          <button class="btn-success">Approve</button>
+          <button class="btn-danger">Reject</button>
+          <button class="btn-ghost">Regenerate</button>
+          <button class="btn-ghost">Assign…</button>
+        </div>
+      </div>
+
+      <!-- Tab 0: Demo Requests -->
+      <div class="tab-panel active" id="t0">
+      <div class="table-card">
+        <div class="tbl-tools">
+          <div class="left">
+            <span class="filter-pill active">All <span class="n">7</span></span>
+            <span class="filter-pill">Pending <span class="n">3</span></span>
+            <span class="filter-pill">In review <span class="n">2</span></span>
+            <span class="filter-pill">Approved <span class="n">2</span></span>
+          </div>
+          <div class="right"><div class="search-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search requests…</div></div>
+        </div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:30px"><span class="cb"></span></th>
+              <th>Request</th>
+              <th>Requester</th>
+              <th>Extension</th>
+              <th>Status</th>
+              <th>SLA</th>
+              <th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="selected"><td><span class="cb checked"></span></td><td><div class="ttl">pgvector RAG · Healthcare CTO pitch</div><div class="sub">Aurora PostgreSQL · 60 min · architect</div></td><td><div class="user-cell"><div class="user-mini u1">RS</div><span>r sundar19</span></div></td><td><span class="ext-chip b">pgvector</span></td><td><span class="badge-status review"><span class="led"></span>IN REVIEW</span></td><td><span class="mono" style="color:#b45309">~ 4h</span></td><td class="actions"><button class="btn-success">Approve</button><button class="btn-danger">Reject</button><button class="btn-ghost">View Spec</button></td></tr>
+            <tr class="selected"><td><span class="cb checked"></span></td><td><div class="ttl">DynamoDB single-table · Gaming leaderboard</div><div class="sub">DynamoDB · 30 min · exec</div></td><td><div class="user-cell"><div class="user-mini u2">JL</div><span>jlee</span></div></td><td><span class="ext-chip p">single-table</span></td><td><span class="badge-status review"><span class="led"></span>IN REVIEW</span></td><td><span class="mono" style="color:#047857">2h left</span></td><td class="actions"><button class="btn-success">Approve</button><button class="btn-danger">Reject</button><button class="btn-ghost">View Spec</button></td></tr>
+            <tr><td><span class="cb"></span></td><td><div class="ttl">Neptune fraud graph · Fintech</div><div class="sub">Neptune · 60 min · architect</div></td><td><div class="user-cell"><div class="user-mini u3">PM</div><span>pmorales</span></div></td><td><span class="ext-chip c">Gremlin</span></td><td><span class="badge-status pending"><span class="led"></span>PENDING</span></td><td><span class="mono" style="color:#b91c1c">- 1h overdue</span></td><td class="actions"><button class="btn-success">Approve</button><button class="btn-danger">Reject</button><button class="btn-ghost">View Spec</button></td></tr>
+            <tr><td><span class="cb"></span></td><td><div class="ttl">PostGIS fleet tracking · Logistics</div><div class="sub">Aurora PostgreSQL · 45 min · developer</div></td><td><div class="user-cell"><div class="user-mini u4">AK</div><span>akumar</span></div></td><td><span class="ext-chip g">PostGIS</span></td><td><span class="badge-status pending"><span class="led"></span>PENDING</span></td><td><span class="mono" style="color:#047857">5h left</span></td><td class="actions"><button class="btn-success">Approve</button><button class="btn-danger">Reject</button><button class="btn-ghost">View Spec</button></td></tr>
+            <tr><td><span class="cb"></span></td><td><div class="ttl">pg_trgm fuzzy search · Retail</div><div class="sub">Aurora PostgreSQL · 30 min · developer</div></td><td><div class="user-cell"><div class="user-mini u5">MG</div><span>mgomez</span></div></td><td><span class="ext-chip o">pg_trgm</span></td><td><span class="badge-status approved"><span class="led"></span>APPROVED</span></td><td><span class="mono">—</span></td><td class="actions"><button class="btn-ghost">Regenerate</button><button class="btn-ghost">View Spec</button></td></tr>
+            <tr><td><span class="cb"></span></td><td><div class="ttl">pg_cron IoT aggregation · Manufacturing</div><div class="sub">Aurora PostgreSQL · 40 min · architect</div></td><td><div class="user-cell"><div class="user-mini u1">RS</div><span>r sundar19</span></div></td><td><span class="ext-chip c">pg_cron</span></td><td><span class="badge-status approved"><span class="led"></span>APPROVED</span></td><td><span class="mono">—</span></td><td class="actions"><button class="btn-ghost">Regenerate</button><button class="btn-ghost">View Spec</button></td></tr>
+            <tr><td><span class="cb"></span></td><td><div class="ttl">pgRouting telecom topology · Carrier</div><div class="sub">Aurora PostgreSQL · 50 min · architect</div></td><td><div class="user-cell"><div class="user-mini u2">JL</div><span>jlee</span></div></td><td><span class="ext-chip o">pgRouting</span></td><td><span class="badge-status pending"><span class="led"></span>PENDING</span></td><td><span class="mono" style="color:#047857">8h left</span></td><td class="actions"><button class="btn-success">Approve</button><button class="btn-danger">Reject</button><button class="btn-ghost">View Spec</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      </div>
+
+      <!-- Tab 1: Agent Actions -->
+      <div class="tab-panel" id="t1">
+        <div class="table-card">
+          <div class="tbl-tools"><div class="left"><span class="filter-pill active">All <span class="n">12</span></span><span class="filter-pill">Tool calls <span class="n">8</span></span><span class="filter-pill">Failures <span class="n">2</span></span></div><div class="right"><div class="search-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search actions…</div></div></div>
+          <table class="tbl">
+            <thead><tr><th style="width:30px"><span class="cb"></span></th><th>Action</th><th>Agent</th><th>Tool / Component</th><th>Outcome</th><th>Duration</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">Generated CloudFormation template</div><div class="sub">Request: pgvector-clinical-rag</div></td><td><div class="user-cell"><div class="user-mini u2" style="background:linear-gradient(135deg,#3b82f6,#7c3aed)">✦</div><span>DemoForge AI</span></div></td><td><span class="ext-chip b">generateCFTemplate</span></td><td><span class="badge-status ready"><span class="led"></span>SUCCESS</span></td><td class="mono">12.4s</td><td class="actions"><button class="btn-ghost">View I/O</button><button class="btn-ghost">Replay</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">Wrote Flask app + embeddings pipeline</div><div class="sub">Request: pgvector-clinical-rag</div></td><td><div class="user-cell"><div class="user-mini u2" style="background:linear-gradient(135deg,#3b82f6,#7c3aed)">✦</div><span>DemoForge AI</span></div></td><td><span class="ext-chip g">generateAppCode</span></td><td><span class="badge-status ready"><span class="led"></span>SUCCESS</span></td><td class="mono">9.1s</td><td class="actions"><button class="btn-ghost">View I/O</button><button class="btn-ghost">Replay</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">Estimated infra cost (4 resources)</div><div class="sub">Request: dynamodb-leaderboard</div></td><td><div class="user-cell"><div class="user-mini u2" style="background:linear-gradient(135deg,#3b82f6,#7c3aed)">✦</div><span>DemoForge AI</span></div></td><td><span class="ext-chip o">estimateInfraCost</span></td><td><span class="badge-status ready"><span class="led"></span>SUCCESS</span></td><td class="mono">0.8s</td><td class="actions"><button class="btn-ghost">View I/O</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">Failed to fetch extension catalog</div><div class="sub">Request: pgrouting-telecom</div></td><td><div class="user-cell"><div class="user-mini u2" style="background:linear-gradient(135deg,#3b82f6,#7c3aed)">✦</div><span>DemoForge AI</span></div></td><td><span class="ext-chip p">lookupExtensions</span></td><td><span class="badge-status failed"><span class="led"></span>FAILED</span></td><td class="mono">timeout</td><td class="actions"><button class="btn-ghost">View error</button><button class="btn-ghost">Retry</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">Authored 8 learning modules</div><div class="sub">Request: pgvector-clinical-rag</div></td><td><div class="user-cell"><div class="user-mini u2" style="background:linear-gradient(135deg,#3b82f6,#7c3aed)">✦</div><span>DemoForge AI</span></div></td><td><span class="ext-chip c">generateModules</span></td><td><span class="badge-status ready"><span class="led"></span>SUCCESS</span></td><td class="mono">14.7s</td><td class="actions"><button class="btn-ghost">View I/O</button><button class="btn-ghost">Replay</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">Designed schema · 2 tables, 50k rows</div><div class="sub">Request: pgvector-clinical-rag</div></td><td><div class="user-cell"><div class="user-mini u2" style="background:linear-gradient(135deg,#3b82f6,#7c3aed)">✦</div><span>DemoForge AI</span></div></td><td><span class="ext-chip b">generateSchema</span></td><td><span class="badge-status ready"><span class="led"></span>SUCCESS</span></td><td class="mono">7.9s</td><td class="actions"><button class="btn-ghost">View I/O</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Repositories -->
+      <div class="tab-panel" id="t2">
+        <div class="table-card">
+          <div class="tbl-tools"><div class="left"><span class="filter-pill active">All <span class="n">142</span></span><span class="filter-pill">Active <span class="n">96</span></span><span class="filter-pill">Archived <span class="n">46</span></span></div><div class="right"><div class="search-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search repos…</div></div></div>
+          <table class="tbl">
+            <thead><tr><th style="width:30px"><span class="cb"></span></th><th>Repository</th><th>Owner</th><th>Size</th><th>Deploys</th><th>Updated</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cb"></span></td><td><div class="ttl"><span class="mono" style="color:var(--text)">pgvector-clinical-rag</span></div><div class="sub">47 files · Aurora PostgreSQL</div></td><td><div class="user-cell"><div class="user-mini u1">RS</div><span>r sundar19</span></div></td><td class="mono">1.8 MB</td><td class="mono">3 / 30d</td><td class="mono">2h ago</td><td class="actions"><button class="btn-ghost">Open</button><button class="btn-ghost">Logs</button><button class="btn-danger">Archive</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl"><span class="mono" style="color:var(--text)">postgis-fleet-tracking</span></div><div class="sub">39 files · Aurora PostgreSQL</div></td><td><div class="user-cell"><div class="user-mini u4">AK</div><span>akumar</span></div></td><td class="mono">2.1 MB</td><td class="mono">7 / 30d</td><td class="mono">1d ago</td><td class="actions"><button class="btn-ghost">Open</button><button class="btn-ghost">Logs</button><button class="btn-danger">Archive</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl"><span class="mono" style="color:var(--text)">dynamodb-leaderboard</span></div><div class="sub">22 files · DynamoDB</div></td><td><div class="user-cell"><div class="user-mini u2">JL</div><span>jlee</span></div></td><td class="mono">0.7 MB</td><td class="mono">2 / 30d</td><td class="mono">3d ago</td><td class="actions"><button class="btn-ghost">Open</button><button class="btn-ghost">Logs</button><button class="btn-danger">Archive</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl"><span class="mono" style="color:var(--text)">neptune-fraud-graph</span></div><div class="sub">51 files · Neptune</div></td><td><div class="user-cell"><div class="user-mini u3">PM</div><span>pmorales</span></div></td><td class="mono">2.4 MB</td><td class="mono">1 / 30d</td><td class="mono">5d ago</td><td class="actions"><button class="btn-ghost">Open</button><button class="btn-ghost">Logs</button><button class="btn-danger">Archive</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl"><span class="mono" style="color:var(--text)">pg-trgm-retail-search</span></div><div class="sub">28 files · Aurora PostgreSQL</div></td><td><div class="user-cell"><div class="user-mini u5">MG</div><span>mgomez</span></div></td><td class="mono">1.1 MB</td><td class="mono">4 / 30d</td><td class="mono">7d ago</td><td class="actions"><button class="btn-ghost">Open</button><button class="btn-ghost">Logs</button><button class="btn-danger">Archive</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 3: Feedback -->
+      <div class="tab-panel" id="t3">
+        <div class="table-card">
+          <div class="tbl-tools"><div class="left"><span class="filter-pill active">All <span class="n">86</span></span><span class="filter-pill">5 ★ <span class="n">52</span></span><span class="filter-pill">≤ 3 ★ <span class="n">9</span></span></div><div class="right"><div class="search-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search feedback…</div></div></div>
+          <table class="tbl">
+            <thead><tr><th style="width:30px"><span class="cb"></span></th><th>Demo</th><th>User</th><th>Rating</th><th>Comment</th><th>Submitted</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">pgvector-clinical-rag</div></td><td><div class="user-cell"><div class="user-mini u1">RS</div><span>r sundar19</span></div></td><td><div class="stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div></td><td class="sub" style="color:var(--text);font-size:13px">"Customer pitch landed perfectly. The PHI section saved me an hour."</td><td class="mono">2h ago</td><td class="actions"><button class="btn-ghost">Reply</button><button class="btn-ghost">Flag</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">postgis-fleet-tracking</div></td><td><div class="user-cell"><div class="user-mini u4">AK</div><span>akumar</span></div></td><td><div class="stars"><span>★</span><span>★</span><span>★</span><span>★</span><span class="empty">★</span></div></td><td class="sub" style="color:var(--text);font-size:13px">"Module 4 had a typo in the geofence query."</td><td class="mono">1d ago</td><td class="actions"><button class="btn-ghost">Reply</button><button class="btn-ghost">Open bug</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">dynamodb-leaderboard</div></td><td><div class="user-cell"><div class="user-mini u2">JL</div><span>jlee</span></div></td><td><div class="stars"><span>★</span><span>★</span><span class="empty">★</span><span class="empty">★</span><span class="empty">★</span></div></td><td class="sub" style="color:var(--text);font-size:13px">"Hot-key warning didn't make it into the script."</td><td class="mono">3d ago</td><td class="actions"><button class="btn-ghost">Reply</button><button class="btn-ghost">Open bug</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">neptune-fraud-graph</div></td><td><div class="user-cell"><div class="user-mini u3">PM</div><span>pmorales</span></div></td><td><div class="stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div></td><td class="sub" style="color:var(--text);font-size:13px">"Best-in-class — Gremlin walkthrough was crisp."</td><td class="mono">5d ago</td><td class="actions"><button class="btn-ghost">Reply</button><button class="btn-ghost">Flag</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 4: Bug tracker -->
+      <div class="tab-panel" id="t4">
+        <div class="table-card">
+          <div class="tbl-tools"><div class="left"><span class="filter-pill active">All <span class="n">5</span></span><span class="filter-pill">High <span class="n">1</span></span><span class="filter-pill">Med <span class="n">2</span></span><span class="filter-pill">Low <span class="n">2</span></span></div><div class="right"><div class="search-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search bugs…</div></div></div>
+          <table class="tbl">
+            <thead><tr><th style="width:30px"><span class="cb"></span></th><th>Title</th><th>Severity</th><th>Component</th><th>Reporter</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">CFN deploy fails on Aurora cluster naming collision</div><div class="sub">Repro: 3rd consecutive deploy in same account</div></td><td><span class="severity s-high">HIGH</span></td><td><span class="ext-chip b">generateCFTemplate</span></td><td><div class="user-cell"><div class="user-mini u4">AK</div><span>akumar</span></div></td><td><span class="badge-status pending"><span class="led"></span>OPEN</span></td><td class="actions"><button class="btn-ghost">Assign</button><button class="btn-success">Resolve</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">pgRouting module 5 references missing function</div><div class="sub">pgr_dijkstraVia not on pgRouting 3.4</div></td><td><span class="severity s-med">MED</span></td><td><span class="ext-chip c">generateModules</span></td><td><div class="user-cell"><div class="user-mini u2">JL</div><span>jlee</span></div></td><td><span class="badge-status review"><span class="led"></span>IN PROGRESS</span></td><td class="actions"><button class="btn-ghost">View</button><button class="btn-success">Resolve</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">PostGIS demo script has typo in geofence example</div><div class="sub">"radius_meters" should be "radius_m"</div></td><td><span class="severity s-med">MED</span></td><td><span class="ext-chip g">generateAppCode</span></td><td><div class="user-cell"><div class="user-mini u4">AK</div><span>akumar</span></div></td><td><span class="badge-status pending"><span class="led"></span>OPEN</span></td><td class="actions"><button class="btn-ghost">Assign</button><button class="btn-success">Resolve</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">DynamoDB leaderboard hot-key warning missing from script</div><div class="sub">Should call out partition design</div></td><td><span class="severity s-low">LOW</span></td><td><span class="ext-chip p">generateModules</span></td><td><div class="user-cell"><div class="user-mini u2">JL</div><span>jlee</span></div></td><td><span class="badge-status pending"><span class="led"></span>OPEN</span></td><td class="actions"><button class="btn-ghost">Assign</button><button class="btn-success">Resolve</button></td></tr>
+              <tr><td><span class="cb"></span></td><td><div class="ttl">README import-to-GitLab steps reference old gitlab.com path</div><div class="sub">Cosmetic but customer-facing</div></td><td><span class="severity s-low">LOW</span></td><td><span class="ext-chip o">generateDocs</span></td><td><div class="user-cell"><div class="user-mini u5">MG</div><span>mgomez</span></div></td><td><span class="badge-status review"><span class="led"></span>IN PROGRESS</span></td><td class="actions"><button class="btn-ghost">View</button><button class="btn-success">Resolve</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+<script>
+  function showTab(idx, el){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach((p,i)=>{
+      p.classList.toggle('active', i===idx);
+    });
+  }
+</script>
+</body>
+</html>
