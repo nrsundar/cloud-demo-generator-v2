@@ -254,34 +254,48 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* TAB 4: Bug Tracker */}
+      {/* TAB 4: Bug Tracker — Self-Healing */}
       {activeTab === 4 && (
-        <div className="table-card">
-          <table className="tbl">
-            <thead><tr><th>Issue</th><th>Severity</th><th>Status</th><th>Detected</th><th style={{ textAlign: "right" }}>Actions</th></tr></thead>
-            <tbody>
-              {bugItems.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", padding: 40, color: "var(--success)" }}>✅ No bugs detected. Agent scans hourly.</td></tr>}
-              {bugItems.map((b: any) => {
-                const plan = b.proposedPlan || {};
-                const fix = (Array.isArray(plan) ? plan : plan.fixes || [])[0] || {};
-                const severity = fix.severity || "medium";
-                const st = STATUS_MAP[b.status] || { cls: "draft", label: b.status };
-                return (
-                  <tr key={b.id}>
-                    <td><div className="ttl">{fix.title || plan.title || "Error detected"}</div></td>
-                    <td><span className={`ext-chip ${severity === "critical" || severity === "high" ? "r" : severity === "medium" ? "p" : "o"}`}>{severity}</span></td>
-                    <td><span className={`badge-status ${st.cls}`}><span className="led"></span>{st.label}</span></td>
-                    <td><span className="mono">{new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}</span></td>
-                    <td className="actions">
-                      {b.proposedPlan && <button className="btn-ghost" onClick={() => setViewSpec({ title: "Bug Details", spec: b.proposedPlan })}>View Fix</button>}
-                      {b.status === "proposed" && <button className="btn-success" onClick={() => approveAction.mutate(b.id)}>Mark Fixed</button>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="info-banner">
+            <svg className="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <div>
+              <strong>Self-Healing System:</strong> The Bug Fix Agent scans all generated repositories hourly. When issues are detected, it proposes fixes with severity and root cause analysis. Upon approval, the system automatically applies the fix. If a fix requires downtime (e.g., database migration, CloudFormation update), you'll see a warning before proceeding.
+            </div>
+          </div>
+          <div className="table-card">
+            <table className="tbl">
+              <thead><tr><th>Issue</th><th>Severity</th><th>Status</th><th>Requires Downtime</th><th>Detected</th><th style={{ textAlign: "right" }}>Actions</th></tr></thead>
+              <tbody>
+                {bugItems.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--success)" }}>✅ No bugs detected. Agent scans hourly.</td></tr>}
+                {bugItems.map((b: any) => {
+                  const plan = b.proposedPlan || {};
+                  const fix = (Array.isArray(plan) ? plan : plan.fixes || [])[0] || {};
+                  const severity = fix.severity || "medium";
+                  const st = STATUS_MAP[b.status] || { cls: "draft", label: b.status };
+                  const needsDowntime = fix.requiresDowntime || fix.downtime || /migration|restart|redeploy/i.test(fix.description || "");
+                  return (
+                    <tr key={b.id}>
+                      <td><div className="ttl">{fix.title || plan.title || "Error detected"}</div><div className="sub">{fix.rootCause || fix.description || ""}</div></td>
+                      <td><span className={`ext-chip ${severity === "critical" || severity === "high" ? "r" : severity === "medium" ? "p" : "o"}`}>{severity}</span></td>
+                      <td><span className={`badge-status ${st.cls}`}><span className="led"></span>{st.label}</span></td>
+                      <td>{needsDowntime ? <span style={{ color: "var(--warning)", fontWeight: 600, fontSize: 12 }}>⚠ Yes</span> : <span style={{ color: "var(--success)", fontSize: 12 }}>No</span>}</td>
+                      <td><span className="mono">{new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "2-digit" })}</span></td>
+                      <td className="actions">
+                        {b.proposedPlan && <button className="btn-ghost" onClick={() => setViewSpec({ title: "Bug Details & Proposed Fix", spec: b.proposedPlan })}>View Fix</button>}
+                        {b.status === "proposed" && (
+                          needsDowntime
+                            ? <button className="btn-danger" onClick={() => { if (window.confirm(`⚠️ DOWNTIME WARNING\n\nApplying this fix may cause temporary service disruption.\n\nIssue: ${fix.title || "Bug fix"}\nSeverity: ${severity}\n\nThe system will:\n1. Apply the proposed fix\n2. Redeploy affected components\n3. Verify the fix\n\nProceed?`)) approveAction.mutate(b.id); }}>⚠ Apply Fix (Downtime)</button>
+                            : <button className="btn-success" onClick={() => approveAction.mutate(b.id)}>✓ Apply Fix</button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* View Spec modal */}

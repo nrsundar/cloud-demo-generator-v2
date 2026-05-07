@@ -4,6 +4,7 @@ import { Router, Route, Switch } from "wouter";
 import { AuthProvider } from "./hooks/useAuth";
 import AppLayout from "./components/AppLayout";
 import Home from "./pages/home";
+import GeneratorPage from "./pages/generator";
 import AdminPage from "./pages/admin";
 import DemoRequestPage from "./pages/demo-request";
 import MyRequestsPage from "./pages/my-requests";
@@ -21,6 +22,7 @@ function AppRouter() {
           <Route path="/" component={LandingPage} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/home" component={Home} />
+          <Route path="/generator" component={GeneratorPage} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/demo-request" component={DemoRequestPage} />
           <Route path="/my-requests" component={MyRequestsPage} />
