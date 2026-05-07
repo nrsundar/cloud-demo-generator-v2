@@ -16,8 +16,10 @@ export function registerAgentRoutes(app: Express) {
   app.post("/api/demo-requests", requireAuth, async (req, res) => {
     try {
       const data = insertDemoRequestSchema.parse(req.body);
+      const skipDedup = req.body.skipDedup === true;
 
-      // Check if a similar demo already exists
+      // Check if a similar demo already exists (skip if from Generator agent)
+      if (!skipDedup) {
       const existing = await db.select().from(repositories)
         .where(eq(repositories.status, "complete"));
       const match = existing.find(r => {
@@ -32,6 +34,7 @@ export function registerAgentRoutes(app: Express) {
           matchedRepo: { id: match.id, name: match.name },
         });
       }
+      } // end skipDedup
 
       const [request] = await db.insert(demoRequests).values(data).returning();
 
@@ -328,6 +331,30 @@ export function registerAgentRoutes(app: Express) {
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Generative UI Agent endpoint ──
+  app.post("/api/generator/agent", requireAuth, async (req, res) => {
+    const { messages, specSnapshot } = req.body;
+    const { BedrockRuntimeClient, InvokeModelCommand } = await import("@aws-sdk/client-bedrock-runtime");
+    const bedrock = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "us-east-2" });
+    const systemPrompt = `You are the DemoForge AI agent. You help AWS Solutions Architects generate database demo packages.
+Your job: Given a user's request, infer as much as possible (database, extension, industry, audience, use case) and only ask what you cannot infer.
+You MUST respond with valid JSON matching this schema:
+{"message":"string (markdown)","components":[GenNode array],"specSnapshot":{"database":"","extensions":[],"useCase":"","industry":"","audience":"","durationMin":null,"estCostHourly":""},"phase":"gathering"|"generating"|"complete"}
+Available component types: AudienceProfile, QuestionSingleSelect, QuestionSlider, ProgressTimeline, InfraPreview, SchemaPreview, CodePreview, ModuleList, CostEstimate, ConfirmationCard.
+Rules: 1) INFER aggressively from the prompt. 2) Only ask what's genuinely ambiguous. 3) specSnapshot must ALWAYS reflect current understanding. 4) When you have database+extension+useCase+audience, set phase="generating". 5) Return ONLY valid JSON.`;
+    try {
+      const body = JSON.stringify({ anthropic_version: "bedrock-2023-05-31", max_tokens: 4096, system: systemPrompt, messages: (messages || []).map((m: any) => ({ role: m.role, content: m.content })) });
+      const command = new InvokeModelCommand({ modelId: "us.anthropic.claude-opus-4-6-v1", contentType: "application/json", body: new TextEncoder().encode(body) });
+      const response = await bedrock.send(command);
+      const text = JSON.parse(new TextDecoder().decode(response.body)).content[0]?.text || "";
+      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```\s*$/m, "").trim();
+      res.json(JSON.parse(cleaned));
+    } catch (err: any) {
+      console.error("Generator agent error:", err);
+      res.json({ message: "I encountered an error. Please try again.", components: [{ type: "ErrorCard", title: "Agent Error", message: err.message || "Unknown error" }], specSnapshot: specSnapshot || null, phase: "error" });
     }
   });
 
