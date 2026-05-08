@@ -2,13 +2,28 @@ import type { AgentStep, SpecSnapshot } from "@shared/schema";
 import * as sessions from "./sessions";
 import * as bedrock from "./bedrock";
 import * as budget from "./budget";
+import { bedrockToolDefs, executeTool } from "../tools";
+import { ensureToolsRegistered } from "../tools/bootstrap";
 
-const SYSTEM_PROMPT = `You are the DemoForge AI agent. You help AWS Solutions Architects generate database demo packages.
-Your job: Given a user's request, infer as much as possible (database, extension, industry, audience, use case) and only ask what you cannot infer.
-You MUST respond with valid JSON matching this schema:
-{"message":"string (markdown)","components":[GenNode array],"specSnapshot":{"database":"","extensions":[],"useCase":"","industry":"","audience":"","durationMin":null,"estCostHourly":""},"phase":"gathering"|"generating"|"complete"}
-Available component types: AudienceProfile, QuestionSingleSelect, QuestionSlider, ProgressTimeline, InfraPreview, SchemaPreview, CodePreview, ModuleList, CostEstimate, ConfirmationCard.
-Rules: 1) INFER aggressively from the prompt. 2) Only ask what's genuinely ambiguous. 3) specSnapshot must ALWAYS reflect current understanding. 4) When you have database+extension+useCase+audience, set phase="generating". 5) Return ONLY valid JSON.`;
+const SYSTEM_PROMPT = `You are the DemoForge orchestrator. You help AWS Solutions Architects generate database demo packages.
+
+TOOLS
+Use the provided tools to gather facts before answering. Infer aggressively; only ask the user what is genuinely ambiguous.
+HARD RULE: Before you set specSnapshot.extensions, you MUST call validateExtension for every extension. If validateExtension reports an extension is not supported on the chosen engine/version, replace it with one of the suggested alternatives (or ask the user). Never set specSnapshot.extensions to anything unvalidated.
+
+FINAL OUTPUT (only when no more tool calls are needed)
+Respond with a single JSON object — no prose around it, no code fences:
+{"message": string (markdown allowed), "components": GenNode[], "specSnapshot": {database, extensions[], useCase, industry?, audience?, durationMin?, estCostHourly?} | null, "phase": "gathering"|"generating"|"complete"}
+
+GenNode component types (use as appropriate to surface info to the SA):
+AudienceProfile, QuestionSingleSelect, QuestionSlider, ProgressTimeline, InfraPreview, SchemaPreview, CodePreview, ModuleList, CostEstimate, ConfirmationCard, ErrorCard.
+
+PHASE RULES
+- "gathering": still collecting requirements; ask via Question* components.
+- "generating": database + (validated) extensions + useCase + audience are all known; emit InfraPreview / SchemaPreview / CodePreview / ModuleList / CostEstimate.
+- "complete": full package ready; emit ConfirmationCard.
+
+specSnapshot must always reflect current understanding (null fields allowed). Return ONLY the JSON.`;
 
 const VALID_PHASES = ["gathering", "generating", "complete", "error"] as const;
 type Phase = typeof VALID_PHASES[number];
@@ -69,13 +84,59 @@ export function validateEnvelope(text: string): ValidatedEnvelope | InvalidEnvel
   };
 }
 
+interface ToolUseBlock {
+  type: "tool_use";
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+interface ToolResultBlock {
+  type: "tool_result";
+  tool_use_id: string;
+  content: string;
+  is_error?: boolean;
+}
+
+interface PersistedToolResult {
+  id: string;
+  output?: unknown;
+  error?: { kind: string; message: string };
+}
+
 function historyToBedrockMessages(history: AgentStep[]): bedrock.BedrockMessage[] {
-  return history
-    .filter((s) => s.role === "user" || s.role === "assistant")
-    .map((s) => ({
-      role: s.role as "user" | "assistant",
-      content: typeof s.content === "string" ? s.content : JSON.stringify(s.content),
-    }));
+  const out: bedrock.BedrockMessage[] = [];
+  for (const step of history) {
+    if (step.role === "user") {
+      const text = typeof step.content === "string" ? step.content : JSON.stringify(step.content ?? "");
+      out.push({ role: "user", content: text });
+      continue;
+    }
+    if (step.role === "assistant") {
+      const text = typeof step.content === "string" ? step.content : "";
+      const calls = (step.toolCalls ?? []) as Array<{ id: string; name: string; input: Record<string, unknown> }>;
+      if (calls.length === 0) {
+        out.push({ role: "assistant", content: text });
+        continue;
+      }
+      const blocks: Array<{ type: "text"; text: string } | ToolUseBlock> = [];
+      if (text.length > 0) blocks.push({ type: "text", text });
+      for (const c of calls) blocks.push({ type: "tool_use", id: c.id, name: c.name, input: c.input ?? {} });
+      out.push({ role: "assistant", content: blocks });
+      continue;
+    }
+    if (step.role === "tool") {
+      const results = (step.toolResults ?? []) as PersistedToolResult[];
+      const blocks: ToolResultBlock[] = results.map((r) => ({
+        type: "tool_result",
+        tool_use_id: r.id,
+        content: r.error ? `Error (${r.error.kind}): ${r.error.message}` : JSON.stringify(r.output ?? null),
+        is_error: r.error ? true : undefined,
+      }));
+      if (blocks.length > 0) out.push({ role: "user", content: blocks });
+    }
+  }
+  return out;
 }
 
 function errorEnvelope(message: string): Envelope {
@@ -102,6 +163,8 @@ export async function runTurnFromMessage(args: {
 }
 
 export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
+  ensureToolsRegistered();
+
   const session = await sessions.loadSession(input.sessionId, input.principal);
   if (!session) throw new Error(`Session ${input.sessionId} not found or not owned by user`);
 
@@ -115,6 +178,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
   });
 
   const state = budget.newBudgetState();
+  const toolDefs = bedrockToolDefs();
 
   try {
     while (true) {
@@ -125,6 +189,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
       const response = await bedrock.invoke({
         systemPrompt: SYSTEM_PROMPT,
         messages: historyToBedrockMessages(history),
+        tools: toolDefs.length > 0 ? toolDefs : undefined,
       });
 
       budget.recordIteration(state, response.tokensIn, response.tokensOut);
@@ -148,7 +213,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
             sessionId: session.id,
             turnIndex,
             role: "tool",
-            toolResults: [{ error: validated.error }],
+            toolResults: [{ error: { kind: "validation", message: validated.error } }],
           });
           continue;
         }
@@ -159,17 +224,21 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
         return { sessionId: session.id, envelope: validated.envelope };
       }
 
-      // P1.2 will execute tools here. For P1.1, treat any tool call as unsupported
-      // and ask the model to produce a final envelope on the next iteration.
+      const principal: sessions.Principal = input.principal;
+      const results: PersistedToolResult[] = await Promise.all(
+        response.toolCalls.map(async (tc) => {
+          const r = await executeTool(tc.name, tc.input, principal);
+          if (r.ok) return { id: tc.id, output: r.output };
+          return { id: tc.id, error: { kind: r.error.kind, message: r.error.message } };
+        }),
+      );
+
       turnIndex++;
       await sessions.appendStep({
         sessionId: session.id,
         turnIndex,
         role: "tool",
-        toolResults: response.toolCalls.map((tc) => ({
-          id: tc.id,
-          error: "Tool execution not yet enabled (P1.2). Respond with a final JSON envelope.",
-        })),
+        toolResults: results,
       });
     }
   } catch (err: any) {
