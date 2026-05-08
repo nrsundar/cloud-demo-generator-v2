@@ -4,6 +4,7 @@ import { API_BASE } from "../lib/config";
 import { getCurrentUser } from "../lib/auth";
 
 export interface AgentTurnResult {
+  sessionId: number;
   message: string;
   components: GenNode[];
   specSnapshot: SpecSnapshot | null;
@@ -15,12 +16,16 @@ async function authHeaders(): Promise<Record<string, string>> {
   return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
 }
 
-export async function sendAgentTurn(messages: { role: string; content: string }[], specSnapshot: SpecSnapshot | null): Promise<AgentTurnResult> {
+export async function sendAgentTurn(
+  messages: { role: string; content: string }[],
+  specSnapshot: SpecSnapshot | null,
+  sessionId?: number,
+): Promise<AgentTurnResult> {
   const headers = await authHeaders();
   const res = await fetch(`${API_BASE}/api/generator/agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify({ messages, specSnapshot }),
+    body: JSON.stringify({ messages, specSnapshot, sessionId }),
   });
   if (!res.ok) throw new Error(`Agent error: ${res.status}`);
   return res.json();

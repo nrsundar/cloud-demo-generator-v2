@@ -80,6 +80,35 @@ CREATE TABLE IF NOT EXISTS agent_actions (
   created_at TIMESTAMP DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS agent_sessions (
+  id SERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  user_email TEXT NOT NULL,
+  phase TEXT NOT NULL DEFAULT 'gathering',
+  spec_snapshot JSON,
+  last_event_id INTEGER DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS agent_sessions_user_recent_idx ON agent_sessions (user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS agent_steps (
+  id SERIAL PRIMARY KEY,
+  session_id INTEGER NOT NULL REFERENCES agent_sessions(id),
+  turn_index INTEGER NOT NULL,
+  role TEXT NOT NULL,
+  content JSON,
+  tool_calls JSON,
+  tool_results JSON,
+  tokens_in INTEGER,
+  tokens_out INTEGER,
+  latency_ms INTEGER,
+  created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS agent_steps_session_turn_idx ON agent_steps (session_id, turn_index);
 `;
 
 export async function ensureSchema() {

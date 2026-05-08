@@ -336,25 +336,32 @@ export function registerAgentRoutes(app: Express) {
 
   // ── Generative UI Agent endpoint ──
   app.post("/api/generator/agent", requireAuth, async (req, res) => {
-    const { messages, specSnapshot } = req.body;
-    const { BedrockRuntimeClient, InvokeModelCommand } = await import("@aws-sdk/client-bedrock-runtime");
-    const bedrock = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "us-east-2" });
-    const systemPrompt = `You are the DemoForge AI agent. You help AWS Solutions Architects generate database demo packages.
-Your job: Given a user's request, infer as much as possible (database, extension, industry, audience, use case) and only ask what you cannot infer.
-You MUST respond with valid JSON matching this schema:
-{"message":"string (markdown)","components":[GenNode array],"specSnapshot":{"database":"","extensions":[],"useCase":"","industry":"","audience":"","durationMin":null,"estCostHourly":""},"phase":"gathering"|"generating"|"complete"}
-Available component types: AudienceProfile, QuestionSingleSelect, QuestionSlider, ProgressTimeline, InfraPreview, SchemaPreview, CodePreview, ModuleList, CostEstimate, ConfirmationCard.
-Rules: 1) INFER aggressively from the prompt. 2) Only ask what's genuinely ambiguous. 3) specSnapshot must ALWAYS reflect current understanding. 4) When you have database+extension+useCase+audience, set phase="generating". 5) Return ONLY valid JSON.`;
+    const user = (req as any).user;
+    const { messages, specSnapshot, sessionId } = req.body ?? {};
+    const lastUserMessage = Array.isArray(messages)
+      ? [...messages].reverse().find((m: any) => m?.role === "user")?.content
+      : undefined;
+    if (typeof lastUserMessage !== "string" || lastUserMessage.length === 0) {
+      return res.status(400).json({ error: "messages[] must include at least one user message" });
+    }
     try {
-      const body = JSON.stringify({ anthropic_version: "bedrock-2023-05-31", max_tokens: 4096, system: systemPrompt, messages: (messages || []).map((m: any) => ({ role: m.role, content: m.content })) });
-      const command = new InvokeModelCommand({ modelId: "us.anthropic.claude-opus-4-6-v1", contentType: "application/json", body: new TextEncoder().encode(body) });
-      const response = await bedrock.send(command);
-      const text = JSON.parse(new TextDecoder().decode(response.body)).content[0]?.text || "";
-      const cleaned = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```\s*$/m, "").trim();
-      res.json(JSON.parse(cleaned));
+      const { runTurnFromMessage } = await import("./agent/loop");
+      const result = await runTurnFromMessage({
+        principal: { sub: user.sub, email: user.email },
+        sessionId: typeof sessionId === "number" ? sessionId : undefined,
+        userMessage: lastUserMessage,
+        specSnapshot: specSnapshot || undefined,
+      });
+      res.json({ sessionId: result.sessionId, ...result.envelope });
     } catch (err: any) {
       console.error("Generator agent error:", err);
-      res.json({ message: "I encountered an error. Please try again.", components: [{ type: "ErrorCard", title: "Agent Error", message: err.message || "Unknown error" }], specSnapshot: specSnapshot || null, phase: "error" });
+      res.json({
+        sessionId: typeof sessionId === "number" ? sessionId : null,
+        message: "I encountered an error. Please try again.",
+        components: [{ type: "ErrorCard", title: "Agent Error", message: err.message || "Unknown error" }],
+        specSnapshot: specSnapshot || null,
+        phase: "error",
+      });
     }
   });
 
