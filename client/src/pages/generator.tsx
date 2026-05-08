@@ -28,12 +28,16 @@ export default function GeneratorPage() {
   const [requestId, setRequestId] = useState<number | null>(() => {
     const v = sessionStorage.getItem("gen-requestId"); return v ? parseInt(v) : null;
   });
+  const [sessionId, setSessionId] = useState<number | null>(() => {
+    const v = sessionStorage.getItem("gen-sessionId"); return v ? parseInt(v) : null;
+  });
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { sessionStorage.setItem("gen-messages", JSON.stringify(messages)); }, [messages]);
   useEffect(() => { sessionStorage.setItem("gen-spec", JSON.stringify(spec)); }, [spec]);
   useEffect(() => { sessionStorage.setItem("gen-phase", phase); }, [phase]);
   useEffect(() => { if (requestId) sessionStorage.setItem("gen-requestId", String(requestId)); }, [requestId]);
+  useEffect(() => { if (sessionId) sessionStorage.setItem("gen-sessionId", String(sessionId)); }, [sessionId]);
 
   useEffect(() => {
     if (phase !== "generating" || !requestId) return;
@@ -64,7 +68,12 @@ export default function GeneratorPage() {
     const newMessages = [...messages, userMsg];
     setMessages(newMessages); setInput(""); setLoading(true);
     try {
-      const result = await sendAgentTurn(newMessages.map(m => ({ role: m.role, content: m.content })), spec);
+      const result = await sendAgentTurn(
+        newMessages.map(m => ({ role: m.role, content: m.content })),
+        spec,
+        sessionId ?? undefined,
+      );
+      if (typeof result.sessionId === "number") setSessionId(result.sessionId);
       setMessages([...newMessages, { role: "assistant", content: result.message, components: result.components }]);
       if (result.specSnapshot) setSpec(result.specSnapshot as SpecSnapshot);
       setPhase(result.phase);
@@ -81,8 +90,8 @@ export default function GeneratorPage() {
   const handleComponentChange = (id: string, value: any) => handleSend(`[Selected ${id}: ${value}]`);
   const handleRevise = (field: string) => setInput(`Change the ${field} to `);
   const handleNewSession = () => {
-    ["gen-messages","gen-spec","gen-phase","gen-requestId"].forEach(k => sessionStorage.removeItem(k));
-    setMessages([]); setSpec({ database: "", extensions: [], useCase: "" }); setPhase("idle"); setRequestId(null);
+    ["gen-messages","gen-spec","gen-phase","gen-requestId","gen-sessionId"].forEach(k => sessionStorage.removeItem(k));
+    setMessages([]); setSpec({ database: "", extensions: [], useCase: "" }); setPhase("idle"); setRequestId(null); setSessionId(null);
   };
 
   if (!user) return <div style={{ padding: 60, textAlign: "center" }}><button className="btn btn-primary" onClick={() => navigate("/auth")}>Sign in to use the Generator</button></div>;

@@ -1,4 +1,5 @@
-import { pgTable, text, serial, integer, json, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, json, timestamp, index } from "drizzle-orm/pg-core";
+import { desc } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -125,3 +126,57 @@ export type DownloadLog = typeof downloadLogs.$inferSelect;
 export type InsertDownloadLog = typeof downloadLogs.$inferInsert;
 export type FeedbackRequest = typeof feedbackRequests.$inferSelect;
 export type InsertFeedbackRequest = typeof feedbackRequests.$inferInsert;
+
+// ── Agent Loop (P1.1) ──
+
+export interface SpecSnapshot {
+  database: string;
+  extensions: string[];
+  useCase: string;
+  industry?: string;
+  audience?: string;
+  durationMin?: number;
+  estCostHourly?: string;
+}
+
+export const agentSessions = pgTable(
+  "agent_sessions",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    userEmail: text("user_email").notNull(),
+    phase: text("phase").notNull().default("gathering"),
+    specSnapshot: json("spec_snapshot").$type<SpecSnapshot>(),
+    lastEventId: integer("last_event_id").default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    userRecentIdx: index("agent_sessions_user_recent_idx").on(t.userId, desc(t.createdAt)),
+  }),
+);
+
+export const agentSteps = pgTable(
+  "agent_steps",
+  {
+    id: serial("id").primaryKey(),
+    sessionId: integer("session_id").references(() => agentSessions.id).notNull(),
+    turnIndex: integer("turn_index").notNull(),
+    role: text("role").notNull(),
+    content: json("content"),
+    toolCalls: json("tool_calls"),
+    toolResults: json("tool_results"),
+    tokensIn: integer("tokens_in"),
+    tokensOut: integer("tokens_out"),
+    latencyMs: integer("latency_ms"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    sessionTurnIdx: index("agent_steps_session_turn_idx").on(t.sessionId, t.turnIndex),
+  }),
+);
+
+export type AgentSession = typeof agentSessions.$inferSelect;
+export type InsertAgentSession = typeof agentSessions.$inferInsert;
+export type AgentStep = typeof agentSteps.$inferSelect;
+export type InsertAgentStep = typeof agentSteps.$inferInsert;
