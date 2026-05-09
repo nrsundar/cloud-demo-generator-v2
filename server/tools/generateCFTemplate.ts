@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ToolSpec } from "./types";
-import { getSkillPromptContext } from "../skills/extensions";
+import { getExtensionSkill, getSkillPromptContext } from "../skills/extensions";
 import { modelJson } from "./modelHelper";
 
 const inputSchema = z.object({
@@ -42,7 +42,9 @@ export const generateCFTemplate: ToolSpec<typeof inputSchema, typeof outputSchem
   outputSchema,
   async execute(_principal, input) {
     const skill = getSkillPromptContext(input.extension);
-    const sharedLibs = skill.includes("shared_preload_libraries") ? [input.extension] : [];
+    const skillEntry = getExtensionSkill(input.extension);
+    const declared = skillEntry?.cfnParameters?.SharedPreloadLibraries;
+    const sharedLibs = declared && declared.length > 0 ? declared.split(",").map((s) => s.trim()) : [];
     const result = await modelJson<{
       summary: string;
       resources: Array<{ logicalId: string; type: string; purpose: string }>;

@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS agent_actions (
 
 CREATE TABLE IF NOT EXISTS agent_sessions (
   id SERIAL PRIMARY KEY,
+  tenant_id TEXT NOT NULL DEFAULT 'default',
   user_id TEXT NOT NULL,
   user_email TEXT NOT NULL,
   phase TEXT NOT NULL DEFAULT 'gathering',
@@ -92,7 +93,11 @@ CREATE TABLE IF NOT EXISTS agent_sessions (
   updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
+ALTER TABLE agent_sessions
+  ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL DEFAULT 'default';
+
 CREATE INDEX IF NOT EXISTS agent_sessions_user_recent_idx ON agent_sessions (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS agent_sessions_tenant_user_recent_idx ON agent_sessions (tenant_id, user_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS agent_steps (
   id SERIAL PRIMARY KEY,

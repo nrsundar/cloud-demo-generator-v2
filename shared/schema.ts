@@ -143,6 +143,7 @@ export const agentSessions = pgTable(
   "agent_sessions",
   {
     id: serial("id").primaryKey(),
+    tenantId: text("tenant_id").notNull().default("default"),
     userId: text("user_id").notNull(),
     userEmail: text("user_email").notNull(),
     phase: text("phase").notNull().default("gathering"),
@@ -153,6 +154,11 @@ export const agentSessions = pgTable(
   },
   (t) => ({
     userRecentIdx: index("agent_sessions_user_recent_idx").on(t.userId, desc(t.createdAt)),
+    tenantUserRecentIdx: index("agent_sessions_tenant_user_recent_idx").on(
+      t.tenantId,
+      t.userId,
+      desc(t.createdAt),
+    ),
   }),
 );
 

@@ -1,4 +1,4 @@
-import { eq, asc } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import { db } from "../db";
 import {
   agentSessions,
@@ -8,16 +8,23 @@ import {
   type InsertAgentStep,
   type SpecSnapshot,
 } from "@shared/schema";
+import { tenantOf } from "./tenant";
 
 export interface Principal {
   sub: string;
   email: string;
+  tenantId?: string;
+}
+
+function tenantFor(p: Principal): string {
+  return p.tenantId ?? tenantOf(p.email, p.sub);
 }
 
 export async function createSession(principal: Principal, specSnapshot?: SpecSnapshot): Promise<AgentSession> {
   const [session] = await db
     .insert(agentSessions)
     .values({
+      tenantId: tenantFor(principal),
       userId: principal.sub,
       userEmail: principal.email,
       specSnapshot: specSnapshot ?? null,
@@ -27,7 +34,11 @@ export async function createSession(principal: Principal, specSnapshot?: SpecSna
 }
 
 export async function loadSession(id: number, principal: Principal): Promise<AgentSession | null> {
-  const [session] = await db.select().from(agentSessions).where(eq(agentSessions.id, id));
+  const tenantId = tenantFor(principal);
+  const [session] = await db
+    .select()
+    .from(agentSessions)
+    .where(and(eq(agentSessions.id, id), eq(agentSessions.tenantId, tenantId)));
   if (!session) return null;
   if (session.userId !== principal.sub) return null;
   return session;

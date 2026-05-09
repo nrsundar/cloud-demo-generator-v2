@@ -365,6 +365,57 @@ export function registerAgentRoutes(app: Express) {
     }
   });
 
+  // ── Generative UI Agent — streaming (SSE) ──
+  app.post("/api/generator/agent/stream", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    const { messages, specSnapshot, sessionId } = req.body ?? {};
+    const lastUserMessage = Array.isArray(messages)
+      ? [...messages].reverse().find((m: any) => m?.role === "user")?.content
+      : undefined;
+    if (typeof lastUserMessage !== "string" || lastUserMessage.length === 0) {
+      return res.status(400).json({ error: "messages[] must include at least one user message" });
+    }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders?.();
+
+    const send = (event: string, data: unknown) => {
+      res.write(`event: ${event}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    let aborted = false;
+    req.on("close", () => {
+      aborted = true;
+    });
+
+    try {
+      const { runTurnFromMessage } = await import("./agent/loop");
+      const result = await runTurnFromMessage({
+        principal: { sub: user.sub, email: user.email },
+        sessionId: typeof sessionId === "number" ? sessionId : undefined,
+        userMessage: lastUserMessage,
+        specSnapshot: specSnapshot || undefined,
+        onEvent: (e) => {
+          if (aborted) return;
+          send(e.type, e);
+        },
+      });
+      if (!aborted) {
+        send("done", { sessionId: result.sessionId });
+        res.end();
+      }
+    } catch (err: any) {
+      if (!aborted) {
+        send("error", { message: err?.message || "Unknown error" });
+        res.end();
+      }
+    }
+  });
+
   // Schedule bug fix agent to run hourly
   setInterval(() => {
     runBugFixAgent().catch(err => console.error("Scheduled bug fix agent failed:", err));
