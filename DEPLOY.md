@@ -61,6 +61,19 @@ aws cloudformation wait stack-create-complete \
 
 ## Step 4: Build and Push Docker Image
 
+For routine redeploys (after the stack already exists), use the one-button script:
+
+```bash
+./scripts/deploy.sh
+```
+
+It runs `tsc`, builds the image, pushes to ECR, and forces an ECS redeploy
+(skipping that last step on first-time deploys when the service doesn't exist
+yet). Override defaults with env vars: `AWS_REGION`, `ECR_REPO`, `ECS_CLUSTER`,
+`ECS_SERVICE`, `IMAGE_TAG`.
+
+For first-time / manual deploys:
+
 ```bash
 aws ecr get-login-password --region <your-region> | \
   docker login --username AWS --password-stdin <account-id>.dkr.ecr.<your-region>.amazonaws.com

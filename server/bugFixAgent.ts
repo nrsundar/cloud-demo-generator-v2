@@ -2,10 +2,10 @@ import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedroc
 import { CloudWatchLogsClient, FilterLogEventsCommand } from "@aws-sdk/client-cloudwatch-logs";
 import { db } from "./db";
 import { agentActions } from "@shared/schema";
+import { BEDROCK_MODEL_ID, BEDROCK_REGION } from "./bedrock/config";
 
-const bedrock = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "us-east-2" });
-const cwLogs = new CloudWatchLogsClient({ region: process.env.AWS_REGION || "us-east-2" });
-const MODEL_ID = "us.anthropic.claude-opus-4-6-v1";
+const bedrock = new BedrockRuntimeClient({ region: BEDROCK_REGION });
+const cwLogs = new CloudWatchLogsClient({ region: BEDROCK_REGION });
 const LOG_GROUP = "/ecs/demo-gen";
 
 async function invokeModel(prompt: string, systemPrompt: string): Promise<string> {
@@ -16,7 +16,7 @@ async function invokeModel(prompt: string, systemPrompt: string): Promise<string
     messages: [{ role: "user", content: prompt }],
   });
   const command = new InvokeModelCommand({
-    modelId: MODEL_ID,
+    modelId: BEDROCK_MODEL_ID,
     contentType: "application/json",
     body: new TextEncoder().encode(body),
   });

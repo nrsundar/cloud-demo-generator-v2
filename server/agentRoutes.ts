@@ -444,7 +444,7 @@ export function registerAgentRoutes(app: Express) {
             // Check name similarity (shared words)
             const aWords = new Set(aName.split("-").filter(w => w.length > 3));
             const bWords = new Set(bName.split("-").filter(w => w.length > 3));
-            const shared = [...aWords].filter(w => bWords.has(w)).length;
+            const shared = Array.from(aWords).filter(w => bWords.has(w)).length;
             if (shared >= 2) {
               duplicates.push({ keep: a.id, remove: b.id, reason: `Similar: ${a.name} ≈ ${b.name} (${shared} shared words, same extension)` });
             }

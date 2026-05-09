@@ -5,9 +5,9 @@ import { tmpdir } from "os";
 import archiver from "archiver";
 import { PassThrough } from "stream";
 import { getSkillPromptContext } from "./skills/extensions";
+import { BEDROCK_MODEL_ID, BEDROCK_REGION } from "./bedrock/config";
 
-const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "us-east-2" });
-const MODEL_ID = "us.anthropic.claude-opus-4-6-v1";
+const client = new BedrockRuntimeClient({ region: BEDROCK_REGION });
 
 async function invokeModel(prompt: string, systemPrompt: string): Promise<string> {
   const body = JSON.stringify({
@@ -17,7 +17,7 @@ async function invokeModel(prompt: string, systemPrompt: string): Promise<string
     messages: [{ role: "user", content: prompt }],
   });
   const command = new InvokeModelCommand({
-    modelId: MODEL_ID,
+    modelId: BEDROCK_MODEL_ID,
     contentType: "application/json",
     body: new TextEncoder().encode(body),
   });
@@ -50,6 +50,7 @@ interface DemoSpec {
   dataModel?: string;
   apiEndpoints?: { method: string; path: string; description: string }[];
   cloudformationNotes?: string;
+  industry?: string;
 }
 
 export async function generateDemoTemplate(spec: DemoSpec): Promise<Buffer> {

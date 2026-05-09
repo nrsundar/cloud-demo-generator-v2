@@ -251,11 +251,10 @@ Resources:
           Essential: true
           PortMappings: [{ ContainerPort: 5000, Protocol: tcp }]
           Environment:
-            - { Name: DATABASE_URL, Value: !Sub 'postgresql://${DBUsername}:${DBPassword}@${Database.Endpoint.Address}:5432/demogen?sslmode=require' }
+            - { Name: DATABASE_URL, Value: !Sub 'postgresql://${DBUsername}:${DBPassword}@${Database.Endpoint.Address}:5432/demogen?sslmode=verify-full' }
             - { Name: NODE_ENV, Value: production }
             - { Name: PORT, Value: '5000' }
             - { Name: AWS_REGION, Value: !Ref 'AWS::Region' }
-            - { Name: NODE_TLS_REJECT_UNAUTHORIZED, Value: '0' }
             - { Name: ALLOWED_ORIGINS, Value: 'https://main.d1s77hhl4y34ji.amplifyapp.com,https://d1s77hhl4y34ji.amplifyapp.com,https://d2g4zib7n3kevf.cloudfront.net,http://localhost:3000' }
             - { Name: AMPLIFY_URL, Value: 'http://localhost:3000' }
             - { Name: VITE_COGNITO_USER_POOL_ID, Value: !Ref CognitoUserPoolId }

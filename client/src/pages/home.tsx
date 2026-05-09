@@ -7,8 +7,8 @@ import { useAuth } from "../hooks/useAuth";
 export default function HomePage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const { data: repos, isLoading } = useQuery({ queryKey: ["/api/repositories"], enabled: !!user });
-  const catalogRepos = (repos || []).filter((r: any) => r.status === "complete");
+  const { data: repos, isLoading } = useQuery<any[]>({ queryKey: ["/api/repositories"], enabled: !!user });
+  const catalogRepos = (repos ?? []).filter((r: any) => r.status === "complete");
 
   const handleDownload = async (id: number) => {
     const res = await apiRequest("GET", `/api/repositories/${id}/zip`);
