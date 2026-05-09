@@ -232,7 +232,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
       const response = await bedrock.invoke({
         systemPrompt: SYSTEM_PROMPT,
         messages: historyToBedrockMessages(history),
-        tools: undefined, // tools disabled for demo stability — re-enable after timeout fix
+        tools: toolDefs.length > 0 ? toolDefs : undefined,
       });
 
       budget.recordIteration(state, response.tokensIn, response.tokensOut);
