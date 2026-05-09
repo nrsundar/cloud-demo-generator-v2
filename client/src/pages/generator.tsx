@@ -3,7 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useLocation } from "wouter";
 import { API_BASE } from "../lib/config";
 import { GenNode, SpecSnapshot, AgentMessage } from "../components/genui/types";
-import { sendAgentTurn, pollRequestStatus, submitDemoRequest } from "../services/agent";
+import { streamAgentTurn, pollRequestStatus, submitDemoRequest } from "../services/agent";
 
 const EXAMPLES = [
   { icon: "🏥", title: "pgvector RAG demo for a healthcare CTO, pretty technical", sub: "Aurora PostgreSQL · pgvector · clinical notes" },
@@ -61,17 +61,26 @@ export default function GeneratorPage() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
+  const [progress, setProgress] = useState<string>("");
+
   const handleSend = async (text?: string) => {
     const msg = text || input;
     if (!msg.trim() || loading) return;
     const userMsg: AgentMessage = { role: "user", content: msg };
     const newMessages = [...messages, userMsg];
-    setMessages(newMessages); setInput(""); setLoading(true);
+    setMessages(newMessages); setInput(""); setLoading(true); setProgress("Thinking...");
     try {
-      const result = await sendAgentTurn(
+      const result = await streamAgentTurn(
         newMessages.map(m => ({ role: m.role, content: m.content })),
         spec,
         sessionId ?? undefined,
+        (e) => {
+          if (e.type === "iteration") setProgress(`Iteration ${e.iteration}...`);
+          else if (e.type === "tool") setProgress(`Calling tool: ${e.name || ""}`);
+          else if (e.type === "assistant") setProgress("Model reasoning...");
+          else if (e.type === "envelope") setProgress("Finalizing response...");
+          else if (e.type === "phase") setProgress(`Phase: ${e.phase}`);
+        },
       );
       if (typeof result.sessionId === "number") setSessionId(result.sessionId);
       setMessages([...newMessages, { role: "assistant", content: result.message, components: result.components }]);
@@ -84,7 +93,7 @@ export default function GeneratorPage() {
       }
     } catch (err: any) {
       setMessages([...newMessages, { role: "assistant", content: `Error: ${err.message}`, components: [{ type: "ErrorCard", title: "Error", message: err.message }] }]);
-    } finally { setLoading(false); }
+    } finally { setLoading(false); setProgress(""); }
   };
 
   const handleComponentChange = (id: string, value: any) => handleSend(`[Selected ${id}: ${value}]`);
@@ -140,8 +149,8 @@ export default function GeneratorPage() {
           <div className="turn ai">
             <div className="avatar-bubble">✦</div>
             <div className="turn-body">
-              <div className="turn-meta"><strong>DemoForge AI</strong><span className="dot"></span>thinking…</div>
-              <div className="gen-progress"><h4><span className="spinner"></span>Processing your request</h4></div>
+              <div className="turn-meta"><strong>DemoForge AI</strong><span className="dot"></span>{progress || "thinking…"}</div>
+              <div className="gen-progress"><h4><span className="spinner"></span>{progress || "Processing your request"}</h4></div>
             </div>
           </div>
         )}

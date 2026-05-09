@@ -1,7 +1,7 @@
 import type { AgentSession } from "@shared/schema";
 
-export const MAX_ITERATIONS = 4;
-export const MAX_TURN_LATENCY_MS = 80_000;
+export const MAX_ITERATIONS = 8;
+export const MAX_TURN_LATENCY_MS = 150_000;
 export const MAX_TOKENS_PER_TURN = 64_000;
 
 export class BudgetExceededError extends Error {
