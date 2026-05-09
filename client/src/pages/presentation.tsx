@@ -128,16 +128,33 @@ const SLIDES = [
   },
   {
     title: "What's Next",
-    subtitle: "Roadmap",
+    subtitle: "Phase 2 — Service-Grade Operations (in progress)",
     bullets: [
-      "Deploy to production for all AWS field SAs globally",
-      "Add remaining database engines (DocumentDB, Keyspaces, QLDB)",
-      "Customer-facing mode — let customers self-serve demos",
-      "Integration with Workshop Studio for guided labs",
-      "Feedback loop — track which demos lead to closed deals",
+      "✅  Per-turn tracing + cost accounting — every model/tool call traced with cost",
+      "🔜  Async generation pipeline — jobs survive disconnects, resume from My Requests",
+      "🔜  Multi-layer caching — Bedrock prompt cache + tool result cache (50%+ cost cut)",
+      "🔜  Eval harness in CI — 30+ fixtures, LLM-as-judge, regression gate on every MR",
+      "",
+      "Phase 3 — Differentiation",
+      "    RAG over canonical corpora • Multi-model routing • Drift detection",
     ],
-    note: "",
+    note: "Phase 1 complete and deployed. Phase 2 targets: tracing, async, caching, eval.",
     accent: "#3498db",
+  },
+  {
+    title: "Resources",
+    subtitle: "Links and access",
+    bullets: [
+      "🔗  Live app: https://main.d1s77hhl4y34ji.amplifyapp.com",
+      "🔗  API: http://demo-gen-alb-29620839.us-east-2.elb.amazonaws.com/api/health",
+      "📦  GitLab: ssh.gitlab.aws.dev:raghasun/cloud-demo-generator-v2",
+      "📦  GitHub: github.com/nrsundar/cloud-demo-generator-v2",
+      "📖  Architecture: /docs/architecture/plan.md (3-phase plan)",
+      "🚀  Deploy: /DEPLOY.md — one-command CloudFormation",
+      "🔒  Cognito pool: us-east-2_sndKJLxLR (admin group for approvals)",
+    ],
+    note: "Account 633384844157 • us-east-2 • ECS Fargate • RDS PostgreSQL 16",
+    accent: "#10b981",
   },
   {
     title: "Try It Now",
@@ -149,7 +166,7 @@ const SLIDES = [
       "4.  Admin approves → AI generates (~10 min)",
       "5.  Download → deploy → present to customer",
     ],
-    note: "DemoForge v3.1.0 • 6 databases • 12+ eval checks • self-healing • live now",
+    note: "DemoForge v3.6.0 • Node 20 • SSE streaming • per-turn tracing • live now",
     accent: "#ff9900",
   },
 ];
@@ -245,7 +262,7 @@ export default function PresentationPage() {
         {slide.note && <p className="slide-note" style={{ color: "rgba(255,255,255,0.6)", fontSize: "18px", marginTop: "32px", fontStyle: "italic", borderLeft: `2px solid ${slide.accent}88`, paddingLeft: "12px" }}>{slide.note}</p>}
       </div>
       <div style={{ padding: "12px 50px", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px" }}>DemoForge v3.1.0</span>
+        <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px" }}>DemoForge v3.6.0</span>
         <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px" }}>Amazon Web Services • ← → to navigate</span>
       </div>
     </div>

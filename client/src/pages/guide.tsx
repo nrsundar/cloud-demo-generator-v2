@@ -60,6 +60,24 @@ const SECTIONS = [
     "Upon approval, the system automatically applies the fix and redeploys if needed.",
     "If a fix requires downtime, a warning is shown before proceeding.",
   ]},
+  { icon: "📊", title: "Observability & Tracing", content: [
+    "Every agent turn is fully traced — model calls, tool calls, and safety checks produce spans.",
+    "Admin Dashboard → Traces tab shows per-turn timelines with latency and token counts.",
+    "Cost accounting: per-user, per-session, per-model breakdowns (Opus 4.6: $15/M in, $75/M out).",
+    "Trace detail view shows the full span tree for any turn — useful for debugging 'why did the AI do X?'.",
+    "Cost rollup API: GET /api/admin/traces/cost-rollup?days=7 for weekly spend summaries.",
+    "90-day retention; older traces aggregated into daily rollups.",
+  ]},
+  { icon: "📚", title: "Resources", content: [
+    "Live app: https://main.d1s77hhl4y34ji.amplifyapp.com",
+    "API endpoint: http://demo-gen-alb-29620839.us-east-2.elb.amazonaws.com",
+    "Source (GitLab): ssh.gitlab.aws.dev:raghasun/cloud-demo-generator-v2",
+    "Source (GitHub): github.com/nrsundar/cloud-demo-generator-v2",
+    "Architecture docs: /docs/architecture/overview.md in the repo",
+    "Deployment guide: /DEPLOY.md — one-command CloudFormation deploy",
+    "Presentation slides: navigate to /presentation in the app (12 slides, keyboard nav)",
+    "Constraints & ADRs: /CONSTRAINTS.md and /docs/decisions/ for design rationale",
+  ]},
 ];
 
 const FAQ = [
