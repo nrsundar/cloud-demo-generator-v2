@@ -10,6 +10,8 @@
     "start": "NODE_ENV=production node dist/production.js",
     "check": "tsc",
     "test:security": "node tests/security.mjs",
+    "eval:fast": "tsx tests/evals/run.ts",
+    "eval:full": "tsx tests/evals/run.ts --full",
     "db:push": "drizzle-kit push"
   },
   "engines": {

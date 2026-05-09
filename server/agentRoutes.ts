@@ -1,7 +1,7 @@
 import { Express } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { db } from "./db";
-import { demoRequests, agentActions, repositories, insertDemoRequestSchema } from "@shared/schema";
+import { demoRequests, agentActions, repositories, agentJobs, insertDemoRequestSchema } from "@shared/schema";
 import { requireAuth, requireAdmin } from "./auth";
 import { generateClarifyingQuestions, generateDemoSpec, resetMetrics, getMetrics } from "./agent";
 import { generateDemoTemplate } from "./templateGenerator";
@@ -463,4 +463,60 @@ export function registerAgentRoutes(app: Express) {
       console.error("Nightly dedup failed:", err);
     }
   }, 24 * 60 * 60 * 1000);
+
+  // ── P2.2: Async job submission ──
+
+  app.post("/api/generator/agent/start", requireAuth, async (req, res) => {
+    try {
+      const { sessionId, userMessage, specSnapshot } = req.body;
+      const principal = (req as any).principal;
+      if (!userMessage) return res.status(400).json({ error: "userMessage required" });
+
+      const crypto = await import("crypto");
+      const idempotencyKey = crypto.createHash("sha256")
+        .update(`${sessionId ?? "new"}:${userMessage}`)
+        .digest("hex");
+
+      // Check for existing job with same key
+      const [existing] = await db.select().from(agentJobs)
+        .where(eq(agentJobs.idempotencyKey, idempotencyKey));
+      if (existing) {
+        return res.json({ sessionId: existing.sessionId, jobId: existing.id, state: existing.state, result: existing.result });
+      }
+
+      // Create session if needed
+      let sid = sessionId;
+      if (!sid) {
+        const { createSession } = await import("./agent/sessions");
+        const s = await createSession(principal, specSnapshot);
+        sid = s.id;
+      }
+
+      const turnIndex = 0;
+      const [job] = await db.insert(agentJobs).values({
+        sessionId: sid,
+        turnIndex,
+        idempotencyKey,
+        payload: { sessionId: sid, principal, userMessage } as any,
+      }).returning();
+
+      res.json({ sessionId: sid, jobId: job.id, state: "ready" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/generator/agent/job/:id", requireAuth, async (req, res) => {
+    const id = Number(req.params.id);
+    const [job] = await db.select().from(agentJobs).where(eq(agentJobs.id, id));
+    if (!job) return res.status(404).json({ error: "Job not found" });
+    res.json(job);
+  });
+
+  app.get("/api/admin/queue-depth", requireAuth, requireAdmin, async (_req, res) => {
+    const [row] = await db.select({ count: sql<number>`COUNT(*)` })
+      .from(agentJobs)
+      .where(eq(agentJobs.state, "ready"));
+    res.json({ ready: row?.count ?? 0 });
+  });
 }

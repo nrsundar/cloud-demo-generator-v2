@@ -72,4 +72,8 @@ app.use((req, res, next) => {
   server.listen(PORT, () => {
     console.log(`🚀 Server listening on http://localhost:${PORT}`);
   });
+
+  // Start async job worker (P2.2)
+  const { startWorker } = await import("./agent/worker");
+  startWorker();
 })();

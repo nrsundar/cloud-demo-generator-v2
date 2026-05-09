@@ -1,6 +1,7 @@
 import type { ToolSpec, Principal, ToolError } from "./types";
 import { toolError } from "./types";
 import { zodToJsonSchema } from "./zodToJsonSchema";
+import { getCached, putCache, getToolTtl } from "../agent/cache";
 
 const registry = new Map<string, ToolSpec>();
 
@@ -63,6 +64,13 @@ export async function executeTool(
 
   let output: unknown;
   try {
+    // P2.3: Check cache before executing
+    if (getToolTtl(name)) {
+      const cached = await getCached(name, parsedInput.data, principal.sub);
+      if (cached != null) {
+        return { ok: true, output: cached };
+      }
+    }
     output = await spec.execute(principal, parsedInput.data);
   } catch (err: any) {
     return {
@@ -77,6 +85,11 @@ export async function executeTool(
       ok: false,
       error: toolError("execution", `Tool '${name}' produced invalid output: ${parsedOutput.error.message}`, false),
     };
+  }
+
+  // P2.3: Store in cache
+  if (getToolTtl(name)) {
+    putCache(name, parsedInput.data, parsedOutput.data, principal.sub).catch(() => {});
   }
 
   return { ok: true, output: parsedOutput.data };

@@ -238,3 +238,52 @@ export type AgentTrace = typeof agentTraces.$inferSelect;
 export type InsertAgentTrace = typeof agentTraces.$inferInsert;
 export type AgentSpan = typeof agentSpans.$inferSelect;
 export type InsertAgentSpan = typeof agentSpans.$inferInsert;
+
+// ── P2.2: Async Generation Pipeline ──
+
+export const agentJobs = pgTable(
+  "agent_jobs",
+  {
+    id: serial("id").primaryKey(),
+    sessionId: integer("session_id").references(() => agentSessions.id).notNull(),
+    turnIndex: integer("turn_index").notNull(),
+    state: text("state").notNull().default("ready"), // 'ready' | 'leased' | 'done' | 'failed' | 'cancelled'
+    attempts: integer("attempts").notNull().default(0),
+    maxAttempts: integer("max_attempts").notNull().default(3),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    payload: json("payload").notNull(),
+    result: json("result"),
+    lastError: json("last_error"),
+    leaseUntil: timestamp("lease_until"),
+    workerId: text("worker_id"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    stateLeaseIdx: index("agent_jobs_state_lease_idx").on(t.state, t.leaseUntil),
+    sessionTurnIdx: index("agent_jobs_session_turn_idx").on(t.sessionId, t.turnIndex),
+  }),
+);
+
+export type AgentJob = typeof agentJobs.$inferSelect;
+export type InsertAgentJob = typeof agentJobs.$inferInsert;
+
+// ── P2.3: Multi-Layer Caching ──
+
+export const toolResultCache = pgTable(
+  "tool_result_cache",
+  {
+    id: serial("id").primaryKey(),
+    toolName: text("tool_name").notNull(),
+    inputHash: text("input_hash").notNull(),
+    result: json("result").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    hitCount: integer("hit_count").notNull().default(0),
+  },
+  (t) => ({
+    toolHashIdx: index("tool_result_cache_tool_hash_idx").on(t.toolName, t.inputHash),
+  }),
+);
+
+export type ToolResultCacheRow = typeof toolResultCache.$inferSelect;
