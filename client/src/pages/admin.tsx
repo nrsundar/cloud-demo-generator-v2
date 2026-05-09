@@ -14,6 +14,7 @@ const STATUS_MAP: Record<string, { cls: string; label: string }> = {
   complete: { cls: "ready", label: "COMPLETE" },
   rejected: { cls: "failed", label: "REJECTED" },
   proposed: { cls: "review", label: "PROPOSED" },
+  resolved: { cls: "ready", label: "RESOLVED" },
 };
 
 const chipColor = (ext: string) => {
@@ -68,6 +69,14 @@ export default function AdminPage() {
   });
   const approveAction = useMutation({
     mutationFn: async (id: number) => { await apiRequest("POST", `/api/admin/agent-actions/${id}/approve`, {}); },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] }),
+  });
+  const bulkApproveActions = useMutation({
+    mutationFn: async (ids: number[]) => { await apiRequest("POST", "/api/admin/agent-actions/bulk-approve", { ids }); },
+    onSuccess: () => { setActionIds([]); queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] }); },
+  });
+  const resolveAction = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("POST", `/api/admin/agent-actions/${id}/resolve`, {}); },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/agent-actions"] }),
   });
   const submitAnswers = useMutation({
@@ -263,11 +272,20 @@ export default function AdminPage() {
               <strong>Self-Healing System:</strong> The Bug Fix Agent scans all generated repositories hourly. When issues are detected, it proposes fixes with severity and root cause analysis. Upon approval, the system automatically applies the fix. If a fix requires downtime (e.g., database migration, CloudFormation update), you'll see a warning before proceeding.
             </div>
           </div>
+          {actionIds.length > 0 && (
+            <div style={{ background: "linear-gradient(135deg,#fef2f2,#fff7ed)", border: "1px solid #fca5a5", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: 13, color: "#b91c1c" }}><strong>{actionIds.length}</strong> bug(s) selected</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn-success" onClick={() => bulkApproveActions.mutate(actionIds)} disabled={bulkApproveActions.isPending}>✓ Bulk Apply Fixes</button>
+                <button className="btn-ghost" onClick={() => setActionIds([])}>Clear</button>
+              </div>
+            </div>
+          )}
           <div className="table-card">
             <table className="tbl">
-              <thead><tr><th>Issue</th><th>Severity</th><th>Status</th><th>Requires Downtime</th><th>Detected</th><th style={{ textAlign: "right" }}>Actions</th></tr></thead>
+              <thead><tr><th style={{ width: 30 }}></th><th>Issue</th><th>Severity</th><th>Status</th><th>Requires Downtime</th><th>Detected</th><th style={{ textAlign: "right" }}>Actions</th></tr></thead>
               <tbody>
-                {bugItems.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--success)" }}>✅ No bugs detected. Agent scans hourly.</td></tr>}
+                {bugItems.length === 0 && <tr><td colSpan={7} style={{ textAlign: "center", padding: 40, color: "var(--success)" }}>✅ No bugs detected. Agent scans hourly.</td></tr>}
                 {bugItems.map((b: any) => {
                   const plan = b.proposedPlan || {};
                   const fix = (Array.isArray(plan) ? plan : plan.fixes || [])[0] || {};
@@ -276,6 +294,7 @@ export default function AdminPage() {
                   const needsDowntime = fix.requiresDowntime || fix.downtime || /migration|restart|redeploy/i.test(fix.description || "");
                   return (
                     <tr key={b.id}>
+                      <td><input type="checkbox" checked={actionIds.includes(b.id)} onChange={() => toggleActionSel(b.id)} /></td>
                       <td><div className="ttl">{fix.title || plan.title || "Error detected"}</div><div className="sub">{fix.rootCause || fix.description || ""}</div></td>
                       <td><span className={`ext-chip ${severity === "critical" || severity === "high" ? "r" : severity === "medium" ? "p" : "o"}`}>{severity}</span></td>
                       <td><span className={`badge-status ${st.cls}`}><span className="led"></span>{st.label}</span></td>
@@ -287,6 +306,9 @@ export default function AdminPage() {
                           needsDowntime
                             ? <button className="btn-danger" onClick={() => { if (window.confirm(`⚠️ DOWNTIME WARNING\n\nApplying this fix may cause temporary service disruption.\n\nIssue: ${fix.title || "Bug fix"}\nSeverity: ${severity}\n\nThe system will:\n1. Apply the proposed fix\n2. Redeploy affected components\n3. Verify the fix\n\nProceed?`)) approveAction.mutate(b.id); }}>⚠ Apply Fix (Downtime)</button>
                             : <button className="btn-success" onClick={() => approveAction.mutate(b.id)}>✓ Apply Fix</button>
+                        )}
+                        {b.status === "approved" && (
+                          <button className="btn-ghost" onClick={() => resolveAction.mutate(b.id)}>✓ Mark Resolved</button>
                         )}
                       </td>
                     </tr>

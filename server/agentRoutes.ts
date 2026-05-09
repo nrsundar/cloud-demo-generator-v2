@@ -323,6 +323,14 @@ export function registerAgentRoutes(app: Express) {
     res.json({ success: true, count: ids.length });
   });
 
+  app.post("/api/admin/agent-actions/:id/resolve", requireAuth, requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await db.update(agentActions)
+      .set({ status: "resolved", adminDecision: "resolved", updatedAt: new Date() })
+      .where(eq(agentActions.id, id));
+    res.json({ success: true });
+  });
+
   // ── Bug Fix Agent ──
 
   app.post("/api/admin/run-bug-fix-agent", requireAuth, requireAdmin, async (_req, res) => {
