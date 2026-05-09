@@ -71,12 +71,15 @@ const SECTIONS = [
   { icon: "📚", title: "Resources (added 2026-05-09)", content: [
     "Live app: https://main.d1s77hhl4y34ji.amplifyapp.com",
     "API endpoint: http://demo-gen-alb-29620839.us-east-2.elb.amazonaws.com",
-    "Source (GitLab): ssh.gitlab.aws.dev:raghasun/cloud-demo-generator-v2",
-    "Source (GitHub): github.com/nrsundar/cloud-demo-generator-v2",
+    "Source (GitLab): https://gitlab.aws.dev/raghasun/cloud-demo-generator-v2",
+    "Source (GitHub): https://github.com/nrsundar/cloud-demo-generator-v2",
     "Architecture docs: /docs/architecture/overview.md in the repo",
     "Deployment guide: /DEPLOY.md — one-command CloudFormation deploy",
-    "Presentation slides: navigate to /presentation in the app (12 slides, keyboard nav)",
+    "Presentation slides: navigate to /presentation in the app (14 slides, keyboard nav)",
     "Constraints & ADRs: /CONSTRAINTS.md and /docs/decisions/ for design rationale",
+    "Eval harness: npm run eval:fast (5 fixtures, tier-1 deterministic checks)",
+    "Admin traces: GET /api/admin/traces — per-turn observability",
+    "Async jobs: POST /api/generator/agent/start — survives disconnects",
   ]},
 ];
 
