@@ -12,6 +12,7 @@ import LandingPage from "./pages/landing";
 import AuthPage from "./pages/auth";
 import GuidePage from "./pages/guide";
 import PresentationPage from "./pages/presentation";
+import ReleaseNotesPage from "./pages/release-notes";
 import NotFound from "./pages/not-found";
 
 function AppRouter() {
@@ -28,6 +29,7 @@ function AppRouter() {
           <Route path="/my-requests" component={MyRequestsPage} />
           <Route path="/guide" component={GuidePage} />
           <Route path="/presentation" component={PresentationPage} />
+          <Route path="/release-notes" component={ReleaseNotesPage} />
           <Route component={NotFound} />
         </Switch>
       </AppLayout>

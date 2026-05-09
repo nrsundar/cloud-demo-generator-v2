@@ -13,6 +13,7 @@ const NAV = [
   { section: "Resources", items: [
     { label: "User Guide", href: "/guide", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" },
     { label: "Presentation", href: "/presentation", icon: "M2 3h20v14H2zM8 21h8M12 17v4" },
+    { label: "Release Notes", href: "/release-notes", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" },
   ]},
   { section: "Management", items: [
     { label: "Admin Dashboard", href: "/admin", icon: "M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" },
@@ -22,7 +23,7 @@ const NAV = [
 const BREADCRUMB: Record<string, string> = {
   "/": "Welcome", "/home": "Dashboard", "/generator": "Generator",
   "/my-requests": "My Requests", "/admin": "Admin Dashboard",
-  "/guide": "User Guide", "/presentation": "Presentation", "/auth": "Sign In",
+  "/guide": "User Guide", "/presentation": "Presentation", "/release-notes": "Release Notes", "/auth": "Sign In",
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
