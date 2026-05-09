@@ -182,7 +182,59 @@ export const agentSteps = pgTable(
   }),
 );
 
+// ── P2.1: Tracing + Cost Accounting ──
+
+export const agentTraces = pgTable(
+  "agent_traces",
+  {
+    id: serial("id").primaryKey(),
+    sessionId: integer("session_id").references(() => agentSessions.id).notNull(),
+    turnIndex: integer("turn_index").notNull(),
+    startedAt: timestamp("started_at").defaultNow().notNull(),
+    endedAt: timestamp("ended_at"),
+    status: text("status").notNull().default("running"), // 'running' | 'ok' | 'error' | 'budget_exceeded'
+    totalTokensIn: integer("total_tokens_in").default(0),
+    totalTokensOut: integer("total_tokens_out").default(0),
+    totalLatencyMs: integer("total_latency_ms").default(0),
+    estCostUsd: text("est_cost_usd"),
+    errorKind: text("error_kind"),
+    errorMessage: text("error_message"),
+  },
+  (t) => ({
+    sessionTurnIdx: index("agent_traces_session_turn_idx").on(t.sessionId, t.turnIndex),
+  }),
+);
+
+export const agentSpans = pgTable(
+  "agent_spans",
+  {
+    id: serial("id").primaryKey(),
+    traceId: integer("trace_id").references(() => agentTraces.id).notNull(),
+    parentSpanId: integer("parent_span_id"),
+    kind: text("kind").notNull(), // 'model' | 'tool' | 'safety'
+    name: text("name").notNull(),
+    startedAt: timestamp("started_at").defaultNow().notNull(),
+    endedAt: timestamp("ended_at"),
+    durationMs: integer("duration_ms"),
+    input: json("input"),
+    output: json("output"),
+    error: json("error"),
+    tokensIn: integer("tokens_in"),
+    tokensOut: integer("tokens_out"),
+    modelId: text("model_id"),
+    cacheHit: text("cache_hit"),
+    costUsd: text("cost_usd"),
+  },
+  (t) => ({
+    traceStartIdx: index("agent_spans_trace_start_idx").on(t.traceId, t.startedAt),
+  }),
+);
+
 export type AgentSession = typeof agentSessions.$inferSelect;
 export type InsertAgentSession = typeof agentSessions.$inferInsert;
 export type AgentStep = typeof agentSteps.$inferSelect;
 export type InsertAgentStep = typeof agentSteps.$inferInsert;
+export type AgentTrace = typeof agentTraces.$inferSelect;
+export type InsertAgentTrace = typeof agentTraces.$inferInsert;
+export type AgentSpan = typeof agentSpans.$inferSelect;
+export type InsertAgentSpan = typeof agentSpans.$inferInsert;

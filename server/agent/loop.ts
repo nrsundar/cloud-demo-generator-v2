@@ -7,6 +7,7 @@ import { ensureToolsRegistered } from "../tools/bootstrap";
 import { validateEnvelopeJson, PHASES, type Phase as EnvPhase } from "./envelope";
 import { sanitizeUserMessage, checkRateLimit, isToolAllowed, redactJson } from "./safety";
 import { toolError } from "../tools/types";
+import * as trace from "./trace";
 
 const SYSTEM_PROMPT = `You are the DemoForge orchestrator. You help AWS Solutions Architects generate database demo packages.
 
@@ -221,6 +222,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
 
   const state = budget.newBudgetState();
   const toolDefs = bedrockToolDefs();
+  const traceHandle = await trace.openTrace(session.id, turnIndex);
 
   try {
     while (true) {
@@ -229,10 +231,19 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
       await emit({ type: "iteration.start", iteration: state.iterations + 1 });
 
       const history = await sessions.loadHistory(session.id);
+
+      const modelSpan = await trace.openSpan(traceHandle, null, "model", "bedrock.invoke", {
+        modelId: "us.anthropic.claude-opus-4-6-v1",
+      });
       const response = await bedrock.invoke({
         systemPrompt: SYSTEM_PROMPT,
         messages: historyToBedrockMessages(history),
         tools: toolDefs.length > 0 ? toolDefs : undefined,
+      });
+      await trace.closeSpan(modelSpan, traceHandle, {
+        tokensIn: response.tokensIn,
+        tokensOut: response.tokensOut,
+        modelId: "us.anthropic.claude-opus-4-6-v1",
       });
 
       budget.recordIteration(state, response.tokensIn, response.tokensOut);
@@ -282,6 +293,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
           phase: validated.envelope.phase,
           specSnapshot: validated.envelope.specSnapshot ?? undefined,
         });
+        await trace.closeTrace(traceHandle, "ok");
         await emit({ type: "phase.update", phase: validated.envelope.phase });
         await emit({ type: "final", envelope: validated.envelope });
         return { sessionId: session.id, envelope: validated.envelope };
@@ -303,12 +315,15 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
             });
             return { id: tc.id, error: { kind: err.kind, message: err.message } };
           }
+          const toolSpan = await trace.openSpan(traceHandle, null, "tool", tc.name, { input: tc.input });
           const r = await executeTool(tc.name, tc.input, fullPrincipal);
           if (r.ok) {
             const safeOutput = redactJson(r.output);
+            await trace.closeSpan(toolSpan, traceHandle, { output: safeOutput });
             await emit({ type: "tool.end", id: tc.id, name: tc.name, ok: true, output: safeOutput });
             return { id: tc.id, output: safeOutput };
           }
+          await trace.closeSpan(toolSpan, traceHandle, { error: { kind: r.error.kind, message: r.error.message } });
           await emit({
             type: "tool.end",
             id: tc.id,
@@ -329,10 +344,15 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
       });
     }
   } catch (err: any) {
-    const message =
-      err instanceof budget.BudgetExceededError
-        ? `Loop budget exceeded (${err.kind}). ${err.message}`
-        : err?.message || "Agent loop failed";
+    const isBudget = err instanceof budget.BudgetExceededError;
+    const message = isBudget
+      ? `Loop budget exceeded (${err.kind}). ${err.message}`
+      : err?.message || "Agent loop failed";
+    await trace.closeTrace(
+      traceHandle,
+      isBudget ? "budget_exceeded" : "error",
+      { kind: isBudget ? err.kind : "unknown", message },
+    );
     await sessions.persistSession(session.id, { phase: "error" });
     await emit({ type: "error", message });
     const envelope = errorEnvelope(message);

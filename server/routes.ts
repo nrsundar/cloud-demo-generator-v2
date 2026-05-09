@@ -3,12 +3,16 @@ import { Storage } from "./storage";
 import { insertRepositorySchema } from "@shared/schema";
 import { requireAuth, requireAdmin } from "./auth";
 import { registerAgentRoutes } from "./agentRoutes";
+import { traceRouter } from "./admin/traces";
 
 const storage = new Storage();
 
 export function registerRoutes(app: Express) {
   // Register agent system routes
   registerAgentRoutes(app);
+
+  // Admin trace routes
+  app.use("/api/admin/traces", requireAuth, requireAdmin, traceRouter);
 
   // Public
   const APP_VERSION = "3.1.0";
